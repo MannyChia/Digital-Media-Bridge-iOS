@@ -1,4 +1,4 @@
-package com.dmb.digital_media_bridge_3
+package com.dmb.digitalmediabridgeTV;
 
 import io.flutter.embedding.android.FlutterActivity
 

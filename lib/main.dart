@@ -336,7 +336,7 @@ class LoginPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         backgroundColor: Color.fromRGBO(10, 85, 163, 0.2),
-                        textStyle: const TextStyle(fontSize: 16.0, fontStyle: FontStyle.italic, fontWeight: FontWeight.bold),
+                        textStyle: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
                       ),
                     onPressed: () {
 
