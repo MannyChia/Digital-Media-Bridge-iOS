@@ -11,6 +11,7 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+
 android {
 //    namespace = "compileSdk.dmb.digital_media_bridge_3"
     namespace "com.dmb.digitalmediabridgeTV"
