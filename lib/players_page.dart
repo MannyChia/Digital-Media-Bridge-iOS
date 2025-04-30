@@ -1,3 +1,4 @@
+
 ///
 ///
 ///
@@ -63,8 +64,8 @@ class _PlayersPageState extends State<PlayersPage> {
       context,
       MaterialPageRoute(
           builder: (context) => ScreensPage(
-            pageTitle: "Player: $selectedPlayerName",
-            pageSubTitle: "Select Screen to Publish"
+              pageTitle: "Player: $selectedPlayerName",
+              pageSubTitle: "Select Screen to Publish"
           )),
     ).then(  ///*** WHEN THE USER RETURNS TO THE PLAYERS SCREEN VIA 'BACK' BTN
             (context){
@@ -120,91 +121,91 @@ class _PlayersPageState extends State<PlayersPage> {
       // **********
       appBar: playersNoBackButton ? _appBarNoBackBtn(context) : _appBarBackBtn(context),
       body:
-        RefreshIndicator(
+      RefreshIndicator(
         onRefresh: _refreshData,     ///*** // trigger the _refreshData function when the user pulls down
         child:
-            ListView.separated(
-            itemCount: dmbMediaPlayers.length,
-            physics: const AlwaysScrollableScrollPhysics(),
-            itemBuilder: (BuildContext context, int index) {
+        ListView.separated(
+          itemCount: dmbMediaPlayers.length,
+          physics: const AlwaysScrollableScrollPhysics(),
+          itemBuilder: (BuildContext context, int index) {
 
-              return Align(
-                alignment: Alignment.center,
-                child: Container(
-                  //width: 100,
-                  color: Colors.blueGrey,
-                  child: Card(
+            return Align(
+              alignment: Alignment.center,
+              child: Container(
+                //width: 100,
+                color: Colors.blueGrey,
+                child: Card(
 
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                      ),
-                      child: InkWell(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                    ),
+                    child: InkWell(
 
-                          customBorder: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Ink(
-                            width: 500,  //The width & height of the 'players' button
-                            height: 50,
-                            decoration: BoxDecoration(   //*** the selectable 'button' of each media player
-                              shape: BoxShape.rectangle,
-                              border: Border.all(
-                                  width: 0, //
-                                  color: const Color.fromRGBO(10, 85, 163, 1.0)
-                              ),
-                              borderRadius:const BorderRadius.all(Radius.circular(8.0)),
-                              gradient: _checkPlayerStatus(index) ? _gradientActiveMediaPlayer(context) : _gradientInActiveMediaPlayer(context),
+                        customBorder: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Ink(
+                          width: 500,  //The width & height of the 'players' button
+                          height: 50,
+                          decoration: BoxDecoration(   //*** the selectable 'button' of each media player
+                            shape: BoxShape.rectangle,
+                            border: Border.all(
+                                width: 0, //
+                                color: const Color.fromRGBO(10, 85, 163, 1.0)
                             ),
+                            borderRadius:const BorderRadius.all(Radius.circular(8.0)),
+                            gradient: _checkPlayerStatus(index) ? _gradientActiveMediaPlayer(context) : _gradientInActiveMediaPlayer(context),
+                          ),
 
-                            ///The two line text on each button
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(dmbMediaPlayers[index].name,
-                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color:Colors.white)),
-                                    ],
-                                  ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      _checkPlayerStatus(index) ? _activeScreenText(context, index) : _inActiveScreenText(context, index),
-                                    ],
-                                  ),
-                                ],
-                              ),
-
+                          ///The two line text on each button
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(dmbMediaPlayers[index].name,
+                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color:Colors.white)),
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    _checkPlayerStatus(index) ? _activeScreenText(context, index) : _inActiveScreenText(context, index),
+                                  ],
+                                ),
+                              ],
                             ),
 
                           ),
-                          onTap: (){  //*** When one of the 'Media Players' button is selected .....
 
-                            ///set the global variable of the selected player
-                            selectedPlayerName = dmbMediaPlayers[index].name;
+                        ),
+                        onTap: (){  //*** When one of the 'Media Players' button is selected .....
 
-                            ///show the user (in a small pop-up) the player name
-                            ///that they just selected
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text("${dmbMediaPlayers[index].name} Selected")),
-                            );
+                          ///set the global variable of the selected player
+                          selectedPlayerName = dmbMediaPlayers[index].name;
 
-                            _showScreensPage();  /// SHOW LIST OF SCREENS
-                          }
-                      ),
+                          ///show the user (in a small pop-up) the player name
+                          ///that they just selected
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("${dmbMediaPlayers[index].name} Selected")),
+                          );
+
+                          _showScreensPage();  /// SHOW LIST OF SCREENS
+                        }
                     ),
                   ),
                 ),
-              );
+              ),
+            );
 
-            },
-            separatorBuilder: (context, index) => const Divider(  ///the divider between the items
-                color: Colors.blueGrey,
-            ),
+          },
+          separatorBuilder: (context, index) => const Divider(  ///the divider between the items
+            color: Colors.blueGrey,
           ),
         ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _userLogout,
         tooltip: 'Logout',
@@ -332,7 +333,7 @@ LinearGradient _gradientInActiveMediaPlayer(BuildContext context){
     end: AlignmentDirectional.bottomCenter,
     colors: [
       Colors.blueGrey,
-      Colors.red,
+      Color.fromRGBO(10, 85, 163, 1.0),
     ],
   );
 }
@@ -360,5 +361,3 @@ Text _inActiveScreenText(BuildContext context, pIndex){
           fontStyle: FontStyle.italic,
           color: Colors.white70));
 }
-
-

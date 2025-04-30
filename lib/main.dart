@@ -442,6 +442,25 @@ class _HomePageState extends State<HomePage> {
   File? _image;
   final ImagePicker _picker = ImagePicker();
 
+  int selectedIndex = 0;
+  final List<String> menuItems = ['Players', 'Screens', 'Settings'];
+
+  void _showImageDialog() {
+    if (_image == null) return;
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: Colors.black,
+        content: Image.file(_image!),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("Close", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
   //photo taken from camera
   Future<void> _takePhoto() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.camera);
@@ -453,7 +472,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  //photo taken from gallery
   Future<void> _chooseFromGallery() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -461,7 +479,7 @@ class _HomePageState extends State<HomePage> {
         _image = File(pickedFile.path);
       });
 
-      // Show image in a popup dialog
+      // Show image in a popup dialog with "Post" and "Close"
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
@@ -471,12 +489,31 @@ class _HomePageState extends State<HomePage> {
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: const Text("Close", style: TextStyle(color: Colors.white)),
-            )
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop(); // Close dialog before posting
+                //make sure to change to username and not "billstanton@gmail.com"
+                bool success = await uploadImage(_image!, "billstanton@gmail.com");
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Image uploaded successfully")),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Image upload failed")),
+                  );
+                }
+              },
+              child: const Text("Post", style: TextStyle(color: Colors.greenAccent)),
+            ),
           ],
         ),
       );
     }
   }
+
+
 
 
   void _updateTitle(title, subTitle, selIndex) {
@@ -495,7 +532,8 @@ class _HomePageState extends State<HomePage> {
       MaterialPageRoute(
           builder: (context) => const PlayersPage(
               pageTitle: "Media Players", pageSubTitle: "Select Player")),
-    ).then(
+    )
+        .then(
 
         ///*** WHEN THE USER RETURNS TO THE PLAYERS PAGE VIA 'BACK' BTN
         (context) {
@@ -609,29 +647,6 @@ class _HomePageState extends State<HomePage> {
                     ))
               ],
               selectedIndex: selectedIndex,
-              // onDestinationSelected: (value) { ///*** WHEN THE USER CLICKS ONE OF THE SIDE NAVIGATION BUTTONS ...
-              //   setState(() {
-              //     selectedIndex = value;
-              //     if (selectedIndex == 0) {
-              //       //if the user selected to look at the players, show a 'back' btn
-              //       playersNoBackButton = false;
-              //     }
-              //   });
-              //
-              //   if (selectedIndex == 0) {
-              //     ///*** Go to the 'Players' page
-              //     _showPlayersPage();
-              //
-              //     /// SHOW LIST OF PLAYERS
-              //   } else if (selectedIndex == 1) {
-              //     ///*** Go to the 'Screens' page
-              //     _showScreensPage();
-              //
-              //     /// SHOW LIST OF SCREENS
-              //   } else {
-              //     _takePhoto(); //  take a photo when entering camera tab
-              //   }
-              // }
                 onDestinationSelected: (value) {
                   if (value == 0 || value == 1) {
                     setState(() {
@@ -659,12 +674,32 @@ class _HomePageState extends State<HomePage> {
                               TextButton(
                                 onPressed: () => Navigator.of(context).pop(),
                                 child: const Text("Close", style: TextStyle(color: Colors.white)),
-                              )
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  Navigator.of(context).pop(); // Close the dialog first
+                                  bool success = await uploadImage(_image!,
+                                      // loginUsername
+                                    "billstanton@gmail.com"
+                                  );
+                                  if (success) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text("Image uploaded successfully")),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text("Image upload failed")),
+                                    );
+                                  }
+                                },
+                                child: const Text("Upload", style: TextStyle(color: Colors.greenAccent)),
+                              ),
                             ],
                           ),
                         );
                       }
                     });
+
                   }
                 }
 
@@ -672,16 +707,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          //const VerticalDivider(thickness: 0, width: 0),
-          // Expanded(
-          //   child: Container(
-          //       color: Theme.of(context).colorScheme.primaryContainer,
-          //       child: PlayersPage(
-          //           pageTitle: "Media Players",
-          //           pageSubTitle: "Select Player"
-          //       )
-          //   ),
-          // )
           Expanded(
             child: Container(
                 color: Theme.of(context).colorScheme.primaryContainer,
