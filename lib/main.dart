@@ -41,6 +41,7 @@ void main() {
 /// **********************************************************
 /// *********************************************************
 
+
 class DmbApp extends StatelessWidget {
   const DmbApp({super.key});
 
@@ -55,15 +56,15 @@ class DmbApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.blueGrey,
         inputDecorationTheme: const InputDecorationTheme(
           border:
-              OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+          OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
           focusedBorder:
-              OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+          OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
           enabledBorder:
-              OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+          OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
           errorBorder:
-              OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+          OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
           focusedErrorBorder:
-              OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+          OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
         ),
         // This is the theme of the application.
         //
@@ -130,8 +131,8 @@ class _MyHomePageState extends State<MyHomePage> {
             MaterialPageRoute(builder: (context) => BypassloginPage()),
           ).then(
 
-              ///*** WHEN THE USER RETURNS TO THE LOGIN PAGE VIA 'BACK' BTN
-              (context) {});
+            ///*** WHEN THE USER RETURNS TO THE LOGIN PAGE VIA 'BACK' BTN
+                  (context) {});
         }
       });
       return LoginPage();
@@ -187,7 +188,7 @@ class _BypassloginPageState extends State<BypassloginPage> {
         setState(() {
           //tell the user
           bypassMsg =
-              "Login Failed.\nPlease logout and then login again with the correct username & password";
+          "Login Failed.\nPlease logout and then login again with the correct username & password";
         });
       }
     });
@@ -286,7 +287,7 @@ class LoginPage extends StatelessWidget {
             children: [
               Padding(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
                 child: TextFormField(
                   controller: emailController,
                   style: const TextStyle(color: Colors.white),
@@ -306,7 +307,7 @@ class LoginPage extends StatelessWidget {
               ),
               Padding(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
                 child: TextFormField(
                   controller: passwordController,
                   obscureText: true,
@@ -327,7 +328,7 @@ class LoginPage extends StatelessWidget {
               ),
               Padding(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 16.0),
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 16.0),
                 child: Center(
                   child: ElevatedButton(
                     ///*** LOGIN BUTTON
@@ -349,7 +350,7 @@ class LoginPage extends StatelessWidget {
                       if (_formKey.currentState!.validate()) {
                         ///*** User provided login info, so check DMB server ...
                         getUserData(emailController.text,
-                                passwordController.text, "user-login")
+                            passwordController.text, "user-login")
                             .then((result) {
                           /// ****
                           /// **** CHECK LOGIN RESULT ****
@@ -376,7 +377,7 @@ class LoginPage extends StatelessWidget {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                   content:
-                                      Text("Cannot Connect To DMB Server")),
+                                  Text("Cannot Connect To DMB Server")),
                             );
                           } else {
                             //*** SUCCESSFUL LOGIN!
@@ -398,8 +399,8 @@ class LoginPage extends StatelessWidget {
                                   builder: (context) => const HomePage()),
                             ).then(
 
-                                ///*** WHEN THE USER RETURNS TO THE LOGIN PAGE VIA 'BACK' BTN
-                                (context) {});
+                              ///*** WHEN THE USER RETURNS TO THE LOGIN PAGE VIA 'BACK' BTN
+                                    (context) {});
 
                             /// ***
                           }
@@ -410,7 +411,7 @@ class LoginPage extends StatelessWidget {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content:
-                                  Text('Username & Password are required')),
+                              Text('Username & Password are required')),
                         );
                       }
                     },
@@ -449,18 +450,21 @@ class _HomePageState extends State<HomePage> {
     if (_image == null) return;
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: Colors.black,
-        content: Image.file(_image!),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text("Close", style: TextStyle(color: Colors.white)),
+      builder: (_) =>
+          AlertDialog(
+            backgroundColor: Colors.black,
+            content: Image.file(_image!),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text(
+                    "Close", style: TextStyle(color: Colors.white)),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
+
   //photo taken from camera
   Future<void> _takePhoto() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.camera);
@@ -482,38 +486,41 @@ class _HomePageState extends State<HomePage> {
       // Show image in a popup dialog with "Post" and "Close"
       showDialog(
         context: context,
-        builder: (_) => AlertDialog(
-          backgroundColor: Colors.black,
-          content: Image.file(_image!),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text("Close", style: TextStyle(color: Colors.white)),
+        builder: (_) =>
+            AlertDialog(
+              backgroundColor: Colors.black,
+              content: Image.file(_image!),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text(
+                      "Close", style: TextStyle(color: Colors.white)),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop(); // Close dialog before posting
+                    //make sure to change to username and not "billstanton@gmail.com"
+                    bool success = await uploadImage(
+                        _image!, "billstanton@gmail.com");
+                    if (success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text("Image uploaded successfully")),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Image upload failed")),
+                      );
+                    }
+                  },
+                  child: const Text(
+                      "Post", style: TextStyle(color: Colors.greenAccent)),
+                ),
+              ],
             ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop(); // Close dialog before posting
-                //make sure to change to username and not "billstanton@gmail.com"
-                bool success = await uploadImage(_image!, "billstanton@gmail.com");
-                if (success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Image uploaded successfully")),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Image upload failed")),
-                  );
-                }
-              },
-              child: const Text("Post", style: TextStyle(color: Colors.greenAccent)),
-            ),
-          ],
-        ),
       );
     }
   }
-
-
 
 
   void _updateTitle(title, subTitle, selIndex) {
@@ -521,25 +528,6 @@ class _HomePageState extends State<HomePage> {
       pageTitle = title;
       pageSubTitle = subTitle;
       selectedIndex = selIndex;
-    });
-  }
-
-  ///*** FUNCTION TO SHOW LIST OF PLAYERS AFTER 'PLAYERS' SIDE
-  ///NAVIGATION IS CLICKED
-  void _showPlayersPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => const PlayersPage(
-              pageTitle: "Media Players", pageSubTitle: "Select Player")),
-    )
-        .then(
-
-        ///*** WHEN THE USER RETURNS TO THE PLAYERS PAGE VIA 'BACK' BTN
-        (context) {
-      setState(() {
-        playersNoBackButton = true;
-      });
     });
   }
 
@@ -557,11 +545,12 @@ class _HomePageState extends State<HomePage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => ScreensPage(
-              pageTitle: "Screens (${dmbScreens.length})",
-              pageSubTitle: selectedPlayerName != null
-                  ? _PlayerSelectedText()
-                  : _PlayerNotSelectedText())),
+          builder: (context) =>
+              ScreensPage(
+                  pageTitle: "Screens (${dmbScreens.length})",
+                  pageSubTitle: selectedPlayerName != null
+                      ? _PlayerSelectedText()
+                      : _PlayerNotSelectedText())),
     ).then((context) {
       _updateTitle(
           "Media Players (${dmbMediaPlayers.length})", "Select Player", 0);
@@ -575,26 +564,14 @@ class _HomePageState extends State<HomePage> {
         children: [
           SafeArea(
             child: NavigationRail(
-              selectedIconTheme: const IconThemeData(
-                color: Colors.white,
-              ),
-              leading: Container(
-                  //child: Center(child: Text('leading')),
-                  ),
-              trailing: Container(
-                  //child: Center(child: Text('trailing')),
-                  ),
-              //elevation: 10,
+              selectedIconTheme: const IconThemeData(color: Colors.white),
+              leading: Container(),
+              trailing: Container(),
               extended: false,
               backgroundColor: Colors.blueGrey,
               minWidth: 56,
-              //The width of the black side bar
               indicatorColor: const Color.fromRGBO(0, 0, 0, 0.0),
-              //black transparent color
               groupAlignment: 0,
-              //vertically align the group of icons to center
-              //selectedLabelTextStyle: TextStyle(color: Colors.purple, fontWeight: FontWeight.bold),
-              //unselectedLabelTextStyle: TextStyle(color: Colors.grey, fontWeight: FontWeight.normal),
               selectedLabelTextStyle: const TextStyle(
                 color: Colors.white,
                 fontSize: 13,
@@ -614,23 +591,10 @@ class _HomePageState extends State<HomePage> {
               labelType: NavigationRailLabelType.all,
               destinations: const [
                 NavigationRailDestination(
-                  icon: Icon(Icons.live_tv, color: Colors.white),
-                  selectedIcon: Icon(Icons.live_tv, color: Colors.white),
-                  label: Padding(
-                    padding:
-                        EdgeInsets.symmetric(vertical: 22), //padding amount
-                    child: RotatedBox(
-                      quarterTurns: -1,
-                      child: Text("PLAYERS"),
-                    ),
-                  ),
-                ),
-                NavigationRailDestination(
                   icon: Icon(Icons.tv_outlined, color: Colors.white),
                   selectedIcon: Icon(Icons.tv_outlined, color: Colors.white),
                   label: Padding(
-                    padding:
-                        EdgeInsets.symmetric(vertical: 22), //padding amount
+                    padding: EdgeInsets.symmetric(vertical: 22),
                     child: RotatedBox(
                       quarterTurns: -1,
                       child: Text("SCREENS"),
@@ -638,75 +602,80 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 NavigationRailDestination(
-                    icon: Icon(Icons.camera_alt, color: Colors.white),
-                    selectedIcon: Icon(Icons.camera_alt, color: Colors.white),
-                    label: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 22),
-                      child:
-                          RotatedBox(quarterTurns: -1, child: Text("CAMERA")),
-                    ))
+                  icon: Icon(Icons.camera_alt, color: Colors.white),
+                  selectedIcon: Icon(Icons.camera_alt, color: Colors.white),
+                  label: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 22),
+                    child: RotatedBox(
+                      quarterTurns: -1,
+                      child: Text("CAMERA"),
+                    ),
+                  ),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.photo_library, color: Colors.white),
+                  selectedIcon: Icon(Icons.photo_library, color: Colors.white),
+                  label: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 22),
+                    child: RotatedBox(
+                      quarterTurns: -1,
+                      child: Text("GALLERY"),
+                    ),
+                  ),
+                ),
               ],
               selectedIndex: selectedIndex,
-                onDestinationSelected: (value) {
-                  if (value == 0 || value == 1) {
-                    setState(() {
-                      selectedIndex = value;
-                      if (selectedIndex == 0) {
-                        playersNoBackButton = false;
-                      }
-                    });
-
-                    if (selectedIndex == 0) {
-                      _showPlayersPage();
-                    } else if (selectedIndex == 1) {
-                      _showScreensPage();
+              onDestinationSelected: (value) {
+                if (value == 0) {
+                  setState(() {
+                    selectedIndex = value;
+                    _showScreensPage();
+                  });
+                } else if (value == 1) {
+                  _takePhoto().then((_) {
+                    if (_image != null) {
+                      showDialog(
+                        context: context,
+                        builder: (_) =>
+                            AlertDialog(
+                              backgroundColor: Colors.black,
+                              content: Image.file(_image!),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text("Close",
+                                      style: TextStyle(color: Colors.white)),
+                                ),
+                                TextButton(
+                                  onPressed: () async {
+                                    Navigator.of(context).pop();
+                                    bool success = await uploadImage(
+                                      _image!,
+                                      "billstanton@gmail.com",
+                                    );
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(success
+                                            ? "Image uploaded successfully"
+                                            : "Image upload failed"),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text("Upload", style: TextStyle(
+                                      color: Colors.greenAccent)),
+                                ),
+                              ],
+                            ),
+                      );
                     }
-                  } else if (value == 2) {
-                    // Don't change selectedIndex — just take photo and show it in a dialog
-                    _takePhoto().then((_) {
-                      if (_image != null) {
-                        showDialog(
-                          context: context,
-                          builder: (_) => AlertDialog(
-                            backgroundColor: Colors.black,
-                            content: Image.file(_image!),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(),
-                                child: const Text("Close", style: TextStyle(color: Colors.white)),
-                              ),
-                              TextButton(
-                                onPressed: () async {
-                                  Navigator.of(context).pop(); // Close the dialog first
-                                  bool success = await uploadImage(_image!,
-                                      // loginUsername
-                                    "billstanton@gmail.com"
-                                  );
-                                  if (success) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text("Image uploaded successfully")),
-                                    );
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text("Image upload failed")),
-                                    );
-                                  }
-                                },
-                                child: const Text("Upload", style: TextStyle(color: Colors.greenAccent)),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-                    });
-
-                  }
+                  });
                 }
-
-                ,
+                else if (value == 2) {
+                  _chooseFromGallery();
+                }
+              },
             ),
           ),
-
           Expanded(
             child: Container(
                 color: Theme.of(context).colorScheme.primaryContainer,
@@ -720,22 +689,8 @@ class _HomePageState extends State<HomePage> {
                       return const Center(child: Text("Invalid Selection"));
                     }
                   },
-
                 )
             ),
-          ),
-        ],
-      ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            onPressed: _chooseFromGallery,
-            tooltip: "Choose from Gallery",
-            child: Icon(Icons.photo_library),
-          ),
-          SizedBox(
-            height: 60,
           ),
         ],
       ),

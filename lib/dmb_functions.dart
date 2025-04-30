@@ -166,7 +166,7 @@ confirmPublish(BuildContext context, String playername, String screenname) {
   // set up the AlertDialog
   AlertDialog alert = AlertDialog(
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.all(Radius.circular(0.0)),
+        borderRadius: BorderRadius.all(Radius.circular(0.0)),
         side: BorderSide(
             width: 5,
             color: Colors.white

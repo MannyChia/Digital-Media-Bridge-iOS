@@ -41,6 +41,8 @@ class PlayersPage extends StatefulWidget {
 }
 
 class _PlayersPageState extends State<PlayersPage> {
+  late String pageTitle;
+  late String pageSubTitle;
 
   ///This 'override' function is called once when the class is loaded
   ///(is used to update the pageTitle * subTitle)
@@ -50,49 +52,53 @@ class _PlayersPageState extends State<PlayersPage> {
     _updateTitle();
   }
 
-  void _updateTitle() {
+  // void _updateTitle() {
+  //
+  //   setState(() {
+  //     pageTitle = "${widget.pageTitle} (${dmbMediaPlayers.length})";
+  //     pageSubTitle = widget.pageSubTitle;
+  //   });
+  // }
 
-    setState(() {
-      pageTitle = "${widget.pageTitle} (${dmbMediaPlayers.length})";
-      pageSubTitle = widget.pageSubTitle;
-    });
+  void _updateTitle() {
+    pageTitle = "${widget.pageTitle} (${dmbMediaPlayers.length})";
+    pageSubTitle = widget.pageSubTitle ?? "";
   }
 
-  void _showScreensPage() {      ///*** FUNCTION TO SHOW LIST OF SCREENS
 
+  void _showScreensPage() {
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => ScreensPage(
-              pageTitle: "Player: $selectedPlayerName",
-              pageSubTitle: "Select Screen to Publish"
-          )),
-    ).then(  ///*** WHEN THE USER RETURNS TO THE PLAYERS SCREEN VIA 'BACK' BTN
-            (context){
-        }
+        builder: (context) => ScreensPage(
+          pageTitle: "Player: $selectedPlayerName",
+          pageSubTitle: "Select Screen to Publish",
+        ),
+      ),
     );
   }
 
   //As the list of players is being build, this function will determine
   //whether we show a 'regular' color button or a 'red' one because
   //the status of the player is inactive
-  _checkPlayerStatus(index){
+  // _checkPlayerStatus(index){
+  //
+  //   var pStatus = dmbMediaPlayers[index].status;
+  //   return pStatus == "Active" ? true : false;
+  // }
 
-    var pStatus = dmbMediaPlayers[index].status;
-    return pStatus == "Active" ? true : false;
+  bool _checkPlayerStatus(int index) {
+    return dmbMediaPlayers[index].status == "Active";
   }
 
-  //In each view, provide a button to let the user logout
+    //In each view, provide a button to let the user logout
   void _userLogout() {
-
     confirmLogout(context);  //*** CONFIRM USER LOGOUT (function is in: dmb_functions.dart)
   }
 
   //Called this when the user pulls down the screen
   Future<void> _refreshData() async{
-
     try{
-
       //Go to the DMB server to get an updated list of players
       getUserData("$loginUsername", "$loginPassword", "players-refresh").then((result){
 
@@ -119,7 +125,7 @@ class _PlayersPageState extends State<PlayersPage> {
       // **********
       /* THE HEADER OF THE 'PLAYERS' PAGE */
       // **********
-      appBar: playersNoBackButton ? _appBarNoBackBtn(context) : _appBarBackBtn(context),
+      appBar: _appBarNoBackBtn(context),
       body:
       RefreshIndicator(
         onRefresh: _refreshData,     ///*** // trigger the _refreshData function when the user pulls down
@@ -177,9 +183,7 @@ class _PlayersPageState extends State<PlayersPage> {
                                 ),
                               ],
                             ),
-
                           ),
-
                         ),
                         onTap: (){  //*** When one of the 'Media Players' button is selected .....
 
@@ -191,7 +195,6 @@ class _PlayersPageState extends State<PlayersPage> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("${dmbMediaPlayers[index].name} Selected")),
                           );
-
                           _showScreensPage();  /// SHOW LIST OF SCREENS
                         }
                     ),
@@ -218,97 +221,50 @@ class _PlayersPageState extends State<PlayersPage> {
 
 ///**** This is the 'App bar' to the players tab when you don't want
 /// to show a 'back' btn
-PreferredSizeWidget _appBarNoBackBtn(BuildContext context){
-
+PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
   return AppBar(
     flexibleSpace: Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: <Color>[Colors.blueGrey, Color.fromRGBO(10, 85, 163, 1.0)]),  //DMB BLUE
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: <Color>[Colors.blueGrey, Color.fromRGBO(10, 85, 163, 1.0)],
+        ),
       ),
     ),
     automaticallyImplyLeading: false,
-    // Here we take the value from the MyHomePage object that was created by
-    // the App.build method, and use it to set our appbar title.
     title: Column(
-      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Text(pageTitle,
-                style: const TextStyle(fontWeight: FontWeight.bold,
-                    color:Colors.white,
-                    fontSize: 16)),
-          ],
+        Text(
+          pageTitle,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            fontSize: 16,
+          ),
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Text(pageSubTitle,
-                style: const TextStyle(fontStyle: FontStyle.italic,
-                    color:Colors.white70,
-                    fontSize: 14)),
-          ],
+        Text(
+          pageSubTitle,
+          style: const TextStyle(
+            fontStyle: FontStyle.italic,
+            color: Colors.white70,
+            fontSize: 14,
+          ),
         ),
       ],
     ),
-  );
-}
-
-///**** This is the 'App bar' to the players tab when you want to show a
-/// back icon and let the user return to the previous page
-PreferredSizeWidget _appBarBackBtn(BuildContext context){
-
-  void _goBack(){  //when the back arrow is selected
-
-    Navigator.of(context).pop();  //just remove this layer to return to the previous screen
-  }
-
-  return AppBar(
-    leading: IconButton(
-      icon: const Icon(Icons.arrow_back, color: Colors.white),
-      onPressed: _goBack,
-    ),
-    flexibleSpace: Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: <Color>[Colors.blueGrey, Color.fromRGBO(10, 85, 163, 1.0)]),  //DMB BLUE
+    actions: [
+      Builder(
+        builder: (context) => IconButton(
+          icon: const Icon(Icons.menu, color: Colors.white),
+          onPressed: () => Scaffold.of(context).openEndDrawer(),
+        ),
       ),
-    ),
-    automaticallyImplyLeading: true,
-    // Here we take the value from the MyHomePage object that was created by
-    // the App.build method, and use it to set our appbar title.
-    title: Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Text(pageTitle,
-                style: const TextStyle(fontWeight: FontWeight.bold,
-                    color:Colors.white,
-                    fontSize: 16)),
-          ],
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Text(pageSubTitle,
-                style: const TextStyle(fontStyle: FontStyle.italic,
-                    color:Colors.white70,
-                    fontSize: 14)),
-          ],
-        ),
-      ],
-    ),
+    ],
   );
-
 }
+
 
 ///**** As the list is being displayed use this object to show a
 /// player whose status is 'active'
@@ -333,7 +289,7 @@ LinearGradient _gradientInActiveMediaPlayer(BuildContext context){
     end: AlignmentDirectional.bottomCenter,
     colors: [
       Colors.blueGrey,
-      Color.fromRGBO(10, 85, 163, 1.0),
+      Colors.red,
     ],
   );
 }
