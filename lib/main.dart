@@ -440,87 +440,101 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  File? _image;
-  final ImagePicker _picker = ImagePicker();
+  // File? _image;
+  // final ImagePicker _picker = ImagePicker();
+  //
+  // int selectedIndex = 0;
+  // final List<String> menuItems = ['Screens', 'Camera', 'Gallery'];
 
-  int selectedIndex = 0;
-  final List<String> menuItems = ['Players', 'Screens', 'Settings'];
+  // //photo taken from camera
+  // Future<void> _takePhoto() async {
+  //   final pickedFile = await _picker.pickImage(source: ImageSource.camera);
+  //
+  //   if (pickedFile != null) {
+  //     setState(() {
+  //       _image = File(pickedFile.path);
+  //     });
+  //
+  //     // Show image in a popup dialog with "Post" and "Close"
+  //     showDialog(
+  //       context: context,
+  //       builder: (_) => AlertDialog(
+  //         backgroundColor: Colors.black,
+  //         content: Image.file(_image!),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () => Navigator.of(context).pop(),
+  //             child: const Text("Close", style: TextStyle(color: Colors.white)),
+  //           ),
+  //           TextButton(
+  //             onPressed: () async {
+  //               Navigator.of(context).pop(); // Close dialog before posting
+  //               // TODO: Replace with actual username/email
+  //               bool success = await uploadImage(_image!, "billstanton@gmail.com");
+  //               ScaffoldMessenger.of(context).showSnackBar(
+  //                 SnackBar(
+  //                   content: Text(
+  //                     success
+  //                         ? "Image uploaded successfully"
+  //                         : "Image upload failed",
+  //                   ),
+  //                 ),
+  //               );
+  //             },
+  //             child: const Text("Post", style: TextStyle(color: Colors.greenAccent)),
+  //           ),
+  //         ],
+  //       ),
+  //     );
+  //   }
+  // }
 
-  void _showImageDialog() {
-    if (_image == null) return;
-    showDialog(
-      context: context,
-      builder: (_) =>
-          AlertDialog(
-            backgroundColor: Colors.black,
-            content: Image.file(_image!),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text(
-                    "Close", style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
-    );
-  }
 
-  //photo taken from camera
-  Future<void> _takePhoto() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
-
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
-    }
-  }
-
-  Future<void> _chooseFromGallery() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
-
-      // Show image in a popup dialog with "Post" and "Close"
-      showDialog(
-        context: context,
-        builder: (_) =>
-            AlertDialog(
-              backgroundColor: Colors.black,
-              content: Image.file(_image!),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text(
-                      "Close", style: TextStyle(color: Colors.white)),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop(); // Close dialog before posting
-                    //make sure to change to username and not "billstanton@gmail.com"
-                    bool success = await uploadImage(
-                        _image!, "billstanton@gmail.com");
-                    if (success) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text("Image uploaded successfully")),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Image upload failed")),
-                      );
-                    }
-                  },
-                  child: const Text(
-                      "Post", style: TextStyle(color: Colors.greenAccent)),
-                ),
-              ],
-            ),
-      );
-    }
-  }
+  // Future<void> _chooseFromGallery() async {
+  //   final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+  //   if (pickedFile != null) {
+  //     setState(() {
+  //       _image = File(pickedFile.path);
+  //     });
+  //
+  //     // Show image in a popup dialog with "Post" and "Close"
+  //     showDialog(
+  //       context: context,
+  //       builder: (_) =>
+  //           AlertDialog(
+  //             backgroundColor: Colors.black,
+  //             content: Image.file(_image!),
+  //             actions: [
+  //               TextButton(
+  //                 onPressed: () => Navigator.of(context).pop(),
+  //                 child: const Text(
+  //                     "Close", style: TextStyle(color: Colors.white)),
+  //               ),
+  //               TextButton(
+  //                 onPressed: () async {
+  //                   Navigator.of(context).pop(); // Close dialog before posting
+  //                   //make sure to change to username and not "billstanton@gmail.com"
+  //                   bool success = await uploadImage(
+  //                       _image!, "billstanton@gmail.com");
+  //                   if (success) {
+  //                     ScaffoldMessenger.of(context).showSnackBar(
+  //                       const SnackBar(
+  //                           content: Text("Image uploaded successfully")),
+  //                     );
+  //                   } else {
+  //                     ScaffoldMessenger.of(context).showSnackBar(
+  //                       const SnackBar(content: Text("Image upload failed")),
+  //                     );
+  //                   }
+  //                 },
+  //                 child: const Text(
+  //                     "Post", style: TextStyle(color: Colors.greenAccent)),
+  //               ),
+  //             ],
+  //           ),
+  //     );
+  //   }
+  // }
 
 
   void _updateTitle(title, subTitle, selIndex) {
@@ -560,139 +574,19 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Row(
-        children: [
-          SafeArea(
-            child: NavigationRail(
-              selectedIconTheme: const IconThemeData(color: Colors.white),
-              leading: Container(),
-              trailing: Container(),
-              extended: false,
-              backgroundColor: Colors.blueGrey,
-              minWidth: 56,
-              indicatorColor: const Color.fromRGBO(0, 0, 0, 0.0),
-              groupAlignment: 0,
-              selectedLabelTextStyle: const TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
-                fontStyle: FontStyle.italic,
-                decorationThickness: 2.0,
-              ),
-              unselectedLabelTextStyle: const TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
-                fontStyle: FontStyle.italic,
-                decorationThickness: 2.0,
-              ),
-              labelType: NavigationRailLabelType.all,
-              destinations: const [
-                NavigationRailDestination(
-                  icon: Icon(Icons.tv_outlined, color: Colors.white),
-                  selectedIcon: Icon(Icons.tv_outlined, color: Colors.white),
-                  label: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 22),
-                    child: RotatedBox(
-                      quarterTurns: -1,
-                      child: Text("SCREENS"),
-                    ),
-                  ),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.camera_alt, color: Colors.white),
-                  selectedIcon: Icon(Icons.camera_alt, color: Colors.white),
-                  label: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 22),
-                    child: RotatedBox(
-                      quarterTurns: -1,
-                      child: Text("CAMERA"),
-                    ),
-                  ),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.photo_library, color: Colors.white),
-                  selectedIcon: Icon(Icons.photo_library, color: Colors.white),
-                  label: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 22),
-                    child: RotatedBox(
-                      quarterTurns: -1,
-                      child: Text("GALLERY"),
-                    ),
-                  ),
-                ),
-              ],
-              selectedIndex: selectedIndex,
-              onDestinationSelected: (value) {
-                if (value == 0) {
-                  setState(() {
-                    selectedIndex = value;
-                    _showScreensPage();
-                  });
-                } else if (value == 1) {
-                  _takePhoto().then((_) {
-                    if (_image != null) {
-                      showDialog(
-                        context: context,
-                        builder: (_) =>
-                            AlertDialog(
-                              backgroundColor: Colors.black,
-                              content: Image.file(_image!),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.of(context).pop(),
-                                  child: const Text("Close",
-                                      style: TextStyle(color: Colors.white)),
-                                ),
-                                TextButton(
-                                  onPressed: () async {
-                                    Navigator.of(context).pop();
-                                    bool success = await uploadImage(
-                                      _image!,
-                                      "billstanton@gmail.com",
-                                    );
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(success
-                                            ? "Image uploaded successfully"
-                                            : "Image upload failed"),
-                                      ),
-                                    );
-                                  },
-                                  child: const Text("Upload", style: TextStyle(
-                                      color: Colors.greenAccent)),
-                                ),
-                              ],
-                            ),
-                      );
-                    }
-                  });
-                }
-                else if (value == 2) {
-                  _chooseFromGallery();
-                }
-              },
-            ),
-          ),
-          Expanded(
-            child: Container(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                child: Builder(
-                  builder: (_) {
-                    if (selectedIndex == 0) {
-                      return PlayersPage(pageTitle: "Media Players", pageSubTitle: "Select Player");
-                    } else if (selectedIndex == 1) {
-                      return ScreensPage(pageTitle: "Screens", pageSubTitle: "Select Screens");
-                    } else {
-                      return const Center(child: Text("Invalid Selection"));
-                    }
-                  },
-                )
-            ),
-          ),
-        ],
+      body: Container(
+        color: Theme
+            .of(context)
+            .colorScheme
+            .primaryContainer,
+        child: Builder(
+          builder: (_) {
+            return PlayersPage(
+              pageTitle: "Media Players",
+              pageSubTitle: "Select Player",
+            );
+          },
+        ),
       ),
     );
   }

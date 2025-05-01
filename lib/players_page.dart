@@ -6,6 +6,10 @@
 /// *** LIST OF AVAILABLE DMB PLAYERS
 /// *************************************************
 ///
+// for camera and gallery
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+
 import './main.dart';
 import './screens_page.dart';
 import './dmb_functions.dart';
@@ -44,6 +48,9 @@ class _PlayersPageState extends State<PlayersPage> {
   late String pageTitle;
   late String pageSubTitle;
 
+  File? _image;
+  final ImagePicker _picker = ImagePicker();
+
   ///This 'override' function is called once when the class is loaded
   ///(is used to update the pageTitle * subTitle)
   @override
@@ -65,6 +72,9 @@ class _PlayersPageState extends State<PlayersPage> {
     pageSubTitle = widget.pageSubTitle ?? "";
   }
 
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  int selectedIndex = 0;
 
   void _showScreensPage() {
     Navigator.push(
@@ -77,6 +87,7 @@ class _PlayersPageState extends State<PlayersPage> {
       ),
     );
   }
+
 
   //As the list of players is being build, this function will determine
   //whether we show a 'regular' color button or a 'red' one because
@@ -118,10 +129,192 @@ class _PlayersPageState extends State<PlayersPage> {
     }
   }
 
+  //photo taken from camera
+  Future<void> _takePhoto() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
+
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+
+      // Show image in a popup dialog with "Post" and "Close"
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          backgroundColor: Colors.black,
+          content: Image.file(_image!),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("Close", style: TextStyle(color: Colors.white)),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop(); // Close dialog before posting
+                // TODO: Replace with actual username/email
+                bool success = await uploadImage(_image!, "billstanton@gmail.com");
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      success
+                          ? "Image uploaded successfully"
+                          : "Image upload failed",
+                    ),
+                  ),
+                );
+              },
+              child: const Text("Post", style: TextStyle(color: Colors.greenAccent)),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _chooseFromGallery() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+
+      // Show image in a popup dialog with "Post" and "Close"
+      showDialog(
+        context: context,
+        builder: (_) =>
+            AlertDialog(
+              backgroundColor: Colors.black,
+              content: Image.file(_image!),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text(
+                      "Close", style: TextStyle(color: Colors.white)),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop(); // Close dialog before posting
+                    //make sure to change to username and not "billstanton@gmail.com"
+                    bool success = await uploadImage(
+                        _image!, "billstanton@gmail.com");
+                    if (success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text("Image uploaded successfully")),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Image upload failed")),
+                      );
+                    }
+                  },
+                  child: const Text(
+                      "Post", style: TextStyle(color: Colors.greenAccent)),
+                ),
+              ],
+            ),
+      );
+    }
+  }
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
+      key: _scaffoldKey,
+      endDrawer: Drawer(
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: <Color>[
+                Colors.blueGrey,
+                Color.fromRGBO(10, 85, 163, 1.0),
+              ],
+            ),
+          ),
+          child: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text(
+                    "Menu",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+
+                // Screens Navigation
+                ListTile(
+                  leading: const Icon(Icons.tv_outlined, color: Colors.white),
+                  title: const Text("Screens", style: TextStyle(color: Colors.white)),
+                  onTap: () {
+                    Navigator.pop(context); // Close drawer
+                    _showScreensPage();
+                  },
+                ),
+
+                // Upload Image Section
+                MenuAnchor(
+                  alignmentOffset: const Offset(190, 0),
+                  builder: (BuildContext context, MenuController controller, Widget? child) {
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                      onTap: () {
+                        controller.isOpen ? controller.close() : controller.open();
+                      },
+                      title: Row(
+                        children: const [
+                          Icon(Icons.upload, color: Colors.white),
+                          SizedBox(width: 16),
+                          Text("Upload Image", style: TextStyle(color: Colors.white)),
+                          Spacer(),
+                          Icon(Icons.arrow_drop_down, color: Colors.white),
+                        ],
+                      ),
+                    );
+                  },
+                  menuChildren: [
+                    MenuItemButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _takePhoto();
+                      },
+                      child: const Row(
+                        children: [
+                          Icon(Icons.camera_alt, size: 20),
+                          SizedBox(width: 8),
+                          Text("Camera"),
+                        ],
+                      ),
+                    ),
+                    const Divider(),
+                    MenuItemButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _chooseFromGallery();
+                      },
+                      child: const Row(
+                        children: [
+                          Icon(Icons.photo_library, size: 20),
+                          SizedBox(width: 8),
+                          Text("Gallery"),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+
       // **********
       /* THE HEADER OF THE 'PLAYERS' PAGE */
       // **********
@@ -183,7 +376,9 @@ class _PlayersPageState extends State<PlayersPage> {
                                 ),
                               ],
                             ),
+
                           ),
+
                         ),
                         onTap: (){  //*** When one of the 'Media Players' button is selected .....
 
@@ -195,6 +390,7 @@ class _PlayersPageState extends State<PlayersPage> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("${dmbMediaPlayers[index].name} Selected")),
                           );
+
                           _showScreensPage();  /// SHOW LIST OF SCREENS
                         }
                     ),
@@ -217,6 +413,7 @@ class _PlayersPageState extends State<PlayersPage> {
     );
 
   }
+
 }
 
 ///**** This is the 'App bar' to the players tab when you don't want
