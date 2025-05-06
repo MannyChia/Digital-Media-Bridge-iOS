@@ -15,7 +15,9 @@ import './screens_page.dart';
 import 'package:flutter/material.dart';
 
 import 'package:http_parser/http_parser.dart'; // for MediaType
+import 'package:digital_media_bridge_3/models/playlist_preview.dart';
 
+/// THIS SUBMITS ALL PICTURES (FROM CAMERA OR GALLERY) TO THE ACCOUNT
 Future<bool> uploadImage(File imageFile, String username) async {
   var uri = Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/upload');
 
@@ -45,6 +47,73 @@ Future<bool> uploadImage(File imageFile, String username) async {
     return false;
   }
 }
+
+Future<List<String>> getUserPlaylists(String email) async {
+  final response = await http.get(
+    Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/GetPlaylist/$email'),
+  );
+
+  if (response.statusCode == 200) {
+    final Map<String, dynamic> jsonData = jsonDecode(response.body);
+
+    if (jsonData.containsKey('data') && jsonData['data'] is List) {
+      return List<String>.from(jsonData['data']);
+    } else {
+      throw Exception("Invalid data format in response");
+    }
+  } else {
+    throw Exception('Failed to load playlists');
+  }
+}
+
+Future<PlaylistPreview> parsePlaylistFile(String playlistName, String userEmail) async {
+  final url = 'https://digitalmediabridge.tv/screen-builder-test/assets/content/$userEmail/others/$playlistName';
+  final response = await http.get(Uri.parse(url));
+
+  if (response.statusCode == 200) {
+    final lines = LineSplitter().convert(response.body)
+        .where((line) => line.trim().isNotEmpty)
+        .toList();
+
+    if (lines.isEmpty) {
+      throw Exception('Playlist file is empty');
+    }
+
+    final firstImageName = lines.first.split(',').first.trim();
+    final itemCount = lines.length;
+
+    final previewImageUrl =
+        'https://digitalmediabridge.tv/screen-builder-test/assets/content/$userEmail/images/$firstImageName';
+
+    return PlaylistPreview(
+      name: playlistName,
+      previewImageUrl: previewImageUrl,
+      itemCount: itemCount,
+    );
+  } else {
+    throw Exception('Failed to load playlist file: $playlistName');
+  }
+}
+
+
+Future<List<PlaylistPreview>> fetchPlaylistPreviews(String userEmail) async {
+  final playlistNames = await getUserPlaylists(userEmail); // This already gives you the list
+
+  List<PlaylistPreview> previews = [];
+
+  for (final name in playlistNames) {
+    try {
+      final preview = await parsePlaylistFile(name, userEmail);
+      previews.add(preview);
+    } catch (e) {
+      print("Error parsing $name: $e");
+    }
+  }
+
+  return previews;
+}
+
+
 
 /// *************************************************
 /// *** AFTER THE USER PROVIDES A DMB USERNAME & PASSWORD ***
