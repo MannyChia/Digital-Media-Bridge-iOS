@@ -13,6 +13,7 @@ import './main.dart';
 import './screens_page.dart';
 import './dmb_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:animations/animations.dart';
 
 /*
 */
@@ -27,6 +28,31 @@ class MediaPlayer {
       {required this.name, required this.status, required this.currentScreen});
 }
 
+// //TODO remove this when api is done
+// List<String> hardcodedImageUrls = [
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/1000069250.jpg",
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/1000069620.jpg",
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/1000069634.jpg",
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/1000069636.jpg",
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/1000069684.jpg",
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/1000069922.jpg",
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/2d059ee4-01bc-4e49-85ca-6c50ee7d03308353998340731931711.jpg",
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/4562a2db-1f30-4999-a11f-5b8b363a2f4f1508852848103652766.jpg",
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/551edd30-786b-48ec-b3d3-8518c4ac0e243048579027917999506.jpg",
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/6.jpg",
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/6133547b-7b17-4a76-80c8-6a7315b6ddde5476597828324408415.jpg",
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/76f63160-d4ca-40ba-ade9-31e84dd88b0e5565208200365439862.jpg",
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/79b31e62-2fef-4fa9-b169-2a3c50d9150b8268856755336619520.jpg",
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/846d04f1-9440-4c6e-af29-5d4fb00b5f661545696184291680028.jpg",
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/a27b9dca-34a0-4a81-9371-bfc114e92a055063628013095681754.jpg",
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/c54a2285-cb97-4e9f-a2e5-52c29867dbda1336516757659709868.jpg",
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/convert_from_pdf_poster2x.png",
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/dmbInContent.png",
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/e99b2adf-16dc-4fc3-b445-b2b0a983947f8312054462485929900.jpg",
+//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/edit_pdf_icon_2x.png"
+// ];
+
+
 //Add necessary public vars
 List<MediaPlayer> dmbMediaPlayers = [];
 dynamic selectedPlayerName;
@@ -35,6 +61,229 @@ dynamic selectedPlayerName;
 //or a 'back' button when showing the user a list of DMB Media Players
 bool playersNoBackButton = true;
 
+class PlaylistSheet extends StatefulWidget {
+  final String userEmail;
+  const PlaylistSheet({super.key, required this.userEmail});
+
+  @override
+  State<PlaylistSheet> createState() => _PlaylistSheetState();
+}
+
+class _PlaylistSheetState extends State<PlaylistSheet> {
+  int _pageIndex = 0;
+  String _currentPlaylist = '';
+  List<String> _playlistImages = [];
+
+  void _openPlaylist(String playlistName) async {
+    try {
+      final images = await fetchAllUserImages(widget.userEmail); // ⬅ now gets *all* user images
+      setState(() {
+        _playlistImages = images;
+        _currentPlaylist = playlistName;
+        _pageIndex = 1;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to load images")),
+      );
+    }
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.6,
+      maxChildSize: 0.9,
+      minChildSize: 0.3,
+        builder: (context, scrollController) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFF121212),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: _pageIndex == 0
+                  ? _buildPlaylistView(scrollController)
+                  : _buildImageView(scrollController),
+            ),
+          );
+
+        }
+
+    );
+  }
+
+  Widget _buildPlaylistView(ScrollController scrollController) {
+    return Column(
+      key: const ValueKey(0),
+      children: [
+        const SizedBox(height: 12),
+        Center(
+          child: Container(
+            width: 40,
+            height: 5,
+            decoration: BoxDecoration(
+              color: Colors.grey[600],
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            children: const [
+              Text(
+                'Edit Playlist',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(width: 6),
+              Icon(Icons.playlist_add, color: Colors.white, size: 20),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: GridView.builder(
+            controller: scrollController,
+            padding: const EdgeInsets.all(12),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.85,
+            ),
+            itemCount: cachedPlaylistPreviews.length,
+            itemBuilder: (context, index) {
+              final preview = cachedPlaylistPreviews[index];
+              return InkWell(
+                onTap: () => _openPlaylist(preview.name),
+                borderRadius: BorderRadius.circular(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          width: double.infinity,
+                          color: Colors.grey[700],
+                          child: Image.network(
+                            preview.previewImageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => const Center(
+                              child: Icon(Icons.broken_image, color: Colors.white70),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${preview.name} (${preview.itemCount})',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+
+  Widget _buildImageView(ScrollController scrollController) {
+    return Column(
+      key: const ValueKey(1),
+      children: [
+        const SizedBox(height: 12),
+        Center(
+          child: Container(
+            width: 40,
+            height: 5,
+            decoration: BoxDecoration(
+              color: Colors.grey[600],
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => setState(() => _pageIndex = 0),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                _currentPlaylist,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: GridView.builder(
+            controller: scrollController,
+            padding: const EdgeInsets.all(12),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: 1,
+            ),
+            itemCount: _playlistImages.length,
+            itemBuilder: (context, index) {
+              final imageUrl = 'https://digitalmediabridge.tv/screen-builder-test/assets/content/${widget.userEmail}/images/${_playlistImages[index]}';
+
+            // //TODO replace this when api comes
+            // itemCount: hardcodedImageUrls.length,
+            // itemBuilder: (context, index) {
+            //   final imageUrl = hardcodedImageUrls[index];
+
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  color: Colors.grey[800],
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => const Center(
+                      child: Icon(Icons.broken_image, color: Colors.white54, size: 40),
+                    ),
+                  ),
+                ),
+              );
+
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+}
 ///
 class PlayersPage extends StatefulWidget {
   //const PlayersPage({super.key, required this.pageTitle, required this.pageSubTitle});
@@ -46,6 +295,7 @@ class PlayersPage extends StatefulWidget {
   @override
   _PlayersPageState createState() => _PlayersPageState();
 }
+
 
 class _PlayersPageState extends State<PlayersPage> {
   late String pageTitle;
@@ -226,7 +476,7 @@ class _PlayersPageState extends State<PlayersPage> {
     }
   }
 
-  void _showPlaylistBottomSheet(BuildContext context) {
+  void _showPlaylistBottomSheet(BuildContext context, String userEmail) {
     if (!hasLoadedPlaylistPreviews || cachedPlaylistPreviews.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Playlists are still loading...")),
@@ -237,103 +487,17 @@ class _PlayersPageState extends State<PlayersPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.grey[900], // Dark background
+      backgroundColor: Colors.grey[900],
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) {
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.4,
-          maxChildSize: 0.8,
-          minChildSize: 0.3,
-          builder: (context, scrollController) {
-            final previews = cachedPlaylistPreviews;
-            return Column(
-              children: [
-                const SizedBox(height: 12),
-                // 🟫 DRAG HANDLE
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[600],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: GridView.builder(
-                    controller: scrollController,
-                    padding: const EdgeInsets.all(12),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 1,
-                    ),
-                    itemCount: previews.length,
-                    itemBuilder: (context, index) {
-                      final preview = previews[index];
-                      return SizedBox(
-                        height: 150,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('${preview.name} tapped')),
-                            );
-                          },
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: AspectRatio(
-                                  aspectRatio: 1,
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Container(
-                                      color: Colors.grey[700],
-                                      child: Image.network(
-                                        preview.previewImageUrl,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return const Center(
-                                            child: Icon(Icons.broken_image, size: 40, color: Colors.white70),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${preview.name} (${preview.itemCount})',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                  overflow: TextOverflow.ellipsis,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (context) => PlaylistSheet(userEmail: userEmail),
     );
+
   }
+
+
+
 
 
 
@@ -450,7 +614,7 @@ class _PlayersPageState extends State<PlayersPage> {
                         // },
                         onTap: () {
                           Navigator.pop(context);
-                          _showPlaylistBottomSheet(context);
+                          _showPlaylistBottomSheet(context, "mannychia7@gmail.com");
                         },
 
 

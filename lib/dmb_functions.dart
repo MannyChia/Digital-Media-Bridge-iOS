@@ -37,7 +37,20 @@ Future<void> preloadPlaylistPreviews(String userEmail) async {
   }
 }
 
+Future<List<String>> fetchAllUserImages(String userEmail) async {
+  final url = 'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(userEmail)}/images/';
+  final response = await http.get(Uri.parse(url));
 
+  if (response.statusCode == 200) {
+    final html = response.body;
+    final regex = RegExp(r'href="([^"]+\.(jpg|jpeg|png|gif))"', caseSensitive: false);
+    final matches = regex.allMatches(html);
+
+    return matches.map((match) => match.group(1)!).toList();
+  } else {
+    throw Exception('Failed to fetch images');
+  }
+}
 
 /// THIS SUBMITS ALL PICTURES (FROM CAMERA OR GALLERY) TO THE ACCOUNT
 Future<bool> uploadImage(File imageFile, String username) async {
