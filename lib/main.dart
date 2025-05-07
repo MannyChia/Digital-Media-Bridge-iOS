@@ -166,33 +166,58 @@ class _BypassloginPageState extends State<BypassloginPage> {
     _getBypassLogin();
   }
 
-  void _getBypassLogin() {
-    ///*** GO TO THE DMB SERVER TO GET A LIST OF MEDIA PLAYERS AND SCREENS
-    /// WITH THE STORED USERNAME & PASSWORD
-    getUserData(storedUsername, storedPassword, "bypass-login").then((result) {
-      if (result == true) {
-        //if good, then load the 'Media Players' view
+  Future<void> _getBypassLogin() async {
+    final result = await getUserData(storedUsername, storedPassword, "bypass-login");
 
-        //set the global logged-in username & password to the ones stored in storage
-        loginUsername = storedUsername;
-        loginPassword = storedPassword;
+    if (result == true) {
+      loginUsername = storedUsername;
+      loginPassword = storedPassword;
 
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
-        ).then((context) {
-          _getBypassLogin(); //<<-- GET A NEW LIST OF DMB MEDIA PLAYERS (e.g., REFRESH)
-        });
-      } else {
-        //else, error getting the data from the DMB server with the username & password from 'storage'
-        setState(() {
-          //tell the user
-          bypassMsg =
-          "Login Failed.\nPlease logout and then login again with the correct username & password";
-        });
-      }
-    });
+      //TODO please remove hard code
+      await preloadPlaylistPreviews("mannychia7@gmail.com");
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      ).then((context) {
+        _getBypassLogin();
+      });
+    } else {
+      setState(() {
+        bypassMsg = "Login Failed.\nPlease logout and then login again with the correct username & password";
+      });
+    }
   }
+
+
+  // void _getBypassLogin() {
+  //   ///*** GO TO THE DMB SERVER TO GET A LIST OF MEDIA PLAYERS AND SCREENS
+  //   /// WITH THE STORED USERNAME & PASSWORD
+  //   getUserData(storedUsername, storedPassword, "bypass-login").then((result) {
+  //     if (result == true) {
+  //       //if good, then load the 'Media Players' view
+  //
+  //       //set the global logged-in username & password to the ones stored in storage
+  //       loginUsername = storedUsername;
+  //       loginPassword = storedPassword;
+  //
+  //       // preloadPlaylistPreviews(loginUsername);
+  //       Navigator.push(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => const HomePage()),
+  //       ).then((context) {
+  //         _getBypassLogin(); //<<-- GET A NEW LIST OF DMB MEDIA PLAYERS (e.g., REFRESH)
+  //       });
+  //     } else {
+  //       //else, error getting the data from the DMB server with the username & password from 'storage'
+  //       setState(() {
+  //         //tell the user
+  //         bypassMsg =
+  //         "Login Failed.\nPlease logout and then login again with the correct username & password";
+  //       });
+  //     }
+  //   });
+  // }
 
   //In each view, provide a button to let the user logout
   void _userLogout() {
@@ -346,75 +371,53 @@ class LoginPage extends StatelessWidget {
                       textStyle: const TextStyle(
                           fontSize: 16.0, fontWeight: FontWeight.bold),
                     ),
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        ///*** User provided login info, so check DMB server ...
-                        getUserData(emailController.text,
-                            passwordController.text, "user-login")
-                            .then((result) {
-                          /// ****
-                          /// **** CHECK LOGIN RESULT ****
-                          /// /// ****
-                          if (result == "invalid_login") {
-                            //*** BAD USER LOGIN
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Invalid Login")),
-                            );
-                          } else if (result == "no_screens") {
-                            //*** NO SCREENS
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text("No Screens To Play")),
-                            );
-                          } else if (result == "no_players") {
-                            //*** NO PLAYERS
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text("No Players To Update")),
-                            );
-                          } else if (result == false) {
-                            //*** BAD CONNECTION
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content:
-                                  Text("Cannot Connect To DMB Server")),
-                            );
-                          } else {
-                            //*** SUCCESSFUL LOGIN!
+                        final result = await getUserData(
+                          emailController.text,
+                          passwordController.text,
+                          "user-login",
+                        );
 
-                            //set global vars
-                            loginUsername = emailController.text;
-                            loginPassword = passwordController.text;
+                        if (result == "invalid_login") {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Invalid Login")),
+                          );
+                        } else if (result == "no_screens") {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("No Screens To Play")),
+                          );
+                        } else if (result == "no_players") {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("No Players To Update")),
+                          );
+                        } else if (result == false) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Cannot Connect To DMB Server")),
+                          );
+                        } else {
+                          loginUsername = emailController.text;
+                          loginPassword = passwordController.text;
 
-                            //*** Save the username & password in storage so the user
-                            // doesn't have to re-enter info until logout
-                            try {
-                              _saveUsername(loginUsername, loginPassword);
-                            } catch (exc) {}
+                          ///TODO please remove hard code
+                          await preloadPlaylistPreviews("mannychia7@gmail.com");
 
-                            ///*** FUNCTION TO SHOW 'HOME' PAGE (which is a list of media players)
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const HomePage()),
-                            ).then(
+                          try {
+                            _saveUsername(loginUsername, loginPassword);
+                          } catch (exc) {}
 
-                              ///*** WHEN THE USER RETURNS TO THE LOGIN PAGE VIA 'BACK' BTN
-                                    (context) {});
-
-                            /// ***
-                          }
-                        });
-
-                        ///*** DONE GETLOGIN()
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const HomePage()),
+                          );
+                        }
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content:
-                              Text('Username & Password are required')),
+                          const SnackBar(content: Text('Username & Password are required')),
                         );
                       }
                     },
+
                     child: const Text('Log In'),
                   ),
                 ),
@@ -440,102 +443,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // File? _image;
-  // final ImagePicker _picker = ImagePicker();
-  //
-  // int selectedIndex = 0;
-  // final List<String> menuItems = ['Screens', 'Camera', 'Gallery'];
-
-  // //photo taken from camera
-  // Future<void> _takePhoto() async {
-  //   final pickedFile = await _picker.pickImage(source: ImageSource.camera);
-  //
-  //   if (pickedFile != null) {
-  //     setState(() {
-  //       _image = File(pickedFile.path);
-  //     });
-  //
-  //     // Show image in a popup dialog with "Post" and "Close"
-  //     showDialog(
-  //       context: context,
-  //       builder: (_) => AlertDialog(
-  //         backgroundColor: Colors.black,
-  //         content: Image.file(_image!),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () => Navigator.of(context).pop(),
-  //             child: const Text("Close", style: TextStyle(color: Colors.white)),
-  //           ),
-  //           TextButton(
-  //             onPressed: () async {
-  //               Navigator.of(context).pop(); // Close dialog before posting
-  //               // TODO: Replace with actual username/email
-  //               bool success = await uploadImage(_image!, "billstanton@gmail.com");
-  //               ScaffoldMessenger.of(context).showSnackBar(
-  //                 SnackBar(
-  //                   content: Text(
-  //                     success
-  //                         ? "Image uploaded successfully"
-  //                         : "Image upload failed",
-  //                   ),
-  //                 ),
-  //               );
-  //             },
-  //             child: const Text("Post", style: TextStyle(color: Colors.greenAccent)),
-  //           ),
-  //         ],
-  //       ),
-  //     );
-  //   }
-  // }
-
-
-  // Future<void> _chooseFromGallery() async {
-  //   final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-  //   if (pickedFile != null) {
-  //     setState(() {
-  //       _image = File(pickedFile.path);
-  //     });
-  //
-  //     // Show image in a popup dialog with "Post" and "Close"
-  //     showDialog(
-  //       context: context,
-  //       builder: (_) =>
-  //           AlertDialog(
-  //             backgroundColor: Colors.black,
-  //             content: Image.file(_image!),
-  //             actions: [
-  //               TextButton(
-  //                 onPressed: () => Navigator.of(context).pop(),
-  //                 child: const Text(
-  //                     "Close", style: TextStyle(color: Colors.white)),
-  //               ),
-  //               TextButton(
-  //                 onPressed: () async {
-  //                   Navigator.of(context).pop(); // Close dialog before posting
-  //                   //make sure to change to username and not "billstanton@gmail.com"
-  //                   bool success = await uploadImage(
-  //                       _image!, "billstanton@gmail.com");
-  //                   if (success) {
-  //                     ScaffoldMessenger.of(context).showSnackBar(
-  //                       const SnackBar(
-  //                           content: Text("Image uploaded successfully")),
-  //                     );
-  //                   } else {
-  //                     ScaffoldMessenger.of(context).showSnackBar(
-  //                       const SnackBar(content: Text("Image upload failed")),
-  //                     );
-  //                   }
-  //                 },
-  //                 child: const Text(
-  //                     "Post", style: TextStyle(color: Colors.greenAccent)),
-  //               ),
-  //             ],
-  //           ),
-  //     );
-  //   }
-  // }
-
 
   void _updateTitle(title, subTitle, selIndex) {
     setState(() {

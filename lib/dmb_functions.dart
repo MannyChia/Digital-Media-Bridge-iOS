@@ -15,7 +15,29 @@ import './screens_page.dart';
 import 'package:flutter/material.dart';
 
 import 'package:http_parser/http_parser.dart'; // for MediaType
-import 'package:digital_media_bridge_3/models/playlist_preview.dart';
+import '/models/playlist_preview.dart';
+
+
+List<PlaylistPreview> cachedPlaylistPreviews = [];
+bool hasLoadedPlaylistPreviews = false;
+
+Future<void> preloadPlaylistPreviews(String userEmail) async {
+  print("⏳ Starting to preload playlists for $userEmail");
+
+  if (!hasLoadedPlaylistPreviews) {
+    try {
+      cachedPlaylistPreviews = await fetchPlaylistPreviews(userEmail);
+      hasLoadedPlaylistPreviews = true;
+      print("Preloaded ${cachedPlaylistPreviews.length} playlists");
+    } catch (e) {
+      print("Failed to preload playlist previews: $e");
+    }
+  } else {
+    print("Playlists already loaded");
+  }
+}
+
+
 
 /// THIS SUBMITS ALL PICTURES (FROM CAMERA OR GALLERY) TO THE ACCOUNT
 Future<bool> uploadImage(File imageFile, String username) async {
@@ -47,11 +69,12 @@ Future<bool> uploadImage(File imageFile, String username) async {
     return false;
   }
 }
-
 Future<List<String>> getUserPlaylists(String email) async {
   final response = await http.get(
     Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/GetPlaylist/$email'),
   );
+
+  print("🔎 Raw response body: ${response.body}");
 
   if (response.statusCode == 200) {
     final Map<String, dynamic> jsonData = jsonDecode(response.body);
@@ -65,6 +88,24 @@ Future<List<String>> getUserPlaylists(String email) async {
     throw Exception('Failed to load playlists');
   }
 }
+
+// Future<List<String>> getUserPlaylists(String email) async {
+//   final response = await http.get(
+//     Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/GetPlaylist/$email'),
+//   );
+//
+//   if (response.statusCode == 200) {
+//     final Map<String, dynamic> jsonData = jsonDecode(response.body);
+//
+//     if (jsonData.containsKey('data') && jsonData['data'] is List) {
+//       return List<String>.from(jsonData['data']);
+//     } else {
+//       throw Exception("Invalid data format in response");
+//     }
+//   } else {
+//     throw Exception('Failed to load playlists');
+//   }
+// }
 
 Future<PlaylistPreview> parsePlaylistFile(String playlistName, String userEmail) async {
   final url = 'https://digitalmediabridge.tv/screen-builder-test/assets/content/$userEmail/others/$playlistName';

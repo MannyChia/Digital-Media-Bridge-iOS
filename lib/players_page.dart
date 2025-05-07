@@ -160,7 +160,7 @@ class _PlayersPageState extends State<PlayersPage> {
                     Navigator.of(context).pop(); // Close dialog before posting
                     // TODO: Replace with actual username/email
                     bool success = await uploadImage(
-                        _image!, "billstanton@gmail.com");
+                        _image!, "mannychia7@gmail.com");
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -203,9 +203,9 @@ class _PlayersPageState extends State<PlayersPage> {
                 TextButton(
                   onPressed: () async {
                     Navigator.of(context).pop(); // Close dialog before posting
-                    //make sure to change to username and not "billstanton@gmail.com"
+                    //TODO: make sure to change account name
                     bool success = await uploadImage(
-                        _image!, "billstanton@gmail.com");
+                        _image!, "mannychia7@gmail.com");
                     if (success) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -226,113 +226,117 @@ class _PlayersPageState extends State<PlayersPage> {
     }
   }
 
-  void _showPlaylistBottomSheet(BuildContext context, String userEmail) async {
-    try {
-      final previews = await fetchPlaylistPreviews(userEmail);
+  void _showPlaylistBottomSheet(BuildContext context) {
+    if (!hasLoadedPlaylistPreviews || cachedPlaylistPreviews.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Playlists are still loading...")),
+      );
+      return;
+    }
 
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.white,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        builder: (context) {
-          return DraggableScrollableSheet(
-            expand: false,
-            initialChildSize: 0.4,
-            maxChildSize: 0.8,
-            minChildSize: 0.3,
-            builder: (context, scrollController) {
-              return Column(
-                children: [
-                  const SizedBox(height: 12),
-                  Container(
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.grey[900], // Dark background
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.4,
+          maxChildSize: 0.8,
+          minChildSize: 0.3,
+          builder: (context, scrollController) {
+            final previews = cachedPlaylistPreviews;
+            return Column(
+              children: [
+                const SizedBox(height: 12),
+                // 🟫 DRAG HANDLE
+                Center(
+                  child: Container(
                     width: 40,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: Colors.grey[400],
+                      color: Colors.grey[600],
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: GridView.builder(
-                      controller: scrollController,
-                      padding: const EdgeInsets.all(12),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 0.95, // slightly taller than square to fit text
-                      ),
-                      itemCount: previews.length,
-                      itemBuilder: (context, index) {
-                        final preview = previews[index];
-                        return SizedBox(
-                          height: 150,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(12),
-                            onTap: () {
-                              // Handle tap here – placeholder
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('${preview.name} tapped')),
-                              );
-                            },
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: AspectRatio(
-                                    aspectRatio: 1,
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Container(
-                                        color: Colors.grey[200],
-                                        child: Image.network(
-                                          preview.previewImageUrl,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) {
-                                            return const Center(
-                                              child: Icon(Icons.broken_image, size: 40),
-                                            );
-                                          },
-                                        ),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: GridView.builder(
+                    controller: scrollController,
+                    padding: const EdgeInsets.all(12),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 1,
+                    ),
+                    itemCount: previews.length,
+                    itemBuilder: (context, index) {
+                      final preview = previews[index];
+                      return SizedBox(
+                        height: 150,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('${preview.name} tapped')),
+                            );
+                          },
+                          child: Column(
+                            children: [
+                              Expanded(
+                                child: AspectRatio(
+                                  aspectRatio: 1,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Container(
+                                      color: Colors.grey[700],
+                                      child: Image.network(
+                                        preview.previewImageUrl,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return const Center(
+                                            child: Icon(Icons.broken_image, size: 40, color: Colors.white70),
+                                          );
+                                        },
                                       ),
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${preview.name} (${preview.itemCount})',
-                                  style: const TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 13,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  maxLines: 1,
-                                  textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${preview.name} (${preview.itemCount})',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  overflow: TextOverflow.ellipsis,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                              ],
-                            ),
+                                maxLines: 1,
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
-                        );
-                      },
-
-
-                    ),
+                        ),
+                      );
+                    },
                   ),
-                ],
-              );
-            },
-          );
-        },
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error loading playlist previews")),
-      );
-    }
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
+
+
+
 
 
 
@@ -432,18 +436,23 @@ class _PlayersPageState extends State<PlayersPage> {
                       ListTile(
                         leading: const Icon(Icons.collections, color: Colors.white), // or Icons.collections
                         title: const Text("Playlists", style: TextStyle(color: Colors.white)),
-                        onTap: () async {
-                          Navigator.pop(context); // close drawer
-                          try {
-                            // final playlists = await getUserPlaylists("billstanton@gmail.com");
-                            // _showPlaylistBottomSheet(context, playlists);
-                            _showPlaylistBottomSheet(context, "billstanton@gmail.com");
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error loading playlists')),
-                            );
-                          }
+                        // onTap: () async {
+                        //   Navigator.pop(context); // close drawer
+                        //   try {
+                        //     // final playlists = await getUserPlaylists("billstanton@gmail.com");
+                        //     // _showPlaylistBottomSheet(context, playlists);
+                        //     _showPlaylistBottomSheet(context, "billstanton@gmail.com");
+                        //   } catch (e) {
+                        //     ScaffoldMessenger.of(context).showSnackBar(
+                        //       SnackBar(content: Text('Error loading playlists')),
+                        //     );
+                        //   }
+                        // },
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showPlaylistBottomSheet(context);
                         },
+
 
                       ),
 
