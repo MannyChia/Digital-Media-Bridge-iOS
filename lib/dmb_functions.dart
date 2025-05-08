@@ -45,10 +45,9 @@ Future<List<String>> fetchAllUserImages(String userEmail) async {
     final html = response.body;
     final regex = RegExp(r'href="([^"]+\.(jpg|jpeg|png|gif))"', caseSensitive: false);
     final matches = regex.allMatches(html);
-
-    return matches.map((match) => match.group(1)!).toList();
+    return matches.map((m) => m.group(1)!).toList();
   } else {
-    throw Exception('Failed to fetch images');
+    throw Exception('Failed to fetch image filenames');
   }
 }
 
@@ -165,6 +164,23 @@ Future<List<PlaylistPreview>> fetchPlaylistPreviews(String userEmail) async {
   }
 
   return previews;
+}
+
+Future<List<String>> fetchPlaylistFilenames(String playlistName, String userEmail) async {
+  final url = 'https://digitalmediabridge.tv/screen-builder-test/assets/content/$userEmail/others/$playlistName';
+  final response = await http.get(Uri.parse(url));
+
+  if (response.statusCode == 200) {
+    final lines = LineSplitter()
+        .convert(response.body)
+        .where((line) => line.trim().isNotEmpty)
+        .toList();
+
+    // Extract just the image filenames (before the first comma)
+    return lines.map((line) => line.split(',').first.trim()).toList();
+  } else {
+    throw Exception('Failed to load playlist file');
+  }
 }
 
 

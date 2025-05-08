@@ -6,7 +6,9 @@
 /// *************************************************
 ///
 // for camera and gallery
+import 'dart:convert';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
 import './main.dart';
@@ -28,29 +30,29 @@ class MediaPlayer {
       {required this.name, required this.status, required this.currentScreen});
 }
 
-// //TODO remove this when api is done
-// List<String> hardcodedImageUrls = [
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/1000069250.jpg",
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/1000069620.jpg",
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/1000069634.jpg",
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/1000069636.jpg",
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/1000069684.jpg",
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/1000069922.jpg",
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/2d059ee4-01bc-4e49-85ca-6c50ee7d03308353998340731931711.jpg",
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/4562a2db-1f30-4999-a11f-5b8b363a2f4f1508852848103652766.jpg",
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/551edd30-786b-48ec-b3d3-8518c4ac0e243048579027917999506.jpg",
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/6.jpg",
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/6133547b-7b17-4a76-80c8-6a7315b6ddde5476597828324408415.jpg",
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/76f63160-d4ca-40ba-ade9-31e84dd88b0e5565208200365439862.jpg",
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/79b31e62-2fef-4fa9-b169-2a3c50d9150b8268856755336619520.jpg",
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/846d04f1-9440-4c6e-af29-5d4fb00b5f661545696184291680028.jpg",
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/a27b9dca-34a0-4a81-9371-bfc114e92a055063628013095681754.jpg",
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/c54a2285-cb97-4e9f-a2e5-52c29867dbda1336516757659709868.jpg",
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/convert_from_pdf_poster2x.png",
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/dmbInContent.png",
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/e99b2adf-16dc-4fc3-b445-b2b0a983947f8312054462485929900.jpg",
-//   "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/edit_pdf_icon_2x.png"
-// ];
+//TODO remove this when api is done
+List<String> hardcodedImageUrls = [
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/1000069250.jpg",
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/1000069620.jpg",
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/1000069634.jpg",
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/1000069636.jpg",
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/1000069684.jpg",
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/1000069922.jpg",
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/2d059ee4-01bc-4e49-85ca-6c50ee7d03308353998340731931711.jpg",
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/4562a2db-1f30-4999-a11f-5b8b363a2f4f1508852848103652766.jpg",
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/551edd30-786b-48ec-b3d3-8518c4ac0e243048579027917999506.jpg",
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/6.jpg",
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/6133547b-7b17-4a76-80c8-6a7315b6ddde5476597828324408415.jpg",
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/76f63160-d4ca-40ba-ade9-31e84dd88b0e5565208200365439862.jpg",
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/79b31e62-2fef-4fa9-b169-2a3c50d9150b8268856755336619520.jpg",
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/846d04f1-9440-4c6e-af29-5d4fb00b5f661545696184291680028.jpg",
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/a27b9dca-34a0-4a81-9371-bfc114e92a055063628013095681754.jpg",
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/c54a2285-cb97-4e9f-a2e5-52c29867dbda1336516757659709868.jpg",
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/convert_from_pdf_poster2x.png",
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/dmbInContent.png",
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/e99b2adf-16dc-4fc3-b445-b2b0a983947f8312054462485929900.jpg",
+  "https://digitalmediabridge.tv/screen-builder-test/assets/content/mannychia7@gmail.com/images/edit_pdf_icon_2x.png"
+];
 
 
 //Add necessary public vars
@@ -73,21 +75,50 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
   int _pageIndex = 0;
   String _currentPlaylist = '';
   List<String> _playlistImages = [];
+  Set<String> selectedImages = {};
+
 
   void _openPlaylist(String playlistName) async {
     try {
-      final images = await fetchAllUserImages(widget.userEmail); // ⬅ now gets *all* user images
+      final allImageFilenames = await fetchAllUserImages(widget.userEmail); // from live folder
+      final playlistFileUrl =
+          'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(widget.userEmail)}/others/$playlistName';
+
+      final playlistResponse = await http.get(Uri.parse(playlistFileUrl));
+
+      if (playlistResponse.statusCode != 200) {
+        throw Exception('Failed to load playlist');
+      }
+
+      final lines = LineSplitter().convert(playlistResponse.body)
+          .where((line) => line.trim().isNotEmpty)
+          .toList();
+      final playlistFilenames = lines.map((line) => line.split(',').first.trim()).toSet();
+
+      final imageUrls = allImageFilenames.map((filename) =>
+      'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(widget.userEmail)}/images/$filename'
+      ).toList();
+
+      final preSelected = <String>{
+        for (final url in imageUrls)
+          if (playlistFilenames.contains(url.split('/').last)) url
+      };
+
       setState(() {
-        _playlistImages = images;
+        _playlistImages = imageUrls;
+        selectedImages = preSelected;
         _currentPlaylist = playlistName;
         _pageIndex = 1;
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to load images")),
+        const SnackBar(content: Text("Failed to load playlist images")),
       );
     }
   }
+
+
+
 
 
   @override
@@ -170,7 +201,8 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: ClipRRect(
+                      child:
+                      ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
                           width: double.infinity,
@@ -222,27 +254,20 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => setState(() => _pageIndex = 0),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                _currentPlaylist,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ],
+        ListTile(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => setState(() => _pageIndex = 0),
+          ),
+          title: Text(
+            _currentPlaylist,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          trailing: Text(
+            "${selectedImages.length} selected",
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
         ),
-        const SizedBox(height: 8),
         Expanded(
           child: GridView.builder(
             controller: scrollController,
@@ -255,33 +280,75 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
             ),
             itemCount: _playlistImages.length,
             itemBuilder: (context, index) {
-              final imageUrl = 'https://digitalmediabridge.tv/screen-builder-test/assets/content/${widget.userEmail}/images/${_playlistImages[index]}';
+              final imageUrl = _playlistImages[index];
+              final isSelected = selectedImages.contains(imageUrl);
 
-            // //TODO replace this when api comes
-            // itemCount: hardcodedImageUrls.length,
-            // itemBuilder: (context, index) {
-            //   final imageUrl = hardcodedImageUrls[index];
-
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  color: Colors.grey[800],
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const Center(
-                      child: Icon(Icons.broken_image, color: Colors.white54, size: 40),
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    isSelected
+                        ? selectedImages.remove(imageUrl)
+                        : selectedImages.add(imageUrl);
+                  });
+                },
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[800], // fallback if image fails
+                          ),
+                          child: Image.network(
+                            imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                            const Center(
+                              child: Icon(Icons.broken_image, color: Colors.white70),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                    if (isSelected)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black26,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    Positioned(
+                      top: 6,
+                      left: 6,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isSelected
+                              ? Colors.greenAccent.withOpacity(0.9)
+                              : Colors.black45,
+                        ),
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          isSelected ? Icons.check : Icons.circle_outlined,
+                          size: 16,
+                          color: isSelected ? Colors.black : Colors.white70,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               );
-
             },
           ),
         ),
       ],
     );
   }
+
 
 }
 ///
