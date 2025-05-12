@@ -133,50 +133,68 @@ class _PlayersPageState extends State<PlayersPage> {
     } catch (err) {}
   }
 
-  //photo taken from camera
-  Future<void> _takePhoto() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
-
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
-
-      // Show image in a popup dialog with "Post" and "Close"
-      showDialog(
-        context: context,
-        builder: (_) =>
-            AlertDialog(
-              backgroundColor: Colors.black,
-              content: Image.file(_image!),
-              actions: [
+  Future<void> _showUploadSheet(File imageFile) async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Upload Image",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.file(imageFile),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text(
-                      "Close", style: TextStyle(color: Colors.white)),
+                  child: const Text("Close", style: TextStyle(color: Colors.white)),
                 ),
-                TextButton(
+                const SizedBox(width: 10),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.greenAccent,
+                  ),
                   onPressed: () async {
-                    Navigator.of(context).pop(); // Close dialog before posting
-                    // TODO: Replace with actual username/email
-                    bool success = await uploadImage(
-                        _image!, "billstanton@gmail.com");
+                    Navigator.of(context).pop();
+                    bool success = await uploadImage(imageFile, "mannychia7@gmail.com");
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          success
-                              ? "Image uploaded successfully"
-                              : "Image upload failed",
+                          success ? "Image uploaded successfully" : "Image upload failed",
                         ),
                       ),
                     );
                   },
-                  child: const Text(
-                      "Post", style: TextStyle(color: Colors.greenAccent)),
+                  child: const Text("Upload"),
                 ),
               ],
             ),
-      );
+          ],
+        ),
+      ),
+    );
+  }
+  Future<void> _takePhoto() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+      _showUploadSheet(_image!);
     }
   }
 
@@ -186,45 +204,10 @@ class _PlayersPageState extends State<PlayersPage> {
       setState(() {
         _image = File(pickedFile.path);
       });
-
-      // Show image in a popup dialog with "Post" and "Close"
-      showDialog(
-        context: context,
-        builder: (_) =>
-            AlertDialog(
-              backgroundColor: Colors.black,
-              content: Image.file(_image!),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text(
-                      "Close", style: TextStyle(color: Colors.white)),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop(); // Close dialog before posting
-                    //make sure to change to username and not "billstanton@gmail.com"
-                    bool success = await uploadImage(
-                        _image!, "billstanton@gmail.com");
-                    if (success) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text("Image uploaded successfully")),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Image upload failed")),
-                      );
-                    }
-                  },
-                  child: const Text(
-                      "Post", style: TextStyle(color: Colors.greenAccent)),
-                ),
-              ],
-            ),
-      );
+      _showUploadSheet(_image!);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -262,31 +245,82 @@ class _PlayersPageState extends State<PlayersPage> {
                           ),
                         ),
                       ),
-                      ListTile(
-                        leading: const Icon(Icons.tv_outlined, color: Colors.white),
-                        title: const Text("Screens", style: TextStyle(color: Colors.white)),
-                        onTap: () {
-                          Navigator.pop(context);
-                          _showScreensPage();
-                        },
+                      // ListTile(
+                      //   leading: const Icon(Icons.tv_outlined, color: Colors.white),
+                      //   title: const Text("Screens", style: TextStyle(color: Colors.white)),
+                      //   onTap: () {
+                      //     Navigator.pop(context);
+                      //     _showScreensPage();
+                      //   },
+                      // ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(8),
+                            onTap: () {
+                              Navigator.pop(context);
+                              _showScreensPage();
+                            },
+                            splashColor: Colors.white24,
+                            highlightColor: Colors.white10,
+                            child: ListTile(
+                              leading: const Icon(Icons.tv_outlined, color: Colors.white),
+                              title: const Text("Screens", style: TextStyle(color: Colors.white)),
+                            ),
+                          ),
+                        ),
                       ),
+
+
+
+                      const Divider(),
+
                       MenuAnchor(
                         alignmentOffset: const Offset(190, 0),
+                        style: MenuStyle(
+                          backgroundColor: MaterialStateProperty.all(Color.fromRGBO(242, 242, 247, 0.85)), // iOS-like w/ transparency
+                          elevation: MaterialStateProperty.all(0),
+                          shape: MaterialStateProperty.all(
+                            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          padding: MaterialStateProperty.all(EdgeInsets.zero),
+                          visualDensity: VisualDensity.compact,
+                        ),
                         builder: (BuildContext context, MenuController controller, Widget? child) {
-                          return ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                            onTap: () {
-                              controller.isOpen ? controller.close() : controller.open();
+                          return StatefulBuilder(
+                            builder: (context, setState) {
+                              return Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () {
+                                    controller.isOpen ? controller.close() : controller.open();
+                                    setState(() {}); // rebuild to rotate the arrow
+                                  },
+                                  borderRadius: BorderRadius.circular(8),
+                                  splashColor: Colors.white24,
+                                  highlightColor: Colors.white10,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.upload, color: Colors.white),
+                                        const SizedBox(width: 12),
+                                        const Text("Upload Image", style: TextStyle(color: Colors.white, fontSize: 16)),
+                                        const Spacer(),
+                                        AnimatedRotation(
+                                          duration: const Duration(milliseconds: 200),
+                                          turns: controller.isOpen ? 0.25 : 0.0, // 90° when open
+                                          child: const Icon(Icons.arrow_right, color: Colors.white),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
                             },
-                            title: Row(
-                              children: const [
-                                Icon(Icons.upload, color: Colors.white),
-                                SizedBox(width: 16),
-                                Text("Upload Image", style: TextStyle(color: Colors.white)),
-                                Spacer(),
-                                Icon(Icons.arrow_drop_down, color: Colors.white),
-                              ],
-                            ),
                           );
                         },
                         menuChildren: [
@@ -295,30 +329,42 @@ class _PlayersPageState extends State<PlayersPage> {
                               Navigator.pop(context);
                               _takePhoto();
                             },
+                            style: ButtonStyle(
+                              padding: MaterialStateProperty.all(const EdgeInsets.symmetric(vertical: 7, horizontal: 12)),
+                              overlayColor: MaterialStateProperty.all(Colors.grey[300]),
+                            ),
                             child: const Row(
                               children: [
-                                Icon(Icons.camera_alt, size: 20),
+                                Icon(Icons.camera_alt, size: 18, color: Colors.black87),
                                 SizedBox(width: 8),
-                                Text("Camera"),
+                                Text("Camera", style: TextStyle(fontSize: 14, color: Colors.black87)),
                               ],
                             ),
                           ),
-                          const Divider(),
+                          const Divider(height: 1, color: Colors.grey),
                           MenuItemButton(
                             onPressed: () {
                               Navigator.pop(context);
                               _chooseFromGallery();
                             },
+                            style: ButtonStyle(
+                              padding: MaterialStateProperty.all(const EdgeInsets.symmetric(vertical: 7, horizontal: 12)),
+                              overlayColor: MaterialStateProperty.all(Colors.grey[300]),
+                            ),
                             child: const Row(
                               children: [
-                                Icon(Icons.photo_library, size: 20),
+                                Icon(Icons.photo_library, size: 18, color: Colors.black87),
                                 SizedBox(width: 8),
-                                Text("Gallery"),
+                                Text("Gallery", style: TextStyle(fontSize: 14, color: Colors.black87)),
                               ],
                             ),
                           ),
                         ],
                       ),
+
+
+
+
                     ],
                   ),
                 ),
@@ -329,17 +375,27 @@ class _PlayersPageState extends State<PlayersPage> {
                   child: Column(
                     children: [
                       const Divider(color: Colors.white54),
-                      ListTile(
-                        leading: const Icon(Icons.logout, color: Colors.white),
-                        title: const Text("Logout", style: TextStyle(color: Colors.white)),
-                        onTap: () {
-                          Navigator.pop(context);
-                          _userLogout();
-                        },
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(4),
+                          splashColor: Colors.white24,
+                          highlightColor: Colors.white10,
+                          onTap: () {
+                            Navigator.pop(context);
+                            _userLogout();
+                          },
+                          child: const ListTile(
+                            leading: Icon(Icons.logout, color: Colors.white),
+                            title: Text("Logout", style: TextStyle(color: Colors.white)),
+                          ),
+                        ),
                       ),
+
                     ],
                   ),
                 ),
+
               ],
             ),
           ),

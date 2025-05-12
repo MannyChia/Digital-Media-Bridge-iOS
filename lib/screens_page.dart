@@ -49,12 +49,6 @@ class _ScreensPageState extends State<ScreensPage> {
 
   }
 
-  //In each view, provide a button to let the user logout
-  void _userLogout() {
-
-    confirmLogout(context);  //*** CONFIRM USER LOGOUT (function is in: dmb_functions.dart)
-  }
-
   @override
   Widget build(BuildContext context) {
 
@@ -160,12 +154,6 @@ class _ScreensPageState extends State<ScreensPage> {
           color: Colors.blueGrey,
         ),
       ),
-      /*    ---- DON'T INCLUDE THE LOGOUT BUTTON ON THE SCREENS PAGE
-      floatingActionButton: FloatingActionButton(
-        onPressed: _userLogout,
-        tooltip: 'Logout',
-        child: const Icon(Icons.logout),
-      ),*/
     );
 
   }

@@ -13,10 +13,6 @@ import './players_page.dart';
 import './screens_page.dart';
 import './dmb_functions.dart';
 
-//version 2.0
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-
 //This is the global vars used to know which "page" the user
 //selected (i.e., Players or Screens)
 dynamic selectedIndex = 0; //PUBLIC variable
@@ -194,12 +190,6 @@ class _BypassloginPageState extends State<BypassloginPage> {
     });
   }
 
-  //In each view, provide a button to let the user logout
-  void _userLogout() {
-    confirmLogout(
-        context); //*** CONFIRM USER LOGOUT (function is in: dmb_functions.dart)
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -209,11 +199,6 @@ class _BypassloginPageState extends State<BypassloginPage> {
                 fontWeight: FontWeight.normal,
                 color: Colors.white,
                 fontSize: 14)),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _userLogout,
-        tooltip: 'Logout',
-        child: const Icon(Icons.logout),
       ),
     );
   }
@@ -440,101 +425,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // File? _image;
-  // final ImagePicker _picker = ImagePicker();
-  //
-  // int selectedIndex = 0;
-  // final List<String> menuItems = ['Screens', 'Camera', 'Gallery'];
-
-  // //photo taken from camera
-  // Future<void> _takePhoto() async {
-  //   final pickedFile = await _picker.pickImage(source: ImageSource.camera);
-  //
-  //   if (pickedFile != null) {
-  //     setState(() {
-  //       _image = File(pickedFile.path);
-  //     });
-  //
-  //     // Show image in a popup dialog with "Post" and "Close"
-  //     showDialog(
-  //       context: context,
-  //       builder: (_) => AlertDialog(
-  //         backgroundColor: Colors.black,
-  //         content: Image.file(_image!),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () => Navigator.of(context).pop(),
-  //             child: const Text("Close", style: TextStyle(color: Colors.white)),
-  //           ),
-  //           TextButton(
-  //             onPressed: () async {
-  //               Navigator.of(context).pop(); // Close dialog before posting
-  //               // TODO: Replace with actual username/email
-  //               bool success = await uploadImage(_image!, "billstanton@gmail.com");
-  //               ScaffoldMessenger.of(context).showSnackBar(
-  //                 SnackBar(
-  //                   content: Text(
-  //                     success
-  //                         ? "Image uploaded successfully"
-  //                         : "Image upload failed",
-  //                   ),
-  //                 ),
-  //               );
-  //             },
-  //             child: const Text("Post", style: TextStyle(color: Colors.greenAccent)),
-  //           ),
-  //         ],
-  //       ),
-  //     );
-  //   }
-  // }
-
-
-  // Future<void> _chooseFromGallery() async {
-  //   final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-  //   if (pickedFile != null) {
-  //     setState(() {
-  //       _image = File(pickedFile.path);
-  //     });
-  //
-  //     // Show image in a popup dialog with "Post" and "Close"
-  //     showDialog(
-  //       context: context,
-  //       builder: (_) =>
-  //           AlertDialog(
-  //             backgroundColor: Colors.black,
-  //             content: Image.file(_image!),
-  //             actions: [
-  //               TextButton(
-  //                 onPressed: () => Navigator.of(context).pop(),
-  //                 child: const Text(
-  //                     "Close", style: TextStyle(color: Colors.white)),
-  //               ),
-  //               TextButton(
-  //                 onPressed: () async {
-  //                   Navigator.of(context).pop(); // Close dialog before posting
-  //                   //make sure to change to username and not "billstanton@gmail.com"
-  //                   bool success = await uploadImage(
-  //                       _image!, "billstanton@gmail.com");
-  //                   if (success) {
-  //                     ScaffoldMessenger.of(context).showSnackBar(
-  //                       const SnackBar(
-  //                           content: Text("Image uploaded successfully")),
-  //                     );
-  //                   } else {
-  //                     ScaffoldMessenger.of(context).showSnackBar(
-  //                       const SnackBar(content: Text("Image upload failed")),
-  //                     );
-  //                   }
-  //                 },
-  //                 child: const Text(
-  //                     "Post", style: TextStyle(color: Colors.greenAccent)),
-  //               ),
-  //             ],
-  //           ),
-  //     );
-  //   }
-  // }
 
 
   void _updateTitle(title, subTitle, selIndex) {
