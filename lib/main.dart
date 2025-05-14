@@ -13,6 +13,8 @@ import './players_page.dart';
 import './screens_page.dart';
 import './dmb_functions.dart';
 
+import 'package:flutter/widgets.dart'; // or material.dart depending on your structure
+
 //This is the global vars used to know which "page" the user
 //selected (i.e., Players or Screens)
 dynamic selectedIndex = 0; //PUBLIC variable
@@ -28,11 +30,22 @@ dynamic loginPassword = "none";
 ///**** STORE THE PROVIDED USERNAME & PASSWORD
 const systemStorage = FlutterSecureStorage();
 
-void main() {
-  runApp(const DmbApp());
 
-  ///<<-- *** START MAIN APP HERE!!!!
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.dumpErrorToConsole(details);
+  };
+
+  runZonedGuarded(() {
+    //most important stuff
+    runApp(const DmbApp());
+  }, (error, stackTrace) {
+    print("Caught zoned error: $error");
+  });
 }
+
 
 /// **********************************************************
 /// *********************************************************

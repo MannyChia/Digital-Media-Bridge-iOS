@@ -7,7 +7,7 @@
         android:label="Digital Media Bridge"
         android:icon="@mipmap/ic_launcher">
         <activity
-            android:name=".MainActivity"
+            android:name="com.dmb.DMBTV.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""
