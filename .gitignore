@@ -41,3 +41,15 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Android NDK / CMake build artifacts
+android/app/.cxx/**
+
+
+# Plugin registrant files (auto-generated, don't commit)
+linux/flutter/generated_*
+macos/Flutter/GeneratedPluginRegistrant.swift
+windows/flutter/generated_*
+
+# Uncomment this if you don't want to commit VS Code settings
+.vscode/
