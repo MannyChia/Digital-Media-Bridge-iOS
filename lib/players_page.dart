@@ -5,18 +5,26 @@
 /// *** LIST OF AVAILABLE DMB PLAYERS
 /// *************************************************
 ///
+// for camera and gallery
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+
 import './main.dart';
 import './screens_page.dart';
 import './dmb_functions.dart';
 import 'package:flutter/material.dart';
+
 /*
 */
 dynamic activeDMBPlayers = 0;
 
 //Create custom class to hold the media player data
-class MediaPlayer{ //modal class for MediaPlayer object
+class MediaPlayer {
+  //modal class for MediaPlayer object
   String name, status, currentScreen;
-  MediaPlayer({required this.name, required this.status, required this.currentScreen});
+
+  MediaPlayer(
+      {required this.name, required this.status, required this.currentScreen});
 }
 
 //Add necessary public vars
@@ -40,6 +48,11 @@ class PlayersPage extends StatefulWidget {
 }
 
 class _PlayersPageState extends State<PlayersPage> {
+  late String pageTitle;
+  late String pageSubTitle;
+
+  File? _image;
+  final ImagePicker _picker = ImagePicker();
 
   ///This 'override' function is called once when the class is loaded
   ///(is used to update the pageTitle * subTitle)
@@ -49,57 +62,67 @@ class _PlayersPageState extends State<PlayersPage> {
     _updateTitle();
   }
 
-  void _updateTitle() {
+  // void _updateTitle() {
+  //
+  //   setState(() {
+  //     pageTitle = "${widget.pageTitle} (${dmbMediaPlayers.length})";
+  //     pageSubTitle = widget.pageSubTitle;
+  //   });
+  // }
 
-    setState(() {
-      pageTitle = "${widget.pageTitle} (${dmbMediaPlayers.length})";
-      pageSubTitle = widget.pageSubTitle;
-    });
+  void _updateTitle() {
+    pageTitle = "${widget.pageTitle} (${dmbMediaPlayers.length})";
+    pageSubTitle = widget.pageSubTitle ?? "";
   }
 
-  void _showScreensPage() {      ///*** FUNCTION TO SHOW LIST OF SCREENS
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  int selectedIndex = 0;
+
+  void _showScreensPage() {
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => ScreensPage(
-            pageTitle: "Player: $selectedPlayerName",
-            pageSubTitle: "Select Screen to Publish"
-          )),
-    ).then(  ///*** WHEN THE USER RETURNS TO THE PLAYERS SCREEN VIA 'BACK' BTN
-            (context){
-        }
+        builder: (context) =>
+            ScreensPage(
+              pageTitle: "Player: $selectedPlayerName",
+              pageSubTitle: "Select Screen to Publish",
+            ),
+      ),
     );
   }
+
 
   //As the list of players is being build, this function will determine
   //whether we show a 'regular' color button or a 'red' one because
   //the status of the player is inactive
-  _checkPlayerStatus(index){
+  // _checkPlayerStatus(index){
+  //
+  //   var pStatus = dmbMediaPlayers[index].status;
+  //   return pStatus == "Active" ? true : false;
+  // }
 
-    var pStatus = dmbMediaPlayers[index].status;
-    return pStatus == "Active" ? true : false;
+  bool _checkPlayerStatus(int index) {
+    return dmbMediaPlayers[index].status == "Active";
   }
 
   //In each view, provide a button to let the user logout
   void _userLogout() {
-
-    confirmLogout(context);  //*** CONFIRM USER LOGOUT (function is in: dmb_functions.dart)
+    confirmLogout(
+        context); //*** CONFIRM USER LOGOUT (function is in: dmb_functions.dart)
   }
 
   //Called this when the user pulls down the screen
-  Future<void> _refreshData() async{
-
-    try{
-
+  Future<void> _refreshData() async {
+    try {
       //Go to the DMB server to get an updated list of players
-      getUserData("$loginUsername", "$loginPassword", "players-refresh").then((result){
-
+      getUserData("$loginUsername", "$loginPassword", "players-refresh").then((
+          result) {
         //*** If the return value is a string, then there was an error
         // getting the data, so don't do anything.
         // Otherwise, should be Ok to set the
         // dmbMediaPlayers var with the new data
-        if(result.runtimeType != String){
+        if (result.runtimeType != String) {
           setState(() {
             dmbMediaPlayers = result;
             pageTitle = "Media Players (${dmbMediaPlayers.length})";
@@ -107,212 +130,443 @@ class _PlayersPageState extends State<PlayersPage> {
           });
         }
       });
-    } catch (err) {
+    } catch (err) {}
+  }
+
+  Future<void> _showUploadSheet(File imageFile) async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Upload Image",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.file(imageFile),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text("Close", style: TextStyle(color: Colors.white)),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.greenAccent,
+                  ),
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    bool success = await uploadImage(imageFile, "mannychia7@gmail.com");
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          success ? "Image uploaded successfully" : "Image upload failed",
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text("Upload"),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  Future<void> _takePhoto() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+      _showUploadSheet(_image!);
     }
   }
 
+  Future<void> _chooseFromGallery() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+      _showUploadSheet(_image!);
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
+      key: _scaffoldKey,
+      endDrawer: Drawer(
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: <Color>[
+                Colors.blueGrey,
+                Color.fromRGBO(10, 85, 163, 1.0),
+              ],
+            ),
+          ),
+          child: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top Section
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Text(
+                          "Menu",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      // ListTile(
+                      //   leading: const Icon(Icons.tv_outlined, color: Colors.white),
+                      //   title: const Text("Screens", style: TextStyle(color: Colors.white)),
+                      //   onTap: () {
+                      //     Navigator.pop(context);
+                      //     _showScreensPage();
+                      //   },
+                      // ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(8),
+                            onTap: () {
+                              Navigator.pop(context);
+                              _showScreensPage();
+                            },
+                            splashColor: Colors.white24,
+                            highlightColor: Colors.white10,
+                            child: ListTile(
+                              leading: const Icon(Icons.tv_outlined, color: Colors.white),
+                              title: const Text("Screens", style: TextStyle(color: Colors.white)),
+                            ),
+                          ),
+                        ),
+                      ),
+
+
+
+                      const Divider(),
+
+                      MenuAnchor(
+                        alignmentOffset: const Offset(190, 0),
+                        style: MenuStyle(
+                          backgroundColor: MaterialStateProperty.all(Color.fromRGBO(242, 242, 247, 0.85)), // iOS-like w/ transparency
+                          elevation: MaterialStateProperty.all(0),
+                          shape: MaterialStateProperty.all(
+                            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          padding: MaterialStateProperty.all(EdgeInsets.zero),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        builder: (BuildContext context, MenuController controller, Widget? child) {
+                          return StatefulBuilder(
+                            builder: (context, setState) {
+                              return Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () {
+                                    controller.isOpen ? controller.close() : controller.open();
+                                    setState(() {}); // rebuild to rotate the arrow
+                                  },
+                                  borderRadius: BorderRadius.circular(8),
+                                  splashColor: Colors.white24,
+                                  highlightColor: Colors.white10,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.upload, color: Colors.white),
+                                        const SizedBox(width: 12),
+                                        const Text("Upload Image", style: TextStyle(color: Colors.white, fontSize: 16)),
+                                        const Spacer(),
+                                        AnimatedRotation(
+                                          duration: const Duration(milliseconds: 200),
+                                          turns: controller.isOpen ? 0.25 : 0.0, // 90° when open
+                                          child: const Icon(Icons.arrow_right, color: Colors.white),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                        menuChildren: [
+                          MenuItemButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _takePhoto();
+                            },
+                            style: ButtonStyle(
+                              padding: MaterialStateProperty.all(const EdgeInsets.symmetric(vertical: 7, horizontal: 12)),
+                              overlayColor: MaterialStateProperty.all(Colors.grey[300]),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.camera_alt, size: 18, color: Colors.black87),
+                                SizedBox(width: 8),
+                                Text("Camera", style: TextStyle(fontSize: 14, color: Colors.black87)),
+                              ],
+                            ),
+                          ),
+                          const Divider(height: 1, color: Colors.grey),
+                          MenuItemButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _chooseFromGallery();
+                            },
+                            style: ButtonStyle(
+                              padding: MaterialStateProperty.all(const EdgeInsets.symmetric(vertical: 7, horizontal: 12)),
+                              overlayColor: MaterialStateProperty.all(Colors.grey[300]),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.photo_library, size: 18, color: Colors.black87),
+                                SizedBox(width: 8),
+                                Text("Gallery", style: TextStyle(fontSize: 14, color: Colors.black87)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+
+
+
+                    ],
+                  ),
+                ),
+
+                // Bottom Section (Logout)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 5.0),
+                  child: Column(
+                    children: [
+                      const Divider(color: Colors.white54),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(4),
+                          splashColor: Colors.white24,
+                          highlightColor: Colors.white10,
+                          onTap: () {
+                            Navigator.pop(context);
+                            _userLogout();
+                          },
+                          child: const ListTile(
+                            leading: Icon(Icons.logout, color: Colors.white),
+                            title: Text("Logout", style: TextStyle(color: Colors.white)),
+                          ),
+                        ),
+                      ),
+
+                    ],
+                  ),
+                ),
+
+              ],
+            ),
+          ),
+
+        ),
+      ),
       // **********
       /* THE HEADER OF THE 'PLAYERS' PAGE */
       // **********
-      appBar: playersNoBackButton ? _appBarNoBackBtn(context) : _appBarBackBtn(context),
+      appBar: _appBarNoBackBtn(context),
       body:
-        RefreshIndicator(
-        onRefresh: _refreshData,     ///*** // trigger the _refreshData function when the user pulls down
+      RefreshIndicator(
+        onRefresh: _refreshData,
+
+        ///*** // trigger the _refreshData function when the user pulls down
         child:
-            ListView.separated(
-            itemCount: dmbMediaPlayers.length,
-            physics: const AlwaysScrollableScrollPhysics(),
-            itemBuilder: (BuildContext context, int index) {
+        ListView.separated(
+          itemCount: dmbMediaPlayers.length,
+          physics: const AlwaysScrollableScrollPhysics(),
+          itemBuilder: (BuildContext context, int index) {
+            return Align(
+              alignment: Alignment.center,
+              child: Container(
+                //width: 100,
+                color: Colors.blueGrey,
+                child: Card(
 
-              return Align(
-                alignment: Alignment.center,
-                child: Container(
-                  //width: 100,
-                  color: Colors.blueGrey,
-                  child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                    ),
+                    child: InkWell(
 
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                      ),
-                      child: InkWell(
-
-                          customBorder: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                        customBorder: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Ink(
+                          width: 500,
+                          //The width & height of the 'players' button
+                          height: 50,
+                          decoration: BoxDecoration( //*** the selectable 'button' of each media player
+                            shape: BoxShape.rectangle,
+                            border: Border.all(
+                                width: 0, //
+                                color: const Color.fromRGBO(10, 85, 163, 1.0)
+                            ),
+                            borderRadius: const BorderRadius.all(
+                                Radius.circular(8.0)),
+                            gradient: _checkPlayerStatus(index)
+                                ? _gradientActiveMediaPlayer(context)
+                                : _gradientInActiveMediaPlayer(context),
                           ),
-                          child: Ink(
-                            width: 500,  //The width & height of the 'players' button
-                            height: 50,
-                            decoration: BoxDecoration(   //*** the selectable 'button' of each media player
-                              shape: BoxShape.rectangle,
-                              border: Border.all(
-                                  width: 0, //
-                                  color: const Color.fromRGBO(10, 85, 163, 1.0)
-                              ),
-                              borderRadius:const BorderRadius.all(Radius.circular(8.0)),
-                              gradient: _checkPlayerStatus(index) ? _gradientActiveMediaPlayer(context) : _gradientInActiveMediaPlayer(context),
+
+                          ///The two line text on each button
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(dmbMediaPlayers[index].name,
+                                        style: const TextStyle(fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white)),
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    _checkPlayerStatus(index)
+                                        ? _activeScreenText(context, index)
+                                        : _inActiveScreenText(context, index),
+                                  ],
+                                ),
+                              ],
                             ),
 
-                            ///The two line text on each button
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(dmbMediaPlayers[index].name,
-                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color:Colors.white)),
-                                    ],
-                                  ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      _checkPlayerStatus(index) ? _activeScreenText(context, index) : _inActiveScreenText(context, index),
-                                    ],
-                                  ),
-                                ],
-                              ),
-
-                            ),
-
                           ),
-                          onTap: (){  //*** When one of the 'Media Players' button is selected .....
 
-                            ///set the global variable of the selected player
-                            selectedPlayerName = dmbMediaPlayers[index].name;
+                        ),
+                        onTap: () { //*** When one of the 'Media Players' button is selected .....
 
-                            ///show the user (in a small pop-up) the player name
-                            ///that they just selected
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text("${dmbMediaPlayers[index].name} Selected")),
-                            );
+                          ///set the global variable of the selected player
+                          selectedPlayerName = dmbMediaPlayers[index].name;
 
-                            _showScreensPage();  /// SHOW LIST OF SCREENS
-                          }
-                      ),
+                          ///show the user (in a small pop-up) the player name
+                          ///that they just selected
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(
+                                "${dmbMediaPlayers[index].name} Selected")),
+                          );
+
+                          _showScreensPage();
+
+                          /// SHOW LIST OF SCREENS
+                        }
                     ),
                   ),
                 ),
-              );
+              ),
+            );
+          },
+          separatorBuilder: (context, index) =>
+          const Divider(
 
-            },
-            separatorBuilder: (context, index) => const Divider(  ///the divider between the items
-                color: Colors.blueGrey,
-            ),
+            ///the divider between the items
+            color: Colors.blueGrey,
           ),
         ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _userLogout,
-        tooltip: 'Logout',
-        child: const Icon(Icons.logout),
       ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: _userLogout,
+      //   tooltip: 'Logout',
+      //   child: const Icon(Icons.logout),
+      // ),
     );
-
   }
+
 }
 
 ///**** This is the 'App bar' to the players tab when you don't want
 /// to show a 'back' btn
-PreferredSizeWidget _appBarNoBackBtn(BuildContext context){
-
+PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
   return AppBar(
     flexibleSpace: Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: <Color>[Colors.blueGrey, Color.fromRGBO(10, 85, 163, 1.0)]),  //DMB BLUE
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: <Color>[Colors.blueGrey, Color.fromRGBO(10, 85, 163, 1.0)],
+        ),
       ),
     ),
     automaticallyImplyLeading: false,
-    // Here we take the value from the MyHomePage object that was created by
-    // the App.build method, and use it to set our appbar title.
     title: Column(
-      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Text(pageTitle,
-                style: const TextStyle(fontWeight: FontWeight.bold,
-                    color:Colors.white,
-                    fontSize: 16)),
-          ],
+        Text(
+          pageTitle,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            fontSize: 16,
+          ),
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Text(pageSubTitle,
-                style: const TextStyle(fontStyle: FontStyle.italic,
-                    color:Colors.white70,
-                    fontSize: 14)),
-          ],
+        Text(
+          pageSubTitle,
+          style: const TextStyle(
+            fontStyle: FontStyle.italic,
+            color: Colors.white70,
+            fontSize: 14,
+          ),
         ),
       ],
     ),
-  );
-}
-
-///**** This is the 'App bar' to the players tab when you want to show a
-/// back icon and let the user return to the previous page
-PreferredSizeWidget _appBarBackBtn(BuildContext context){
-
-  void _goBack(){  //when the back arrow is selected
-
-    Navigator.of(context).pop();  //just remove this layer to return to the previous screen
-  }
-
-  return AppBar(
-    leading: IconButton(
-      icon: const Icon(Icons.arrow_back, color: Colors.white),
-      onPressed: _goBack,
-    ),
-    flexibleSpace: Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: <Color>[Colors.blueGrey, Color.fromRGBO(10, 85, 163, 1.0)]),  //DMB BLUE
+    actions: [
+      Builder(
+        builder: (context) =>
+            IconButton(
+              icon: const Icon(Icons.menu, color: Colors.white),
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
+            ),
       ),
-    ),
-    automaticallyImplyLeading: true,
-    // Here we take the value from the MyHomePage object that was created by
-    // the App.build method, and use it to set our appbar title.
-    title: Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Text(pageTitle,
-                style: const TextStyle(fontWeight: FontWeight.bold,
-                    color:Colors.white,
-                    fontSize: 16)),
-          ],
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Text(pageSubTitle,
-                style: const TextStyle(fontStyle: FontStyle.italic,
-                    color:Colors.white70,
-                    fontSize: 14)),
-          ],
-        ),
-      ],
-    ),
+    ],
   );
-
 }
+
 
 ///**** As the list is being displayed use this object to show a
 /// player whose status is 'active'
-LinearGradient _gradientActiveMediaPlayer(BuildContext context){
-
+LinearGradient _gradientActiveMediaPlayer(BuildContext context) {
   return const LinearGradient(
     begin: AlignmentDirectional.topCenter,
     end: AlignmentDirectional.bottomCenter,
@@ -325,8 +579,7 @@ LinearGradient _gradientActiveMediaPlayer(BuildContext context){
 
 ///**** As the list is being displayed use this object to show a
 /// player whose status is 'inactive'
-LinearGradient _gradientInActiveMediaPlayer(BuildContext context){
-
+LinearGradient _gradientInActiveMediaPlayer(BuildContext context) {
   return const LinearGradient(
     begin: AlignmentDirectional.topCenter,
     end: AlignmentDirectional.bottomCenter,
@@ -339,8 +592,7 @@ LinearGradient _gradientInActiveMediaPlayer(BuildContext context){
 
 ///*** As the list is being displayed, show a (slightly) different
 /// text (label) to the user for players that are active vs. inactive
-Text _activeScreenText(BuildContext context, pIndex){
-
+Text _activeScreenText(BuildContext context, pIndex) {
   return Text("${dmbMediaPlayers[pIndex]
       .status} - Current Screen: ${dmbMediaPlayers[pIndex]
       .currentScreen}",
@@ -350,8 +602,7 @@ Text _activeScreenText(BuildContext context, pIndex){
           color: Colors.white70));
 }
 
-Text _inActiveScreenText(BuildContext context, pIndex){
-
+Text _inActiveScreenText(BuildContext context, pIndex) {
   return Text("${dmbMediaPlayers[pIndex]
       .status} - Last Screen: ${dmbMediaPlayers[pIndex]
       .currentScreen}",
@@ -360,5 +611,3 @@ Text _inActiveScreenText(BuildContext context, pIndex){
           fontStyle: FontStyle.italic,
           color: Colors.white70));
 }
-
-

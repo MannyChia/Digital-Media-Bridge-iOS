@@ -6,12 +6,45 @@
 /// *************************************************
 ///
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 ///
 import './main.dart';
 import './players_page.dart';
 import './screens_page.dart';
 import 'package:flutter/material.dart';
+
+import 'package:http_parser/http_parser.dart'; // for MediaType
+
+Future<bool> uploadImage(File imageFile, String username) async {
+  var uri = Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/upload');
+
+  var request = http.MultipartRequest('POST', uri)
+    ..fields['filetype'] = 'images'
+    ..fields['username'] = username
+    ..files.add(
+      await http.MultipartFile.fromPath(
+        'file',
+        imageFile.path,
+        contentType: MediaType('image', 'jpeg'), // or use `image/png` as needed
+      ),
+    );
+
+  try {
+    var response = await request.send();
+
+    if (response.statusCode == 200) {
+      print("Upload successful");
+      return true;
+    } else {
+      print("Upload failed with status: ${response.statusCode}");
+      return false;
+    }
+  } catch (e) {
+    print("Upload exception: $e");
+    return false;
+  }
+}
 
 /// *************************************************
 /// *** AFTER THE USER PROVIDES A DMB USERNAME & PASSWORD ***
@@ -133,7 +166,7 @@ confirmPublish(BuildContext context, String playername, String screenname) {
   // set up the AlertDialog
   AlertDialog alert = AlertDialog(
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.all(Radius.circular(0.0)),
+        borderRadius: BorderRadius.all(Radius.circular(0.0)),
         side: BorderSide(
             width: 5,
             color: Colors.white
