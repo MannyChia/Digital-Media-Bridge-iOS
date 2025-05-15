@@ -38,18 +38,17 @@ Future<void> preloadPlaylistPreviews(String userEmail) async {
 }
 
 Future<List<String>> fetchAllUserImages(String userEmail) async {
-  final url = 'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(userEmail)}/images/';
+  final url = 'https://digitalmediabridge.tv/screen-builder/assets/api/get_images.php?email=$userEmail';
   final response = await http.get(Uri.parse(url));
 
   if (response.statusCode == 200) {
-    final html = response.body;
-    final regex = RegExp(r'href="([^"]+\.(jpg|jpeg|png|gif))"', caseSensitive: false);
-    final matches = regex.allMatches(html);
-    return matches.map((m) => m.group(1)!).toList();
+    final List<dynamic> data = jsonDecode(response.body);
+    return List<String>.from(data);
   } else {
-    throw Exception('Failed to fetch image filenames');
+    throw Exception('Failed to fetch user image filenames');
   }
 }
+
 
 /// THIS SUBMITS ALL PICTURES (FROM CAMERA OR GALLERY) TO THE ACCOUNT
 Future<bool> uploadImage(File imageFile, String username) async {
