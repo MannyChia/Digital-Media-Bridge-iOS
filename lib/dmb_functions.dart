@@ -49,8 +49,39 @@ Future<List<String>> fetchAllUserImages(String userEmail) async {
   }
 }
 
-
+//TODO this is the main code, use this api!
 /// THIS SUBMITS ALL PICTURES (FROM CAMERA OR GALLERY) TO THE ACCOUNT
+// Future<bool> uploadImage(File imageFile, String username) async {
+//   var uri = Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/upload');
+//
+//   var request = http.MultipartRequest('POST', uri)
+//     ..fields['filetype'] = 'images'
+//     ..fields['username'] = username
+//     ..files.add(
+//       await http.MultipartFile.fromPath(
+//         'file',
+//         imageFile.path,
+//         contentType: MediaType('image', 'jpeg'), // or use `image/png` as needed
+//       ),
+//     );
+//
+//   try {
+//     var response = await request.send();
+//
+//     if (response.statusCode == 200) {
+//       print("Upload successful");
+//       return true;
+//     } else {
+//       print("Upload failed with status: ${response.statusCode}");
+//       return false;
+//     }
+//   } catch (e) {
+//     print("Upload exception: $e");
+//     return false;
+//   }
+// }
+
+//TODO remove this api! this is not the main api
 Future<bool> uploadImage(File imageFile, String username) async {
   var uri = Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/upload');
 
@@ -61,16 +92,18 @@ Future<bool> uploadImage(File imageFile, String username) async {
       await http.MultipartFile.fromPath(
         'file',
         imageFile.path,
-        contentType: MediaType('image', 'jpeg'), // or use `image/png` as needed
+        contentType: MediaType('image', 'jpeg'), // or image/png if needed
       ),
     );
 
   try {
     var response = await request.send();
 
+    final responseBody = await response.stream.bytesToString();
+    print("🔽 Server Response Body: $responseBody");
+
     if (response.statusCode == 200) {
-      print("Upload successful");
-      return true;
+      return true; // Still return true unless you want to parse the body for specific errors
     } else {
       print("Upload failed with status: ${response.statusCode}");
       return false;
@@ -80,6 +113,9 @@ Future<bool> uploadImage(File imageFile, String username) async {
     return false;
   }
 }
+
+
+
 Future<List<String>> getUserPlaylists(String email) async {
   final response = await http.get(
     Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/GetPlaylist/$email'),
@@ -99,24 +135,6 @@ Future<List<String>> getUserPlaylists(String email) async {
     throw Exception('Failed to load playlists');
   }
 }
-
-// Future<List<String>> getUserPlaylists(String email) async {
-//   final response = await http.get(
-//     Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/GetPlaylist/$email'),
-//   );
-//
-//   if (response.statusCode == 200) {
-//     final Map<String, dynamic> jsonData = jsonDecode(response.body);
-//
-//     if (jsonData.containsKey('data') && jsonData['data'] is List) {
-//       return List<String>.from(jsonData['data']);
-//     } else {
-//       throw Exception("Invalid data format in response");
-//     }
-//   } else {
-//     throw Exception('Failed to load playlists');
-//   }
-// }
 
 Future<PlaylistPreview> parsePlaylistFile(String playlistName, String userEmail) async {
   final url = 'https://digitalmediabridge.tv/screen-builder-test/assets/content/$userEmail/others/$playlistName';
@@ -182,6 +200,38 @@ Future<List<String>> fetchPlaylistFilenames(String playlistName, String userEmai
   }
 }
 
+Future<bool> updatePlaylist({
+  required String userEmail,
+  required String playlistFileName,
+  required List<String> selectedFilenames,
+}) async {
+  final url = Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/file/updateplaylist');
+
+  final body = jsonEncode({
+    "userName": userEmail,
+    "fileName": playlistFileName,
+    "images": selectedFilenames,
+  });
+
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: body,
+    );
+
+    print("🔄 Server response: ${response.body}");
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (e) {
+    print("❌ Update playlist exception: $e");
+    return false;
+  }
+}
 
 
 /// *************************************************

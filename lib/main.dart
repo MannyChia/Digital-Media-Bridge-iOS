@@ -219,12 +219,6 @@ class _BypassloginPageState extends State<BypassloginPage> {
   //   });
   // }
 
-  //In each view, provide a button to let the user logout
-  void _userLogout() {
-    confirmLogout(
-        context); //*** CONFIRM USER LOGOUT (function is in: dmb_functions.dart)
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -234,11 +228,6 @@ class _BypassloginPageState extends State<BypassloginPage> {
                 fontWeight: FontWeight.normal,
                 color: Colors.white,
                 fontSize: 14)),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _userLogout,
-        tooltip: 'Logout',
-        child: const Icon(Icons.logout),
       ),
     );
   }

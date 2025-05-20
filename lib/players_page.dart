@@ -8,6 +8,7 @@
 // for camera and gallery
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
@@ -58,7 +59,8 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
   void _openPlaylist(String playlistName) async {
     try {
       // Step 1: Fetch all image filenames from API
-      final apiUrl = 'https://digitalmediabridge.tv/screen-builder/assets/api/get_images.php?email=${Uri.encodeComponent(widget.userEmail)}';
+      final apiUrl =
+          'https://digitalmediabridge.tv/screen-builder/assets/api/get_images.php?email=${Uri.encodeComponent(widget.userEmail)}';
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode != 200) {
@@ -66,9 +68,10 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
       }
 
       final List<dynamic> filenames = json.decode(response.body);
-      final List<String> allImageUrls = filenames.map((f) =>
-      'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(widget.userEmail)}/images/$f'
-      ).toList();
+      final List<String> allImageUrls = filenames
+          .map((f) =>
+      'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(widget.userEmail)}/images/$f')
+          .toList();
 
       // Step 2: Load playlist file to get selected filenames
       final playlistFileUrl =
@@ -79,16 +82,22 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
         throw Exception('Failed to load playlist');
       }
 
-      final lines = LineSplitter().convert(playlistResponse.body)
+      final lines = LineSplitter()
+          .convert(playlistResponse.body)
           .where((line) => line.trim().isNotEmpty)
           .toList();
-      final selectedFilenames = lines.map((line) => line.split(',').first.trim()).toSet();
 
-      // Step 3: Determine which URLs are selected
+      final selectedFilenames =
+      lines.map((line) => line.split(',').first.trim()).toSet();
+
       final preSelected = <String>{
         for (final url in allImageUrls)
           if (selectedFilenames.contains(url.split('/').last)) url
       };
+
+      // 🟩 Save the original set for change comparison
+      originalPlaylistImages =
+          preSelected.map((url) => url.split('/').last).toSet();
 
       setState(() {
         _playlistImages = allImageUrls;
@@ -105,7 +114,23 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
   }
 
 
+  bool _hasPlaylistChanged() {
+    final selectedFilenames = selectedImages.map((url) => url.split('/').last).toSet();
+    return selectedFilenames.isNotEmpty && !setEquals(selectedFilenames, originalPlaylistImages);
+  }
 
+
+
+  Future<void> _refreshPlaylistPreviews() async {
+    try {
+      final updated = await fetchPlaylistPreviews(widget.userEmail);
+      setState(() {
+        cachedPlaylistPreviews = updated;
+      });
+    } catch (e) {
+      print("Failed to refresh playlist previews: $e");
+    }
+  }
 
 
 
@@ -228,116 +253,167 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
 
 
   Widget _buildImageView(ScrollController scrollController) {
-    return Column(
-      key: const ValueKey(1),
+    return Stack(
       children: [
-        const SizedBox(height: 12),
-        Center(
-          child: Container(
-            width: 40,
-            height: 5,
-            decoration: BoxDecoration(
-              color: Colors.grey[600],
-              borderRadius: BorderRadius.circular(10),
+        Column(
+          key: const ValueKey(1),
+          children: [
+            const SizedBox(height: 12),
+            Center(
+              child: Container(
+                width: 40,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey[600],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
             ),
-          ),
-        ),
-        ListTile(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => setState(() => _pageIndex = 0),
-          ),
-          title: Text(
-            _currentPlaylist,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          trailing: Text(
-            "${selectedImages.length} selected",
-            style: const TextStyle(color: Colors.white70, fontSize: 13),
-          ),
-        ),
-        Expanded(
-          child: GridView.builder(
-            controller: scrollController,
-            padding: const EdgeInsets.all(12),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              childAspectRatio: 1,
-            ),
-            itemCount: _playlistImages.length,
-            itemBuilder: (context, index) {
-              final imageUrl = _playlistImages[index];
-              final isSelected = selectedImages.contains(imageUrl);
-
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick(); // 💥 Add this line for light vibration
+            ListTile(
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () async {
+                  await _refreshPlaylistPreviews(); //This re-fetches the updated data
                   setState(() {
-                    isSelected
-                        ? selectedImages.remove(imageUrl)
-                        : selectedImages.add(imageUrl);
+                    _pageIndex = 0;
                   });
                 },
 
-                child: Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: AspectRatio(
-                        aspectRatio: 1,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.grey[800], // fallback if image fails
-                          ),
-                          child: Image.network(
-                            imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                            const Center(
-                              child: Icon(Icons.broken_image, color: Colors.white70),
+              ),
+              title: Text(
+                _currentPlaylist,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              trailing: Text(
+                "${selectedImages.length} selected",
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+            ),
+            Expanded(
+              child: GridView.builder(
+                controller: scrollController,
+                padding: const EdgeInsets.only(left: 12, right: 12, bottom: 70, top: 12), // leave space for the Save button
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 1,
+                ),
+                itemCount: _playlistImages.length,
+                itemBuilder: (context, index) {
+                  final imageUrl = _playlistImages[index];
+                  final isSelected = selectedImages.contains(imageUrl);
+
+                  return GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() {
+                        isSelected
+                            ? selectedImages.remove(imageUrl)
+                            : selectedImages.add(imageUrl);
+                      });
+                    },
+
+                    child: Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: AspectRatio(
+                            aspectRatio: 1,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.grey[800],
+                              ),
+                              child: Image.network(
+                                imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                const Center(
+                                  child: Icon(Icons.broken_image, color: Colors.white70),
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                    if (isSelected)
-                      Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black26,
-                            borderRadius: BorderRadius.circular(12),
+                        if (isSelected)
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black26,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        Positioned(
+                          top: 6,
+                          left: 6,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isSelected
+                                  ? Colors.greenAccent.withOpacity(0.9)
+                                  : Colors.black45,
+                            ),
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(
+                              isSelected ? Icons.check : Icons.circle_outlined,
+                              size: 16,
+                              color: isSelected ? Colors.black : Colors.white70,
+                            ),
                           ),
                         ),
-                      ),
-                    Positioned(
-                      top: 6,
-                      left: 6,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isSelected
-                              ? Colors.greenAccent.withOpacity(0.9)
-                              : Colors.black45,
-                        ),
-                        padding: const EdgeInsets.all(4),
-                        child: Icon(
-                          isSelected ? Icons.check : Icons.circle_outlined,
-                          size: 16,
-                          color: isSelected ? Colors.black : Colors.white70,
-                        ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              );
-            },
-          ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
+        Positioned(
+          bottom: 12,
+          left: 16,
+          right: 16,
+          child: ElevatedButton(
+            onPressed: _hasPlaylistChanged() ? () => _onSavePressed() : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _hasPlaylistChanged() ? Colors.greenAccent : Colors.grey[700],
+              foregroundColor: _hasPlaylistChanged() ? Colors.black : Colors.white54,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text(
+              'Save Playlist',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        )
       ],
     );
+
   }
+  void _onSavePressed() async {
+    final selectedFilenames = selectedImages.map((url) => url.split('/').last).toList();
+
+    final success = await updatePlaylist(
+      userEmail: widget.userEmail,
+      playlistFileName: _currentPlaylist,
+      selectedFilenames: selectedFilenames,
+    );
+
+    if (success) {
+      originalPlaylistImages = selectedFilenames.toSet();
+      setState(() {}); // Refresh UI to disable Save button
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("✅ Playlist updated")),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("❌ Failed to update playlist")),
+      );
+    }
+  }
+
 
 
 }
