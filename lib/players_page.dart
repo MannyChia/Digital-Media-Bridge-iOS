@@ -16,7 +16,6 @@ import './main.dart';
 import './screens_page.dart';
 import './dmb_functions.dart';
 import 'package:flutter/material.dart';
-import 'package:animations/animations.dart';
 import 'package:flutter/services.dart';
 
 /*
@@ -690,12 +689,12 @@ class _PlayersPageState extends State<PlayersPage> {
                       MenuAnchor(
                         alignmentOffset: const Offset(190, 0),
                         style: MenuStyle(
-                          backgroundColor: MaterialStateProperty.all(Color.fromRGBO(242, 242, 247, 0.85)), // iOS-like w/ transparency
-                          elevation: MaterialStateProperty.all(0),
-                          shape: MaterialStateProperty.all(
+                          backgroundColor: WidgetStateProperty.all(Color.fromRGBO(242, 242, 247, 0.85)), // iOS-like w/ transparency
+                          elevation: WidgetStateProperty.all(0),
+                          shape: WidgetStateProperty.all(
                             RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          padding: MaterialStateProperty.all(EdgeInsets.zero),
+                          padding: WidgetStateProperty.all(EdgeInsets.zero),
                           visualDensity: VisualDensity.compact,
                         ),
                         builder: (BuildContext context, MenuController controller, Widget? child) {
@@ -738,9 +737,10 @@ class _PlayersPageState extends State<PlayersPage> {
                               Navigator.pop(context);
                               _takePhoto();
                             },
+
                             style: ButtonStyle(
-                              padding: MaterialStateProperty.all(const EdgeInsets.symmetric(vertical: 7, horizontal: 12)),
-                              overlayColor: MaterialStateProperty.all(Colors.grey[300]),
+                              padding: WidgetStateProperty.all(const EdgeInsets.symmetric(vertical: 7, horizontal: 12)),
+                              overlayColor: WidgetStateProperty.all(Colors.grey[300]),
                             ),
                             child: const Row(
                               children: [
@@ -757,8 +757,8 @@ class _PlayersPageState extends State<PlayersPage> {
                               _chooseFromGallery();
                             },
                             style: ButtonStyle(
-                              padding: MaterialStateProperty.all(const EdgeInsets.symmetric(vertical: 7, horizontal: 12)),
-                              overlayColor: MaterialStateProperty.all(Colors.grey[300]),
+                              padding: WidgetStateProperty.all(const EdgeInsets.symmetric(vertical: 7, horizontal: 12)),
+                              overlayColor: WidgetStateProperty.all(Colors.grey[300]),
                             ),
                             child: const Row(
                               children: [
