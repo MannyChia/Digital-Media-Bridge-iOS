@@ -13,9 +13,7 @@ import './players_page.dart';
 import './screens_page.dart';
 import './dmb_functions.dart';
 
-//version 2.0
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'package:flutter/widgets.dart'; // or material.dart depending on your structure
 
 //This is the global vars used to know which "page" the user
 //selected (i.e., Players or Screens)
@@ -33,9 +31,18 @@ dynamic loginPassword = "none";
 const systemStorage = FlutterSecureStorage();
 
 void main() {
-  runApp(const DmbApp());
+  WidgetsFlutterBinding.ensureInitialized();
 
-  ///<<-- *** START MAIN APP HERE!!!!
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.dumpErrorToConsole(details);
+  };
+
+  runZonedGuarded(() {
+    //most important stuff
+    runApp(const DmbApp());
+  }, (error, stackTrace) {
+    print("Caught zoned error: $error");
+  });
 }
 
 /// **********************************************************
@@ -190,34 +197,7 @@ class _BypassloginPageState extends State<BypassloginPage> {
   }
 
 
-  // void _getBypassLogin() {
-  //   ///*** GO TO THE DMB SERVER TO GET A LIST OF MEDIA PLAYERS AND SCREENS
-  //   /// WITH THE STORED USERNAME & PASSWORD
-  //   getUserData(storedUsername, storedPassword, "bypass-login").then((result) {
-  //     if (result == true) {
-  //       //if good, then load the 'Media Players' view
-  //
-  //       //set the global logged-in username & password to the ones stored in storage
-  //       loginUsername = storedUsername;
-  //       loginPassword = storedPassword;
-  //
-  //       // preloadPlaylistPreviews(loginUsername);
-  //       Navigator.push(
-  //         context,
-  //         MaterialPageRoute(builder: (context) => const HomePage()),
-  //       ).then((context) {
-  //         _getBypassLogin(); //<<-- GET A NEW LIST OF DMB MEDIA PLAYERS (e.g., REFRESH)
-  //       });
-  //     } else {
-  //       //else, error getting the data from the DMB server with the username & password from 'storage'
-  //       setState(() {
-  //         //tell the user
-  //         bypassMsg =
-  //         "Login Failed.\nPlease logout and then login again with the correct username & password";
-  //       });
-  //     }
-  //   });
-  // }
+
 
   @override
   Widget build(BuildContext context) {
@@ -406,7 +386,6 @@ class LoginPage extends StatelessWidget {
                         );
                       }
                     },
-
                     child: const Text('Log In'),
                   ),
                 ),
@@ -432,6 +411,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+
 
   void _updateTitle(title, subTitle, selIndex) {
     setState(() {
