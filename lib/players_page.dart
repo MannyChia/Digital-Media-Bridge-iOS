@@ -523,10 +523,19 @@ class _PlayersPageState extends State<PlayersPage> {
       ),
       isScrollControlled: true,
       builder: (_) => Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: MediaQuery.of(context).viewInsets.add(const EdgeInsets.all(16)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Container(
+              width: 40,
+              height: 5,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[700],
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
             const Text(
               "Upload Image",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
@@ -534,7 +543,16 @@ class _PlayersPageState extends State<PlayersPage> {
             const SizedBox(height: 12),
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.file(imageFile),
+              child: Container(
+                color: Colors.grey[800],
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: Image.file(
+                    imageFile,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 20),
             Row(
@@ -548,17 +566,48 @@ class _PlayersPageState extends State<PlayersPage> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.greenAccent,
+                    foregroundColor: Colors.black,
                   ),
                   onPressed: () async {
                     Navigator.of(context).pop();
-                    bool success = await uploadImage(imageFile, "mannychia7@gmail.com");
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          success ? "Image uploaded successfully" : "Image upload failed",
+
+                    // Call uploadImage and handle result
+                    final result = await uploadImage(imageFile, "mannychia7@gmail.com");
+
+                    if (!result['success']) {
+                      final String message = result['message'];
+
+                      showDialog(
+                        context: context,
+                        barrierColor: Colors.black.withOpacity(0.5),
+                        builder: (_) => AlertDialog(
+                          backgroundColor: const Color(0xFF1E1E1E),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          title: Text(
+                            message.contains('20')
+                                ? "Upload Limit Reached"
+                                : "Upload Failed",
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                          content: Text(
+                            message.contains('20')
+                                ? "You cannot upload more than 20 images. Please delete one first."
+                                : message,
+                            style: const TextStyle(color: Colors.white70),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text("OK", style: TextStyle(color: Colors.greenAccent)),
+                            ),
+                          ],
                         ),
-                      ),
-                    );
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("✅ Image uploaded successfully")),
+                      );
+                    }
                   },
                   child: const Text("Upload"),
                 ),
@@ -569,6 +618,8 @@ class _PlayersPageState extends State<PlayersPage> {
       ),
     );
   }
+
+
   Future<void> _takePhoto() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.camera);
     if (pickedFile != null) {

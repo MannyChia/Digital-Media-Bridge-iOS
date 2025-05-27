@@ -82,7 +82,7 @@ Future<List<String>> fetchAllUserImages(String userEmail) async {
 // }
 
 //TODO remove this api! this is not the main api
-Future<bool> uploadImage(File imageFile, String username) async {
+Future<Map<String, dynamic>> uploadImage(File imageFile, String username) async {
   var uri = Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/upload');
 
   var request = http.MultipartRequest('POST', uri)
@@ -92,27 +92,32 @@ Future<bool> uploadImage(File imageFile, String username) async {
       await http.MultipartFile.fromPath(
         'file',
         imageFile.path,
-        contentType: MediaType('image', 'jpeg'), // or image/png if needed
+        contentType: MediaType('image', 'jpeg'), // or adjust if needed
       ),
     );
 
   try {
     var response = await request.send();
-
     final responseBody = await response.stream.bytesToString();
-    print("🔽 Server Response Body: $responseBody");
+    final decoded = json.decode(responseBody);
 
-    if (response.statusCode == 200) {
-      return true; // Still return true unless you want to parse the body for specific errors
+    print("📦 Server Response Body: $decoded");
+
+    if (response.statusCode == 200 && decoded['status'] == 'success') {
+      return {'success': true, 'message': 'Image uploaded successfully'};
     } else {
-      print("Upload failed with status: ${response.statusCode}");
-      return false;
+      return {
+        'success': false,
+        'message': decoded['message'] ?? 'Unknown error occurred'
+      };
     }
   } catch (e) {
     print("Upload exception: $e");
-    return false;
+    return {'success': false, 'message': 'Upload failed with exception'};
   }
 }
+
+
 
 
 
@@ -220,11 +225,20 @@ Future<bool> updatePlaylist({
       body: body,
     );
 
-    print("🔄 Server response: ${response.body}");
+    print("🔄 Server status: ${response.statusCode}");
+    print("📥 Server response: ${response.body}");
 
     if (response.statusCode == 200) {
       return true;
     } else {
+      // Optionally decode the error message if it's in JSON format
+      try {
+        final decoded = json.decode(response.body);
+        print("⚠️ Server error message: ${decoded['message']}");
+      } catch (_) {
+        // If it's not valid JSON
+        print("⚠️ Server returned non-JSON error");
+      }
       return false;
     }
   } catch (e) {
@@ -232,6 +246,40 @@ Future<bool> updatePlaylist({
     return false;
   }
 }
+
+
+// Future<bool> updatePlaylist({
+//   required String userEmail,
+//   required String playlistFileName,
+//   required List<String> selectedFilenames,
+// }) async {
+//   final url = Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/file/updateplaylist');
+//
+//   final body = jsonEncode({
+//     "userName": userEmail,
+//     "fileName": playlistFileName,
+//     "images": selectedFilenames,
+//   });
+//
+//   try {
+//     final response = await http.post(
+//       url,
+//       headers: {'Content-Type': 'application/json'},
+//       body: body,
+//     );
+//
+//     print("🔄 Server response: ${response.body}");
+//
+//     if (response.statusCode == 200) {
+//       return true;
+//     } else {
+//       return false;
+//     }
+//   } catch (e) {
+//     print("❌ Update playlist exception: $e");
+//     return false;
+//   }
+// }
 
 
 /// *************************************************
