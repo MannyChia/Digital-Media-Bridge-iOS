@@ -13,6 +13,7 @@ import './main.dart';
 import './screens_page.dart';
 import './dmb_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:dropdown_button2/dropdown_button2.dart';
 
 /*
 */
@@ -47,6 +48,7 @@ class PlayersPage extends StatefulWidget {
   _PlayersPageState createState() => _PlayersPageState();
 }
 
+// main class that holds everything until line 611
 class _PlayersPageState extends State<PlayersPage> {
   late String pageTitle;
   late String pageSubTitle;
@@ -91,7 +93,6 @@ class _PlayersPageState extends State<PlayersPage> {
       ),
     );
   }
-
 
   //As the list of players is being build, this function will determine
   //whether we show a 'regular' color button or a 'red' one because
@@ -208,6 +209,8 @@ class _PlayersPageState extends State<PlayersPage> {
     }
   }
 
+  final List<String> uploadOptions = ['Camera', 'Gallery', 'Create Image'];
+  String? selectedOption;
 
   @override
   Widget build(BuildContext context) {
@@ -217,13 +220,14 @@ class _PlayersPageState extends State<PlayersPage> {
         child: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment.topLeft,
+              begin: Alignment.topRight,
               end: Alignment.bottomRight,
               colors: <Color>[
                 Colors.blueGrey,
                 Color.fromRGBO(10, 85, 163, 1.0),
               ],
             ),
+            // color: Color.fromRGBO(10, 85, 163, 1.0)
           ),
           child: SafeArea(
             child: Column(
@@ -232,7 +236,7 @@ class _PlayersPageState extends State<PlayersPage> {
                 // Top Section
                 Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const Padding(
                         padding: EdgeInsets.all(16.0),
@@ -267,104 +271,97 @@ class _PlayersPageState extends State<PlayersPage> {
                             splashColor: Colors.white24,
                             highlightColor: Colors.white10,
                             child: ListTile(
-                              leading: const Icon(Icons.tv_outlined, color: Colors.white),
-                              title: const Text("Screens", style: TextStyle(color: Colors.white)),
+                              leading: const Icon(Icons.tv_outlined, color: Colors.orange),
+                              title: const Text("My Screens", style: TextStyle(color: Colors.white, fontSize: 20)),
                             ),
                           ),
                         ),
                       ),
 
 
+                      // ADD DUPLICATE UPLOAD IMAGE DROP DOWN BUTTON - BILLY
+                      const Divider(color: Colors.black),
 
-                      const Divider(),
-
-                      MenuAnchor(
-                        alignmentOffset: const Offset(190, 0),
-                        style: MenuStyle(
-                          backgroundColor: MaterialStateProperty.all(Color.fromRGBO(242, 242, 247, 0.85)), // iOS-like w/ transparency
-                          elevation: MaterialStateProperty.all(0),
-                          shape: MaterialStateProperty.all(
-                            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      DropdownButton2<String>(
+                        isExpanded: true,
+                        customButton: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          height: 60,
+                          width: 350,
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          padding: MaterialStateProperty.all(EdgeInsets.zero),
-                          visualDensity: VisualDensity.compact,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.upload, color: Colors.orange),
+                              const SizedBox(width: 8),
+                              const Text(
+                                "Upload Image",
+                                style: TextStyle(fontSize: 20, color: Colors.white),
+                              ),
+                              const Spacer(),
+                              const Icon(Icons.arrow_drop_down, color: Colors.white), // <-- Arrow icon here
+                            ],
+                          ),
                         ),
-                        builder: (BuildContext context, MenuController controller, Widget? child) {
-                          return StatefulBuilder(
-                            builder: (context, setState) {
-                              return Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: () {
-                                    controller.isOpen ? controller.close() : controller.open();
-                                    setState(() {}); // rebuild to rotate the arrow
-                                  },
-                                  borderRadius: BorderRadius.circular(8),
-                                  splashColor: Colors.white24,
-                                  highlightColor: Colors.white10,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.upload, color: Colors.white),
-                                        const SizedBox(width: 12),
-                                        const Text("Upload Image", style: TextStyle(color: Colors.white, fontSize: 16)),
-                                        const Spacer(),
-                                        AnimatedRotation(
-                                          duration: const Duration(milliseconds: 200),
-                                          turns: controller.isOpen ? 0.25 : 0.0, // 90° when open
-                                          child: const Icon(Icons.arrow_right, color: Colors.white),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
+                        items: uploadOptions.map((String value) {
+                          IconData iconData;
+                          if (value == 'Camera') {
+                            iconData = Icons.camera_alt;
+                          } else if (value == 'Gallery') {
+                            iconData = Icons.photo_library;
+                          } else if (value == 'Create Image') {
+                            iconData = Icons.auto_awesome;
+                          } else {
+                            iconData = Icons.help_outline;
+                          }
+
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Row(
+                              children: [
+                                Icon(iconData, color: Colors.orange),
+                                const SizedBox(width: 8),
+                                Text(value),
+                              ],
+                            ),
                           );
+                        }).toList(),
+                        value: selectedOption,
+                        onChanged: (String? newValue) async {
+                          if (newValue == 'Camera') {
+                            final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+                            if (image != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Image selected: ${image.name}')),
+                              );
+                            }
+                          } else if (newValue == 'Gallery') {
+                            final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+                            if (image != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Image selected: ${image.name}')),
+                              );
+                            }
+                          } else if (newValue == 'Create Image') {
+                            // implement logic for AI generated photo
+                          }
                         },
-                        menuChildren: [
-                          MenuItemButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                              _takePhoto();
-                            },
-                            style: ButtonStyle(
-                              padding: MaterialStateProperty.all(const EdgeInsets.symmetric(vertical: 7, horizontal: 12)),
-                              overlayColor: MaterialStateProperty.all(Colors.grey[300]),
-                            ),
-                            child: const Row(
-                              children: [
-                                Icon(Icons.camera_alt, size: 18, color: Colors.black87),
-                                SizedBox(width: 8),
-                                Text("Camera", style: TextStyle(fontSize: 14, color: Colors.black87)),
-                              ],
-                            ),
-                          ),
-                          const Divider(height: 1, color: Colors.grey),
-                          MenuItemButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                              _chooseFromGallery();
-                            },
-                            style: ButtonStyle(
-                              padding: MaterialStateProperty.all(const EdgeInsets.symmetric(vertical: 7, horizontal: 12)),
-                              overlayColor: MaterialStateProperty.all(Colors.grey[300]),
-                            ),
-                            child: const Row(
-                              children: [
-                                Icon(Icons.photo_library, size: 18, color: Colors.black87),
-                                SizedBox(width: 8),
-                                Text("Gallery", style: TextStyle(fontSize: 14, color: Colors.black87)),
-                              ],
-                            ),
-                          ),
-                        ],
+                        buttonStyleData: const ButtonStyleData(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          height: 60,
+                          width: 200,
+                        ),
+                        dropdownStyleData: const DropdownStyleData(
+                          maxHeight: 200,
+                        ),
+                        menuItemStyleData: const MenuItemStyleData(
+                          height: 40,
+                        ),
                       ),
 
-
-
-
+                      const Divider(color: Colors.black),
                     ],
                   ),
                 ),
@@ -374,7 +371,6 @@ class _PlayersPageState extends State<PlayersPage> {
                   padding: const EdgeInsets.only(bottom: 5.0),
                   child: Column(
                     children: [
-                      const Divider(color: Colors.white54),
                       Material(
                         color: Colors.transparent,
                         child: InkWell(
@@ -386,7 +382,7 @@ class _PlayersPageState extends State<PlayersPage> {
                             _userLogout();
                           },
                           child: const ListTile(
-                            leading: Icon(Icons.logout, color: Colors.white),
+                            leading: Icon(Icons.logout, color: Colors.orange),
                             title: Text("Logout", style: TextStyle(color: Colors.white)),
                           ),
                         ),
@@ -420,7 +416,7 @@ class _PlayersPageState extends State<PlayersPage> {
               alignment: Alignment.center,
               child: Container(
                 //width: 100,
-                color: Colors.blueGrey,
+                color: Colors.transparent,
                 child: Card(
 
                   child: Padding(
@@ -502,7 +498,7 @@ class _PlayersPageState extends State<PlayersPage> {
           const Divider(
 
             ///the divider between the items
-            color: Colors.blueGrey,
+            color: Colors.black,
           ),
         ),
       ),
