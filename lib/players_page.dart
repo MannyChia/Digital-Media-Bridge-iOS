@@ -8,10 +8,10 @@
 // for camera and gallery
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-
 import './main.dart';
 import './screens_page.dart';
 import './dmb_functions.dart';
+import './ai_image_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 
@@ -209,6 +209,7 @@ class _PlayersPageState extends State<PlayersPage> {
     }
   }
 
+
   final List<String> uploadOptions = ['Camera', 'Gallery', 'Create Image'];
   String? selectedOption;
 
@@ -345,7 +346,16 @@ class _PlayersPageState extends State<PlayersPage> {
                               );
                             }
                           } else if (newValue == 'Create Image') {
-                            // implement logic for AI generated photo
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const WelcomePage(
+                                    pageTitle: "AI Image Creation",
+                                    pageSubTitle: "Welcome to the Future",
+                                  ),
+                                ),
+                              );
                           }
                         },
                         buttonStyleData: const ButtonStyleData(

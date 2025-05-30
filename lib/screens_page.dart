@@ -51,7 +51,6 @@ class _ScreensPageState extends State<ScreensPage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       // **********
       /* THE TITLE OF THE 'SCREENS' PAGE */
