@@ -220,15 +220,7 @@ class _PlayersPageState extends State<PlayersPage> {
       endDrawer: Drawer(
         child: Container(
           decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topRight,
-              end: Alignment.bottomRight,
-              colors: <Color>[
-                Colors.blueGrey,
-                Color.fromRGBO(10, 85, 163, 1.0),
-              ],
-            ),
-            // color: Color.fromRGBO(10, 85, 163, 1.0)
+            color: Colors.black87,
           ),
           child: SafeArea(
             child: Column(
@@ -280,7 +272,7 @@ class _PlayersPageState extends State<PlayersPage> {
                       ),
 
 
-                      // ADD DUPLICATE UPLOAD IMAGE DROP DOWN BUTTON - BILLY
+                      // UPLOAD IMAGE DROP DOWN BUTTON - BILLY
                       const Divider(color: Colors.black),
 
                       DropdownButton2<String>(
@@ -295,8 +287,9 @@ class _PlayersPageState extends State<PlayersPage> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.upload, color: Colors.orange),
                               const SizedBox(width: 8),
+                              const Icon(Icons.upload, color: Colors.orange),
+                              const SizedBox(width: 15),
                               const Text(
                                 "Upload Image",
                                 style: TextStyle(fontSize: 20, color: Colors.white),
@@ -324,7 +317,9 @@ class _PlayersPageState extends State<PlayersPage> {
                               children: [
                                 Icon(iconData, color: Colors.orange),
                                 const SizedBox(width: 8),
-                                Text(value),
+                                Text(
+                                    value,
+                                    style: const TextStyle(color: Colors.white)),
                               ],
                             ),
                           );
@@ -365,6 +360,9 @@ class _PlayersPageState extends State<PlayersPage> {
                         ),
                         dropdownStyleData: const DropdownStyleData(
                           maxHeight: 200,
+                          decoration: BoxDecoration(
+                            color: Color(0xFF424242),
+                          )
                         ),
                         menuItemStyleData: const MenuItemStyleData(
                           height: 40,
@@ -397,11 +395,9 @@ class _PlayersPageState extends State<PlayersPage> {
                           ),
                         ),
                       ),
-
                     ],
                   ),
                 ),
-
               ],
             ),
           ),
@@ -415,7 +411,6 @@ class _PlayersPageState extends State<PlayersPage> {
       body:
       RefreshIndicator(
         onRefresh: _refreshData,
-
         ///*** // trigger the _refreshData function when the user pulls down
         child:
         ListView.separated(
@@ -428,12 +423,10 @@ class _PlayersPageState extends State<PlayersPage> {
                 //width: 100,
                 color: Colors.transparent,
                 child: Card(
-
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                     ),
                     child: InkWell(
-
                         customBorder: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -528,10 +521,11 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
   return AppBar(
     flexibleSpace: Container(
       decoration: const BoxDecoration(
+        color: Color(0xFF424242),
         gradient: LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: <Color>[Colors.blueGrey, Color.fromRGBO(10, 85, 163, 1.0)],
+          colors: <Color>[Colors.black87, Color.fromRGBO(10, 85, 163, 1.0)],
         ),
       ),
     ),
@@ -551,7 +545,7 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
           pageSubTitle,
           style: const TextStyle(
             fontStyle: FontStyle.italic,
-            color: Colors.white70,
+            color: Colors.white,
             fontSize: 14,
           ),
         ),
