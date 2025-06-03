@@ -68,7 +68,7 @@ class _ScreensPageState extends State<ScreensPage> {
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
                 colors: <Color>[Colors.black87, Color.fromRGBO(10, 85, 163, 1.0)]),  //DMB BLUE
-          ),
+            ),
         ),
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
@@ -131,17 +131,18 @@ class _ScreensPageState extends State<ScreensPage> {
                   border: Border.all(
                       width: 1, //
                       //color: const Color.fromRGBO(10, 85, 163, 1.0)
-                      color: Colors.blueGrey
+                      color: Colors.white,
                   ),
                   borderRadius:const BorderRadius.all(Radius.circular(8.0)),
-                  gradient: const LinearGradient(
-                    begin: AlignmentDirectional.topCenter,
-                    end: AlignmentDirectional.bottomCenter,
-                    colors: [
-                      Color.fromRGBO(10, 85, 163, 1.0),
-                      Colors.blueGrey,
-                    ],
-                  ),
+                  // gradient: const LinearGradient(
+                  //   begin: AlignmentDirectional.topCenter,
+                  //   end: AlignmentDirectional.bottomCenter,
+                  //   colors: [
+                  //     Color.fromRGBO(10, 85, 163, 1.0),
+                  //     Colors.blueGrey,
+                  //   ],
+                  // ),
+                  color: Color.fromRGBO(10, 85, 163, 1.0),
                 ),
                 child: Center(child: Text(dmbScreens[index].name,
                     style: const TextStyle(fontWeight: FontWeight.bold, color:Colors.white))),
@@ -150,7 +151,7 @@ class _ScreensPageState extends State<ScreensPage> {
 
         },
         separatorBuilder: (context, index) => const Divider(  ///the divider between the items
-          color: Colors.blueGrey,
+          color: Colors.transparent,
         ),
       ),
     );
