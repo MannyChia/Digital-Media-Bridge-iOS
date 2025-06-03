@@ -136,10 +136,10 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.6,
-      maxChildSize: 0.9,
-      minChildSize: 0.3,
+        expand: false,
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        minChildSize: 0.3,
         builder: (context, scrollController) {
           return Container(
             decoration: const BoxDecoration(
@@ -640,7 +640,7 @@ class _PlayersPageState extends State<PlayersPage> {
     }
   }
 
-  void _showPlaylistBottomSheet(BuildContext context, String userEmail) {
+  Future<void> _showPlaylistBottomSheet(BuildContext context, String userEmail) async {
     if (!hasLoadedPlaylistPreviews || cachedPlaylistPreviews.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Playlists are still loading...")),
@@ -648,7 +648,7 @@ class _PlayersPageState extends State<PlayersPage> {
       return;
     }
 
-    showModalBottomSheet(
+    await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.grey[900],
@@ -658,7 +658,19 @@ class _PlayersPageState extends State<PlayersPage> {
       builder: (context) => PlaylistSheet(userEmail: userEmail),
     );
 
+    // 🟢 Refresh preview after sheet is dismissed
+    try {
+      cachedPlaylistPreviews = await fetchPlaylistPreviews(userEmail);
+      hasLoadedPlaylistPreviews = true;
+    } catch (e) {
+      print("❌ Failed to refresh playlist previews: $e");
+    }
   }
+
+
+
+
+
 
 
 
@@ -836,10 +848,16 @@ class _PlayersPageState extends State<PlayersPage> {
                         //     );
                         //   }
                         // },
-                        onTap: () {
-                          Navigator.pop(context);
-                          _showPlaylistBottomSheet(context, "mannychia7@gmail.com");
+                        onTap: () async {
+                          Navigator.pop(context); // Close the drawer first
+                          await _showPlaylistBottomSheet(context, "mannychia7@gmail.com");
+
+                          // Then refresh and rebuild
+                          await preloadPlaylistPreviews("mannychia7@gmail.com");
+                          setState(() {}); // Rebuild UI with updated cachedPlaylistPreviews
                         },
+
+
 
 
                       ),
