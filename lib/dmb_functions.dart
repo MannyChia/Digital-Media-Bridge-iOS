@@ -141,30 +141,64 @@ Future<List<String>> getUserPlaylists(String email) async {
   }
 }
 
+// Future<PlaylistPreview> parsePlaylistFile(String playlistName, String userEmail) async {
+//   final url = 'https://digitalmediabridge.tv/screen-builder-test/assets/content/$userEmail/others/$playlistName';
+//   final response = await http.get(Uri.parse(url));
+//
+//   if (response.statusCode == 200) {
+//     final lines = LineSplitter().convert(response.body)
+//         .where((line) => line.trim().isNotEmpty)
+//         .toList();
+//
+//     if (lines.isEmpty) {
+//       throw Exception('Playlist file is empty');
+//     }
+//
+//     final firstImageName = lines.first.split(',').first.trim();
+//     final itemCount = lines.length;
+//
+//     final previewImageUrl =
+//         'https://digitalmediabridge.tv/screen-builder-test/assets/content/$userEmail/images/$firstImageName';
+//
+//     return PlaylistPreview(
+//       name: playlistName,
+//       previewImageUrl: previewImageUrl,
+//       itemCount: itemCount,
+//     );
+//   } else {
+//     throw Exception('Failed to load playlist file: $playlistName');
+//   }
+// }
+
 Future<PlaylistPreview> parsePlaylistFile(String playlistName, String userEmail) async {
-  final url = 'https://digitalmediabridge.tv/screen-builder-test/assets/content/$userEmail/others/$playlistName';
+  final url =
+      'https://digitalmediabridge.tv/screen-builder-test/assets/content/$userEmail/others/$playlistName';
   final response = await http.get(Uri.parse(url));
 
   if (response.statusCode == 200) {
-    final lines = LineSplitter().convert(response.body)
+    final lines = LineSplitter()
+        .convert(response.body)
         .where((line) => line.trim().isNotEmpty)
         .toList();
 
-    if (lines.isEmpty) {
-      throw Exception('Playlist file is empty');
+    if (lines.isNotEmpty) {
+      final firstImageName = lines.first.split(',').first.trim();
+      final itemCount = lines.length;
+      final previewImageUrl =
+          'https://digitalmediabridge.tv/screen-builder-test/assets/content/$userEmail/images/$firstImageName';
+      return PlaylistPreview(
+        name: playlistName,
+        previewImageUrl: previewImageUrl,
+        itemCount: itemCount,
+      );
+    } else {
+      // ← empty playlist: return a null previewImageUrl and count = 0
+      return PlaylistPreview(
+        name: playlistName,
+        previewImageUrl: null,
+        itemCount: 0,
+      );
     }
-
-    final firstImageName = lines.first.split(',').first.trim();
-    final itemCount = lines.length;
-
-    final previewImageUrl =
-        'https://digitalmediabridge.tv/screen-builder-test/assets/content/$userEmail/images/$firstImageName';
-
-    return PlaylistPreview(
-      name: playlistName,
-      previewImageUrl: previewImageUrl,
-      itemCount: itemCount,
-    );
   } else {
     throw Exception('Failed to load playlist file: $playlistName');
   }

@@ -219,15 +219,27 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                         child: Container(
                           width: double.infinity,
                           color: Colors.grey[700],
-                          child: Image.network(
-                            preview.previewImageUrl,
+                          child: preview.previewImageUrl != null
+                              ? Image.network(
+                            preview.previewImageUrl!,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) => const Center(
                               child: Icon(Icons.broken_image, color: Colors.white70),
                             ),
+                          )
+                              : Container(
+                            color: Colors.grey[800],
+                            child: const Center(
+                              child: Icon(
+                                Icons.image_not_supported,
+                                color: Colors.white70,
+                                size: 40,
+                              ),
+                            ),
                           ),
                         ),
                       ),
+
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -641,7 +653,7 @@ class _PlayersPageState extends State<PlayersPage> {
   }
 
   Future<void> _showPlaylistBottomSheet(BuildContext context, String userEmail) async {
-    if (!hasLoadedPlaylistPreviews || cachedPlaylistPreviews.isEmpty) {
+    if (!hasLoadedPlaylistPreviews) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Playlists are still loading...")),
       );
