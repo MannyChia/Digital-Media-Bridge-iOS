@@ -3,49 +3,56 @@ import './dmb_functions.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:typed_data';
+import 'package:permission_handler/permission_handler.dart';
+// import 'package:image_gallery_saver/image_gallery_saver.dart';
 
+
+/// landing page of the Flutter App
+/// contains the logic for the ai image generation page
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key, this.pageTitle, this.pageSubTitle});
-
   final String? pageTitle;
   final String? pageSubTitle;
 
   @override
   _WelcomePageState createState() => _WelcomePageState();
 }
-
+/// implementation of WelcomePage
 class _WelcomePageState extends State<WelcomePage> {
   late String pageTitle;
   late String pageSubTitle;
-  String _savedText = '';
-  String? _generatedImageUrl;
-  bool _isLoading = false;
-  final TextEditingController _controller = TextEditingController();
+  String? _savedText; // if this breaks set it to the empty string
+  String? _generatedImageUrl; // URL to the remote server where the AI image is kept
+  bool _isLoading = false; // true between the time that we submitted our query for the image and when we receive feedback
+  final TextEditingController _controller = TextEditingController(); // needed for accepting text input
 
+  ///  needed to perform set up tasks
+  ///  called when the State object is created
   @override
   void initState() {
     super.initState();
     _updateTitle();
   }
 
+  /// updates the Title of the page
   void _updateTitle() {
     pageTitle = widget.pageTitle ?? "Welcome";
     pageSubTitle = widget.pageSubTitle ?? "";
   }
 
+  /// logs out the user
+  /// assumes confirmLogout is defined in dmb_functions.dart
   void _userLogout() {
-    confirmLogout(context); // Assumes confirmLogout is defined in dmb_functions.dart
+    confirmLogout(context);
   }
 
-  void _saveText() {
-    setState(() {
-      _savedText = _controller.text;
-    });
-  }
-
-  Future<void> _saveText2() async {
+  /// generates photo using Stability.ai API key
+  /// edit this function if we change services (Leonardo, Open AI, etc)
+  Future<void> _getAIPhoto() async {
     final prompt = _controller.text.trim();
 
+    // Check if dotenv is initialized
     if (!dotenv.isInitialized) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Environment variables not loaded')),
@@ -53,8 +60,9 @@ class _WelcomePageState extends State<WelcomePage> {
       return;
     }
 
-    final apiKey = dotenv.env['STABILITY_API_KEY'];
+    final apiKey = dotenv.env['LEONARDO_API_KEY'];
 
+    // Validate prompt
     if (prompt.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Please enter a prompt')),
@@ -62,6 +70,7 @@ class _WelcomePageState extends State<WelcomePage> {
       return;
     }
 
+    // Validate API key
     if (apiKey == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('API key not found in .env file')),
@@ -71,73 +80,136 @@ class _WelcomePageState extends State<WelcomePage> {
 
     setState(() {
       _savedText = prompt;
-      _isLoading = true; // Start loading
+      _isLoading = true;
     });
 
-    final url = Uri.parse('https://api.stability.ai/v2beta/stable-image/generate/core');
+    final url = Uri.parse('https://cloud.leonardo.ai/api/rest/v1/generations');
 
     try {
-      var request = http.MultipartRequest('POST', url)
-        ..headers['Authorization'] = 'Bearer $apiKey'
-        ..headers['Accept'] = 'application/json'
-        ..fields['prompt'] = prompt
-        ..fields['output_format'] = 'png';
+      final headers = {
+        'Authorization': 'Bearer $apiKey',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      };
 
-      final response = await request.send();
-      final responseBody = await http.Response.fromStream(response);
+      final body = jsonEncode({
+        'prompt': prompt,
+        'modelId': 'de7d3faf-762f-48e0-b3b7-9d0ac3a3fcf3', // Phoenix 1.0 model
+        'num_images': 1,
+        'width': 1536,
+        'height': 864,
+      });
+
+      // Initiate image generation
+      final response = await http.post(url, headers: headers, body: body);
 
       if (response.statusCode == 200) {
-        final responseBodyString = responseBody.body;
-        print('API Response: $responseBodyString');
-        final data = jsonDecode(responseBodyString);
-        final base64String = data['image']?.toString();
-        print('Base64 String Length: ${base64String?.length ?? 0}');
-        print('Base64 Sample: ${base64String?.substring(0, base64String != null && base64String.length > 100 ? 100 : base64String?.length ?? 0)}...');
+        final data = jsonDecode(response.body);
+        final generationId = data['sdGenerationJob']?['generationId'];
 
-        if (base64String == null || base64String.isEmpty) {
-          print('Error: No valid image data found in response');
+        if (generationId == null) {
           setState(() {
             _isLoading = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('No valid image data received')),
+            SnackBar(content: Text('No generation ID received')),
           );
           return;
         }
 
-        try {
-          // Validate base64 string
-          base64Decode(base64String.replaceFirst(RegExp(r'^data:image/[^;]+;base64,'), ''));
-          setState(() {
-            _generatedImageUrl = base64String;
-            _isLoading = false;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Image generated successfully')),
-          );
+        // Poll for generation result
+        final pollUrl = Uri.parse('https://cloud.leonardo.ai/api/rest/v1/generations/$generationId');
+        bool isCompleted = false;
+        String imageUrl = "";
 
-          // Navigate to ImageResultScreen
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ImageResultScreen(
-                imageUrl: _generatedImageUrl!,
-                onEdit: () {}, // Implement edit logic if needed
-                onAccept: () {}, // Implement accept logic if needed
-              ),
-            ),
-          );
-        } catch (e) {
-          print('Base64 Decode Error: $e');
+        // Poll until the generation is complete (max 30 seconds)
+        for (int i = 0; i < 30; i++) {
+          await Future.delayed(Duration(seconds: 1));
+          final pollResponse = await http.get(pollUrl, headers: headers);
+
+          if (pollResponse.statusCode == 200) {
+            final pollData = jsonDecode(pollResponse.body);
+            final status = pollData['generations_by_pk']?['status'];
+
+            if (status == 'COMPLETE') {
+              isCompleted = true;
+              imageUrl = pollData['generations_by_pk']?['generated_images']?[0]?['url'];
+              break;
+            } else if (status == 'FAILED') {
+              setState(() {
+                _isLoading = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Image generation failed')),
+              );
+              return;
+            }
+          } else {
+            print('Poll Error: ${pollResponse.statusCode} - ${pollResponse.body}');
+          }
+        }
+
+        if (!isCompleted || imageUrl == null) {
           setState(() {
             _isLoading = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Invalid image data received: $e')),
+            SnackBar(content: Text('Image generation timed out or no image received')),
           );
+          return;
         }
+
+        // Update state with the image URL
+        setState(() {
+          _generatedImageUrl = imageUrl;
+          _isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Image generated successfully')),
+        );
+
+        // Navigate to ImageResultScreen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ImageResultScreen(
+              imageUrl: _generatedImageUrl!,
+              onEdit: () {
+                // Implement edit logic if needed
+              },
+              onAccept: () async {
+                // Optionally download and save the image
+                try {
+                  final imageResponse = await http.get(Uri.parse(imageUrl));
+                  if (imageResponse.statusCode == 200) {
+                    // Save to gallery (uncomment and implement if needed)
+                    /*
+                  final imageBytes = imageResponse.bodyBytes;
+                  final fileName = "ai_generated_image_${DateTime.now().millisecondsSinceEpoch}.png";
+                  final result = await ImageGallerySaver.saveImage(
+                    Uint8List.fromList(imageBytes),
+                    quality: 100,
+                    name: fileName,
+                  );
+                  if (result['isSuccess'] != true) {
+                    throw Exception("Failed to save image");
+                  }
+                  */
+                  } else {
+                    throw Exception('Failed to download image');
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error saving image: $e')),
+                  );
+                }
+              },
+            ),
+          ),
+        );
       } else {
-        print('API Error: ${response.statusCode} - ${responseBody.body}');
+        print('API Error: ${response.statusCode} - ${response.body}');
         setState(() {
           _isLoading = false;
         });
@@ -150,10 +222,10 @@ class _WelcomePageState extends State<WelcomePage> {
             errorMsg = 'Rate limit exceeded. Please try again later.';
             break;
           case 400:
-            errorMsg = 'Invalid request: ${responseBody.body}';
+            errorMsg = 'Invalid request: ${response.body}';
             break;
           default:
-            errorMsg = 'Error: ${response.statusCode} - ${responseBody.body}';
+            errorMsg = 'Error: ${response.statusCode} - ${response.body}';
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMsg)),
@@ -214,9 +286,12 @@ class _WelcomePageState extends State<WelcomePage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
+    // get dimensions of the screen
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       appBar: AppBar(
         iconTheme: const IconThemeData(
@@ -304,63 +379,55 @@ class _WelcomePageState extends State<WelcomePage> {
           ),
         ),
       ),
-      body: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                const SizedBox(height: 50),
-                Image.asset(
-                  'assets/cilutions_ai_logo.png',
-                  width: 180,
-                  height: 180,
-                ),
-                const SizedBox(height: 30),
-                TextField(
-                  controller: _controller,
-                  decoration: const InputDecoration(
-                    labelText: 'Enter Prompt',
-                    labelStyle: TextStyle(
-                      color: Colors.white,
-                    ),
-                  ),
-                  style: const TextStyle(
-                    color: Colors.white,
-                  ),
-                  onSubmitted: (value) {
-                    _saveText2();
-                  },
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _saveText2,
-                  child: const Text('Generate Photo using AI'),
-                ),
-                const SizedBox(height: 250),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => ExampleScreen()),
-                    );
-                  },
-                  child: const Text('View Examples'),
-                ),
-              ],
-            ),
-          ),
-
-          // LOADING OVERLAY
-          if (_isLoading)
-            Container(
-              color: Colors.black45,
-              child: const Center(
-                child: CircularProgressIndicator(),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              SizedBox(height: (screenHeight * 0.03)),
+              Image.asset(
+                'assets/cilutions_ai_logo.png',
+                width: screenWidth * 0.2,
+                height: screenWidth * 0.2,
+                // width: 180,
+                // height: 180,
               ),
-            ),
-        ],
-      ),
+              SizedBox(height: (screenHeight * 0.03)),
+              Align(
+                alignment: Alignment.center,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 500),
+                  child: TextField(
+                    controller: _controller,
+                    decoration: const InputDecoration(
+                      labelText: 'Enter Prompt',
+                      labelStyle: TextStyle(color: Colors.white),
+                      border: OutlineInputBorder(),
+                    ),
+                    style: const TextStyle(color: Colors.white),
+                    onSubmitted: (_) => _getAIPhoto(),
+                  ),
+                ),
+              ),
+              SizedBox(height: (screenHeight * 0.03)),
+              ElevatedButton(
+                onPressed: _getAIPhoto,
+                child: const Text('Generate Photo using AI'),
+              ),
+              SizedBox(height: (screenHeight * 0.2)),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ExampleScreen()),
+                  );
+                },
+                child: const Text('View Examples'),
+              ),
+            ]
+          )
+        )
+      )
     );
   }
 }
@@ -408,8 +475,6 @@ class ExampleScreen extends StatelessWidget {
   }
 }
 
-
-
 class ImageResultScreen extends StatelessWidget {
   final String imageUrl;
   final VoidCallback onEdit;
@@ -449,13 +514,9 @@ class ImageResultScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12.0),
                 child: Image.network(
                   imageUrl,
-                  width: 300,
-                  height: 300,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
-                      width: 300,
-                      height: 300,
                       color: Colors.grey[300],
                       child: const Center(
                         child: Text(
