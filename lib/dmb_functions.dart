@@ -22,7 +22,7 @@ List<PlaylistPreview> cachedPlaylistPreviews = [];
 bool hasLoadedPlaylistPreviews = false;
 
 Future<void> preloadPlaylistPreviews(String userEmail) async {
-  print("⏳ Starting to preload playlists for $userEmail");
+  print("Starting to preload playlists for $userEmail");
 
   if (!hasLoadedPlaylistPreviews) {
     try {
@@ -101,7 +101,7 @@ Future<Map<String, dynamic>> uploadImage(File imageFile, String username) async 
     final responseBody = await response.stream.bytesToString();
     final decoded = json.decode(responseBody);
 
-    print("📦 Server Response Body: $decoded");
+    print("Server Response Body: $decoded");
 
     if (response.statusCode == 200 && decoded['status'] == 'success') {
       return {'success': true, 'message': 'Image uploaded successfully'};
@@ -126,7 +126,7 @@ Future<List<String>> getUserPlaylists(String email) async {
     Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/GetPlaylist/$email'),
   );
 
-  print("🔎 Raw response body: ${response.body}");
+  print("Raw response body: ${response.body}");
 
   if (response.statusCode == 200) {
     final Map<String, dynamic> jsonData = jsonDecode(response.body);
@@ -192,7 +192,7 @@ Future<PlaylistPreview> parsePlaylistFile(String playlistName, String userEmail)
         itemCount: itemCount,
       );
     } else {
-      // ← empty playlist: return a null previewImageUrl and count = 0
+      // empty playlist: return a null previewImageUrl and we'll probably set the count = 0
       return PlaylistPreview(
         name: playlistName,
         previewImageUrl: null,
@@ -259,8 +259,8 @@ Future<bool> updatePlaylist({
       body: body,
     );
 
-    print("🔄 Server status: ${response.statusCode}");
-    print("📥 Server response: ${response.body}");
+    print("Server status: ${response.statusCode}");
+    print("Server response: ${response.body}");
 
     if (response.statusCode == 200) {
       return true;
@@ -268,15 +268,15 @@ Future<bool> updatePlaylist({
       // Optionally decode the error message if it's in JSON format
       try {
         final decoded = json.decode(response.body);
-        print("⚠️ Server error message: ${decoded['message']}");
+        print("Server error message: ${decoded['message']}");
       } catch (_) {
         // If it's not valid JSON
-        print("⚠️ Server returned non-JSON error");
+        print("Server returned non-JSON error");
       }
       return false;
     }
   } catch (e) {
-    print("❌ Update playlist exception: $e");
+    print("Update playlist exception: $e");
     return false;
   }
 }
@@ -302,7 +302,7 @@ Future<bool> updatePlaylist({
 //       body: body,
 //     );
 //
-//     print("🔄 Server response: ${response.body}");
+//     print("Server response: ${response.body}");
 //
 //     if (response.statusCode == 200) {
 //       return true;
@@ -310,7 +310,7 @@ Future<bool> updatePlaylist({
 //       return false;
 //     }
 //   } catch (e) {
-//     print("❌ Update playlist exception: $e");
+//     print("Update playlist exception: $e");
 //     return false;
 //   }
 // }

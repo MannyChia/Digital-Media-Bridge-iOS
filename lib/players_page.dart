@@ -57,7 +57,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
 
   void _openPlaylist(String playlistName) async {
     try {
-      // Step 1: Fetch all image filenames from API
+      // Got to fetch all image filenames from API
       final apiUrl =
           'https://digitalmediabridge.tv/screen-builder/assets/api/get_images.php?email=${Uri.encodeComponent(widget.userEmail)}';
       final response = await http.get(Uri.parse(apiUrl));
@@ -66,13 +66,14 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
         throw Exception('Failed to fetch image filenames');
       }
 
+      // remember the lists have to be dynamic
       final List<dynamic> filenames = json.decode(response.body);
       final List<String> allImageUrls = filenames
           .map((f) =>
       'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(widget.userEmail)}/images/$f')
           .toList();
 
-      // Step 2: Load playlist file to get selected filenames
+      // load playlist file to get data like: selected filenames
       final playlistFileUrl =
           'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(widget.userEmail)}/others/$playlistName';
 
@@ -94,7 +95,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
           if (selectedFilenames.contains(url.split('/').last)) url
       };
 
-      // 🟩 Save the original set for change comparison
+      //store the original set of playlist to change the comparison
       originalPlaylistImages =
           preSelected.map((url) => url.split('/').last).toSet();
 
@@ -102,7 +103,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
         _playlistImages = allImageUrls;
         selectedImages = preSelected;
         _currentPlaylist = playlistName;
-        _pageIndex = 1;
+        _pageIndex = 1; // probably just going to stick to 1 page index for animation to go bakc and forth in sheet
       });
     } catch (e) {
       print("ERROR: $e");
@@ -112,18 +113,19 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
     }
   }
 
-
+// have to check if playlist is changed, if it didn't change in any circumstance then disable "save playlist" button
   bool _hasPlaylistChanged() {
     final selectedFilenames = selectedImages.map((url) => url.split('/').last).toSet();
     return selectedFilenames.isNotEmpty && !setEquals(selectedFilenames, originalPlaylistImages);
   }
 
 
-
+// this updates the preview image and playlist number using cache data
   Future<void> _refreshPlaylistPreviews() async {
     try {
       final updated = await fetchPlaylistPreviews(widget.userEmail);
       setState(() {
+        // remember data stored in cache UPDATES the current playlist previes when reloaded
         cachedPlaylistPreviews = updated;
       });
     } catch (e) {
@@ -146,6 +148,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
               color: Color(0xFF121212),
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
+            // animation navigation between playlist and image view, it could change later
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: _pageIndex == 0
@@ -197,6 +200,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
           child: GridView.builder(
             controller: scrollController,
             padding: const EdgeInsets.all(12),
+            // UI&UX visual looking for user to identify closing of sheet
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 12,
@@ -214,6 +218,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                   children: [
                     Expanded(
                       child:
+                          // Got to use ClipRReact for all playlist and all images
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
@@ -284,7 +289,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.white),
                 onPressed: () async {
-                  await _refreshPlaylistPreviews(); //This re-fetches the updated data
+                  await _refreshPlaylistPreviews(); //This re-fetches the updated data -> remember, it goes back to the cache to fetch it
                   setState(() {
                     _pageIndex = 0;
                   });
@@ -303,7 +308,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
             Expanded(
               child: GridView.builder(
                 controller: scrollController,
-                padding: const EdgeInsets.only(left: 12, right: 12, bottom: 70, top: 12), // leave space for the Save button
+                padding: const EdgeInsets.only(left: 12, right: 12, bottom: 70, top: 12), // leaving space for the Save button
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
                   crossAxisSpacing: 8,
@@ -315,6 +320,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                   final imageUrl = _playlistImages[index];
                   final isSelected = selectedImages.contains(imageUrl);
 
+                  // vibration when a user clicks on an image for better UX, HApticFeedback could change to heavier if needed
                   return GestureDetector(
                     onTap: () {
                       HapticFeedback.lightImpact();
@@ -327,6 +333,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
 
                     child: Stack(
                       children: [
+                        // ClipRREact when deco images, can use same dimentions with playlist
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: AspectRatio(
@@ -355,6 +362,8 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                               ),
                             ),
                           ),
+                        // going to put a circle selected thingie like gallery stuff here
+                        // green if selected, else just a circle
                         Positioned(
                           top: 6,
                           left: 6,
@@ -403,6 +412,9 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
     );
 
   }
+
+  // remember to save it in cache later.
+  // for future got to update locally first and let backend update gradually
   void _onSavePressed() async {
     final selectedFilenames = selectedImages.map((url) => url.split('/').last).toList();
 
@@ -416,11 +428,11 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
       originalPlaylistImages = selectedFilenames.toSet();
       setState(() {}); // Refresh UI to disable Save button
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("✅ Playlist updated")),
+        const SnackBar(content: Text("Playlist updated")),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("❌ Failed to update playlist")),
+        const SnackBar(content: Text("Failed to update playlist")),
       );
     }
   }
@@ -526,6 +538,8 @@ class _PlayersPageState extends State<PlayersPage> {
     } catch (err) {}
   }
 
+  // change from pop up dialog to a sheet to make consistent ui throughout
+  // remember your future, async
   Future<void> _showUploadSheet(File imageFile) async {
     showModalBottomSheet(
       context: context,
@@ -583,7 +597,9 @@ class _PlayersPageState extends State<PlayersPage> {
                   onPressed: () async {
                     Navigator.of(context).pop();
 
-                    // Call uploadImage and handle result
+                    // Call uploadImage and handle result.
+                    // got to update user if there's any errors
+                    // got to keep testing to prompt user ALL errors
                     final result = await uploadImage(imageFile, "mannychia7@gmail.com");
 
                     if (!result['success']) {
@@ -617,7 +633,7 @@ class _PlayersPageState extends State<PlayersPage> {
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("✅ Image uploaded successfully")),
+                        const SnackBar(content: Text("Image uploaded successfully")),
                       );
                     }
                   },
@@ -655,6 +671,8 @@ class _PlayersPageState extends State<PlayersPage> {
   Future<void> _showPlaylistBottomSheet(BuildContext context, String userEmail) async {
     if (!hasLoadedPlaylistPreviews) {
       ScaffoldMessenger.of(context).showSnackBar(
+        // changed to avoid this. got to make sure that playlist are already loaded before logging in
+        // fetched data from cache to avoid this. BUT, just in case
         const SnackBar(content: Text("Playlists are still loading...")),
       );
       return;
@@ -670,12 +688,14 @@ class _PlayersPageState extends State<PlayersPage> {
       builder: (context) => PlaylistSheet(userEmail: userEmail),
     );
 
-    // 🟢 Refresh preview after sheet is dismissed
+    //Refresh preview after sheet is closed
+    // slight delay though, got to fix this in the future
+    // for local load and then backend functions
     try {
       cachedPlaylistPreviews = await fetchPlaylistPreviews(userEmail);
       hasLoadedPlaylistPreviews = true;
     } catch (e) {
-      print("❌ Failed to refresh playlist previews: $e");
+      print("Failed to refresh playlist previews: $e");
     }
   }
 
@@ -764,7 +784,7 @@ class _PlayersPageState extends State<PlayersPage> {
                       MenuAnchor(
                         alignmentOffset: const Offset(190, 0),
                         style: MenuStyle(
-                          backgroundColor: WidgetStateProperty.all(Color.fromRGBO(242, 242, 247, 0.85)), // iOS-like w/ transparency
+                          backgroundColor: WidgetStateProperty.all(Color.fromRGBO(242, 242, 247, 0.85)), // iOS-like w/ transparency need to change this like drawer ui
                           elevation: WidgetStateProperty.all(0),
                           shape: WidgetStateProperty.all(
                             RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
