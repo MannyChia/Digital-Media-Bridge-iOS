@@ -62,6 +62,8 @@ class _PlayersPageState extends State<PlayersPage> {
   TextEditingController _textFieldController = TextEditingController();
   String? _generatedImageUrl;
   bool _isGenerating = false; // Track image generation state
+  List<String> prompts = []; // stores all the prompts given by the user
+  String backgroundURL = "https://lp-cms-production.imgix.net/2023-02/3cb45f6e59190e8213ce0a35394d0e11-nice.jpg";
 
   ///This 'override' function is called once when the class is loaded
   ///(is used to update the pageTitle * subTitle)
@@ -170,7 +172,7 @@ class _PlayersPageState extends State<PlayersPage> {
                   ),
                   onPressed: () async {
                     Navigator.of(context).pop();
-                    bool success = await uploadImage(imageFile, "mannychia7@gmail.com");
+                    bool success = await uploadImage(imageFile, "billstantonthefourth@gmail.com");
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -357,7 +359,7 @@ class _PlayersPageState extends State<PlayersPage> {
     Navigator.of(context).pop(); // Close the image dialog
     setState(() {
       _generatedImageUrl = null; // Clear the previous image
-      // _textFieldController.clear(); // Clear the text field for new input
+      _textFieldController.clear(); // Clear the text field for new input
     });
     _showAIPromptDialog();
   }
@@ -370,6 +372,7 @@ class _PlayersPageState extends State<PlayersPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Failed to download image")),
         );
+        print("ERROR ON ONSUBMIT FUNCTION!");
         return;
       }
 
@@ -386,14 +389,15 @@ class _PlayersPageState extends State<PlayersPage> {
       await tempFile.writeAsBytes(bytes);
 
       // call uploadImage with tempFile and userName
-      bool success = await uploadImage(tempFile, username);
+      bool success = await uploadImage(tempFile, "billstantonthefourth@gmail.com");
 
       // Only delete temp file if upload succeeded AND deleteAfter is true
       // remember to delete from cache
       if (success) {
         try {
           await tempFile.delete();
-        } catch (_) {
+        }
+        catch (_) {
           // ignore deletion errors first
         }
       }
@@ -412,16 +416,17 @@ class _PlayersPageState extends State<PlayersPage> {
         SnackBar(content: Text("Error: $e")),
       );
     }
+    Navigator.of(context).pop(); // Close the image dialog
   }
 
   // Helper function to handle image generation and display
-  Future<void> _generateAndShowImage(String prompt, BuildContext dialogContext) async {
-    final imageUrl = await _getAIPhoto(prompt, 1536, 864);
+  Future<void> _generateAndShowImage(String inputPrompt, BuildContext dialogContext) async {
+    final imageUrl = await _getAIPhoto(inputPrompt, 1536, 864);
     if (!dialogContext.mounted) return; // Prevent UI updates if unmounted
     setState(() {
       _generatedImageUrl = imageUrl;
     });
-    if (imageUrl != null && imageUrl.isNotEmpty && Uri.parse(imageUrl).isAbsolute) {
+    if (imageUrl != null) {
       if (dialogContext.mounted) {
         ScaffoldMessenger.of(dialogContext).showSnackBar(
           const SnackBar(content: Text('Image generated successfully')),
@@ -457,7 +462,7 @@ class _PlayersPageState extends State<PlayersPage> {
                       ),
                       ElevatedButton(
                           onPressed: () {
-                            onSubmit(imageUrl, "mannychia7@gmail.com");
+                            onSubmit(imageUrl, "billstantonthefourth@gmail.com");
                           },
                           child: Row(
                               children: [
@@ -484,9 +489,9 @@ class _PlayersPageState extends State<PlayersPage> {
     }
   }
 
-  void _showAIPromptDialog() {
+  Future<void> _showAIPromptDialog() async {
     final dialogContext = context; // Store state context
-    showDialog(
+    await showDialog(
       context: dialogContext,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -518,7 +523,14 @@ class _PlayersPageState extends State<PlayersPage> {
                   _isGenerating = true; // Show loading circle
                 });
               }
-              await _generateAndShowImage(prompt, dialogContext);
+              // add prompt to prompts list
+              prompts.add(prompt);
+              // concatenate all strings in prompts into one
+              String totalPrompt = "";
+              for (String my_prompt in prompts) {
+                totalPrompt = "$totalPrompt, $my_prompt";
+              }
+              await _generateAndShowImage(totalPrompt, dialogContext);
               if (mounted) {
                 setState(() {
                   _isGenerating = false; // Hide loading circle
@@ -543,7 +555,15 @@ class _PlayersPageState extends State<PlayersPage> {
                     _isGenerating = true; // Show loading circle
                   });
                 }
-                await _generateAndShowImage(prompt, dialogContext);
+                // add prompt to prompts list
+                prompts.add(prompt);
+                // concatenate all strings in prompts into one
+                String totalPrompt = "";
+                for (String my_prompt in prompts) {
+                  totalPrompt = "$totalPrompt, $my_prompt";
+                }
+
+                await _generateAndShowImage(totalPrompt, dialogContext);
                 if (mounted) {
                   setState(() {
                     _isGenerating = false; // Hide loading circle
@@ -563,6 +583,10 @@ class _PlayersPageState extends State<PlayersPage> {
         );
       },
     );
+    // when user taps away from dialog, clear input string
+    prompts.clear();
+    _textFieldController.clear(); // Clear the text field for new input
+
   }
 
 
@@ -571,8 +595,12 @@ class _PlayersPageState extends State<PlayersPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       key: _scaffoldKey,
+      backgroundColor: Colors.white, // Fallback color if image fails to load
       endDrawer: Drawer(
         child: Container(
           decoration: const BoxDecoration(
@@ -587,7 +615,7 @@ class _PlayersPageState extends State<PlayersPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.all(16.0),
                         child: Text(
                           "Menu",
@@ -598,14 +626,6 @@ class _PlayersPageState extends State<PlayersPage> {
                           ),
                         ),
                       ),
-                      // ListTile(
-                      //   leading: const Icon(Icons.tv_outlined, color: Colors.white),
-                      //   title: const Text("Screens", style: TextStyle(color: Colors.white)),
-                      //   onTap: () {
-                      //     Navigator.pop(context);
-                      //     _showScreensPage();
-                      //   },
-                      // ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Material(
@@ -626,11 +646,8 @@ class _PlayersPageState extends State<PlayersPage> {
                           ),
                         ),
                       ),
-
-
-                      // UPLOAD IMAGE DROP DOWN BUTTON - BILLY
+                      // UPLOAD IMAGE DROP DOWN BUTTON
                       const Divider(color: Colors.black),
-
                       DropdownButton2<String>(
                         isExpanded: true,
                         customButton: Container(
@@ -651,7 +668,7 @@ class _PlayersPageState extends State<PlayersPage> {
                                 style: TextStyle(fontSize: 20, color: Colors.white),
                               ),
                               const Spacer(),
-                              const Icon(Icons.arrow_drop_down, color: Colors.white), // <-- Arrow icon here
+                              const Icon(Icons.arrow_drop_down, color: Colors.white),
                             ],
                           ),
                         ),
@@ -667,7 +684,6 @@ class _PlayersPageState extends State<PlayersPage> {
                           } else {
                             iconData = Icons.help_outline;
                           }
-
                           return DropdownMenuItem<String>(
                             value: value,
                             child: Row(
@@ -675,8 +691,9 @@ class _PlayersPageState extends State<PlayersPage> {
                                 Icon(iconData, color: Colors.orange),
                                 const SizedBox(width: 8),
                                 Text(
-                                    value,
-                                    style: const TextStyle(color: Colors.white)),
+                                  value,
+                                  style: const TextStyle(color: Colors.white),
+                                ),
                               ],
                             ),
                           );
@@ -684,31 +701,10 @@ class _PlayersPageState extends State<PlayersPage> {
                         value: selectedOption,
                         onChanged: (String? newValue) async {
                           if (newValue == 'Camera') {
-                            final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-                            if (image != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Image selected: ${image.name}')),
-                              );
-                            }
-                          }
-                          else if (newValue == 'Gallery') {
-                            final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-                            if (image != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Image selected: ${image.name}')),
-                              );
-                            }
+                            _takePhoto();
+                          } else if (newValue == 'Gallery') {
+                            _chooseFromGallery();
                           } else if (newValue == 'Create Image') {
-                            // Navigator.pop(context);
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //     builder: (context) => const WelcomePage(
-                            //       pageTitle: "AI Image Creation",
-                            //       pageSubTitle: "Welcome to the Future",
-                            //     ),
-                            //   ),
-                            // );
                             _showAIPromptDialog();
                           }
                         },
@@ -718,21 +714,19 @@ class _PlayersPageState extends State<PlayersPage> {
                           width: 200,
                         ),
                         dropdownStyleData: const DropdownStyleData(
-                            maxHeight: 200,
-                            decoration: BoxDecoration(
-                              color: Color(0xFF424242),
-                            )
+                          maxHeight: 200,
+                          decoration: BoxDecoration(
+                            color: Color(0xFF424242),
+                          ),
                         ),
                         menuItemStyleData: const MenuItemStyleData(
                           height: 40,
                         ),
                       ),
-
                       const Divider(color: Colors.black),
                     ],
                   ),
                 ),
-
                 // Bottom Section (Logout)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 5.0),
@@ -760,53 +754,54 @@ class _PlayersPageState extends State<PlayersPage> {
               ],
             ),
           ),
-
         ),
       ),
-      // **********
-      /* THE HEADER OF THE 'PLAYERS' PAGE */
-      // **********
       appBar: _appBarNoBackBtn(context),
-      body:
-      RefreshIndicator(
-        onRefresh: _refreshData,
-        ///*** // trigger the _refreshData function when the user pulls down
-        child:
-        ListView.separated(
-          itemCount: dmbMediaPlayers.length,
-          physics: const AlwaysScrollableScrollPhysics(),
-          itemBuilder: (BuildContext context, int index) {
-            return Align(
-              alignment: Alignment.center,
-              child: Container(
-                //width: 100,
-                color: Colors.transparent,
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                    ),
-                    child: InkWell(
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: NetworkImage(
+              backgroundURL.isNotEmpty
+                  ? backgroundURL
+                  : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?fit=crop&w=1536&h=864', // Fallback image
+            ),
+            fit: BoxFit.cover, // Adjusts image to cover the entire background
+            onError: (exception, stackTrace) {
+              print('Failed to load background image: $exception');
+            },
+          ),
+        ),
+        child: RefreshIndicator(
+          onRefresh: _refreshData,
+          child: ListView.separated(
+            itemCount: dmbMediaPlayers.length,
+            physics: const AlwaysScrollableScrollPhysics(),
+            itemBuilder: (BuildContext context, int index) {
+              return Align(
+                alignment: Alignment.center,
+                child: Container(
+                  color: Colors.transparent,
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(),
+                      child: InkWell(
                         customBorder: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Ink(
-                          width: 500,
-                          //The width & height of the 'players' button
-                          height: 50,
-                          decoration: BoxDecoration( //*** the selectable 'button' of each media player
+                          width: MediaQuery.of(context).size.width * 0.8,
+                          height: MediaQuery.of(context).size.height * 0.1,
+                          decoration: BoxDecoration(
                             shape: BoxShape.rectangle,
                             border: Border.all(
-                                width: 0, //
-                                color: const Color.fromRGBO(10, 85, 163, 1.0)
+                              width: 0,
+                              color: const Color.fromRGBO(10, 85, 163, 1.0),
                             ),
-                            borderRadius: const BorderRadius.all(
-                                Radius.circular(8.0)),
+                            borderRadius: const BorderRadius.all(Radius.circular(8.0)),
                             gradient: _checkPlayerStatus(index)
                                 ? _gradientActiveMediaPlayer(context)
                                 : _gradientInActiveMediaPlayer(context),
                           ),
-
-                          ///The two line text on each button
                           child: Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -814,10 +809,14 @@ class _PlayersPageState extends State<PlayersPage> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Text(dmbMediaPlayers[index].name,
-                                        style: const TextStyle(fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white)),
+                                    Text(
+                                      dmbMediaPlayers[index].name,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                                   ],
                                 ),
                                 Row(
@@ -830,48 +829,27 @@ class _PlayersPageState extends State<PlayersPage> {
                                 ),
                               ],
                             ),
-
                           ),
-
                         ),
-                        onTap: () { //*** When one of the 'Media Players' button is selected .....
-
-                          ///set the global variable of the selected player
+                        onTap: () {
                           selectedPlayerName = dmbMediaPlayers[index].name;
-
-                          ///show the user (in a small pop-up) the player name
-                          ///that they just selected
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(
-                                "${dmbMediaPlayers[index].name} Selected")),
+                            SnackBar(content: Text("${dmbMediaPlayers[index].name} Selected")),
                           );
-
                           _showScreensPage();
-
-                          /// SHOW LIST OF SCREENS
-                        }
+                        },
+                      ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
-          separatorBuilder: (context, index) =>
-          const Divider(
-
-            ///the divider between the items
-            color: Colors.black,
+              );
+            },
+            separatorBuilder: (context, index) => const Divider(color: Colors.black),
           ),
         ),
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: _userLogout,
-      //   tooltip: 'Logout',
-      //   child: const Icon(Icons.logout),
-      // ),
     );
   }
-
 }
 
 ///**** This is the 'App bar' to the players tab when you don't want
