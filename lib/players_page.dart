@@ -362,8 +362,8 @@ class _PlayersPageState extends State<PlayersPage> {
     _showAIPromptDialog();
   }
 
-  Future<void> onSubmit(String imageUrl) async {
-    // call manny's function
+  Future<void> onSubmit(String imageUrl, String username) async {
+    // convert imageUrl into File, upload to DMB server
     try {
       final response = await http.get(Uri.parse(imageUrl));
       if (response.statusCode != 200) {
@@ -382,10 +382,32 @@ class _PlayersPageState extends State<PlayersPage> {
       final tempFile = File("${tempDir.path}/$filename");
 
       // use writeAsBytes
-      // this takes the bytes from the url and copies it directly into the tmpfile
+      // this takes the bytes from the url and copies it directly into the tempfile
       await tempFile.writeAsBytes(bytes);
 
-    } catch (e) {
+      // call uploadImage with tempFile and userName
+      bool success = await uploadImage(tempFile, username);
+
+      // Only delete temp file if upload succeeded AND deleteAfter is true
+      // remember to delete from cache
+      if (success) {
+        try {
+          await tempFile.delete();
+        } catch (_) {
+          // ignore deletion errors first
+        }
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? "Image uploaded successfully"
+                : "Image upload failed",
+          ),
+        ),
+      );
+    }
+    catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
       );
@@ -435,7 +457,7 @@ class _PlayersPageState extends State<PlayersPage> {
                       ),
                       ElevatedButton(
                           onPressed: () {
-                            onSubmit(imageUrl);
+                            onSubmit(imageUrl, "mannychia7@gmail.com");
                           },
                           child: Row(
                               children: [

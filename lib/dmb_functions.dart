@@ -13,7 +13,6 @@ import './main.dart';
 import './players_page.dart';
 import './screens_page.dart';
 import 'package:flutter/material.dart';
-
 import 'package:http_parser/http_parser.dart'; // for MediaType
 
 Future<bool> uploadImage(File imageFile, String username) async {
