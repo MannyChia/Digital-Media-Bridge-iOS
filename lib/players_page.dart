@@ -17,6 +17,8 @@ import './ai_image_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 
 /*
 */
@@ -360,9 +362,34 @@ class _PlayersPageState extends State<PlayersPage> {
     _showAIPromptDialog();
   }
 
-  void onSubmit() {
+  Future<void> onSubmit(String imageUrl) async {
     // call manny's function
-    print("Submit photo button");
+    try {
+      final response = await http.get(Uri.parse(imageUrl));
+      if (response.statusCode != 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to download image")),
+        );
+        return;
+      }
+
+      // extract the bytes from the url's image
+      final bytes = response.bodyBytes;
+      // dir to store the tempfile -> should be located in cache
+      final tempDir = await getTemporaryDirectory();
+      // extract the names of the file
+      final filename = path.basename(imageUrl);
+      final tempFile = File("${tempDir.path}/$filename");
+
+      // use writeAsBytes
+      // this takes the bytes from the url and copies it directly into the tmpfile
+      await tempFile.writeAsBytes(bytes);
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    }
   }
 
   // Helper function to handle image generation and display
@@ -408,7 +435,7 @@ class _PlayersPageState extends State<PlayersPage> {
                       ),
                       ElevatedButton(
                           onPressed: () {
-                            onSubmit();
+                            onSubmit(imageUrl);
                           },
                           child: Row(
                               children: [
