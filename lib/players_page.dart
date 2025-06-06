@@ -163,6 +163,63 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
   }
 
   Widget _buildPlaylistView(ScrollController scrollController) {
+    // If there are no playlists at all, we just print "No playlists available" message
+    if (cachedPlaylistPreviews.isEmpty) {
+      return Column(
+        key: const ValueKey(0),
+        children: [
+          // ── Drag Handle ──
+          const SizedBox(height: 12),
+          Center(
+            child: Container(
+              width: 40,
+              height: 5,
+              decoration: BoxDecoration(
+                color: Colors.grey[600],
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // ── Header Row ──
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              children: const [
+                Text(
+                  'Edit Playlist',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(width: 6),
+                Icon(Icons.playlist_add, color: Colors.white, size: 20),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // send the message with a Center "No playlists" message
+          Expanded(
+            child: Center(
+              child: Text(
+                'No playlists available',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // ── Otherwise, show the grid of existing playlists ──
     return Column(
       key: const ValueKey(0),
       children: [
@@ -200,7 +257,6 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
           child: GridView.builder(
             controller: scrollController,
             padding: const EdgeInsets.all(12),
-            // UI&UX visual looking for user to identify closing of sheet
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 12,
@@ -217,9 +273,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child:
-                          // Got to use ClipRReact for all playlist and all images
-                      ClipRRect(
+                      child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
                           width: double.infinity,
@@ -228,8 +282,12 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                               ? Image.network(
                             preview.previewImageUrl!,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => const Center(
-                              child: Icon(Icons.broken_image, color: Colors.white70),
+                            errorBuilder: (context, error, stackTrace) =>
+                            const Center(
+                              child: Icon(
+                                Icons.broken_image,
+                                color: Colors.white70,
+                              ),
                             ),
                           )
                               : Container(
@@ -244,7 +302,6 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                           ),
                         ),
                       ),
-
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -266,6 +323,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
       ],
     );
   }
+
 
 
   Widget _buildImageView(ScrollController scrollController) {
@@ -867,7 +925,7 @@ class _PlayersPageState extends State<PlayersPage> {
                       ),
                       ListTile(
                         leading: const Icon(Icons.collections, color: Colors.white), // or Icons.collections
-                        title: const Text("Playlists", style: TextStyle(color: Colors.white)),
+                        title: const Text("Edit Playlists", style: TextStyle(color: Colors.white)),
                         // onTap: () async {
                         //   Navigator.pop(context); // close drawer
                         //   try {
