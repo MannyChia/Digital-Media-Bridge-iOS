@@ -6,7 +6,9 @@
 /// *************************************************
 ///
 // for camera and gallery
+import 'dart:convert';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import './main.dart';
 import './screens_page.dart';
@@ -14,6 +16,7 @@ import './dmb_functions.dart';
 import './ai_image_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /*
 */
@@ -52,9 +55,11 @@ class PlayersPage extends StatefulWidget {
 class _PlayersPageState extends State<PlayersPage> {
   late String pageTitle;
   late String pageSubTitle;
-
   File? _image;
   final ImagePicker _picker = ImagePicker();
+  TextEditingController _textFieldController = TextEditingController();
+  String? _generatedImageUrl;
+  bool _isGenerating = false; // Track image generation state
 
   ///This 'override' function is called once when the class is loaded
   ///(is used to update the pageTitle * subTitle)
@@ -63,14 +68,6 @@ class _PlayersPageState extends State<PlayersPage> {
     super.initState();
     _updateTitle();
   }
-
-  // void _updateTitle() {
-  //
-  //   setState(() {
-  //     pageTitle = "${widget.pageTitle} (${dmbMediaPlayers.length})";
-  //     pageSubTitle = widget.pageSubTitle;
-  //   });
-  // }
 
   void _updateTitle() {
     pageTitle = "${widget.pageTitle} (${dmbMediaPlayers.length})";
@@ -189,6 +186,7 @@ class _PlayersPageState extends State<PlayersPage> {
       ),
     );
   }
+
   Future<void> _takePhoto() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
@@ -207,6 +205,315 @@ class _PlayersPageState extends State<PlayersPage> {
       });
       _showUploadSheet(_image!);
     }
+  }
+
+
+  /// generates photo using Stability.ai API key
+  /// edit this function if we change services (Leonardo, Open AI, etc)
+  Future<String?> _getAIPhoto(String prompt, int width, int height) async {
+    if (!dotenv.isInitialized) {
+      if (mounted) { // checks is a state object is still part of the widget tree
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Environment variables not loaded')),
+        );
+      }
+      return null;
+    }
+
+    final apiKey = dotenv.env['LEONARDO_API_KEY'];
+
+    if (apiKey == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('API key not found in .env file')),
+        );
+      }
+      return null;
+    }
+
+    if (prompt.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Please enter a prompt')),
+        );
+      }
+      return null;
+    }
+
+    final url = Uri.parse('https://cloud.leonardo.ai/api/rest/v1/generations');
+
+    try {
+      final headers = {
+        'Authorization': 'Bearer $apiKey',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      };
+
+      final body = jsonEncode({
+        'prompt': prompt,
+        'modelId': 'de7d3faf-762f-48e0-b3b7-9d0ac3a3fcf3', // Phoenix 1.0 model
+        'num_images': 1,
+        'width': width,
+        'height': height,
+      });
+
+      final response = await http.post(url, headers: headers, body: body);
+
+      // response code == 200 means successful response
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final generationId = data['sdGenerationJob']?['generationId'];
+
+        if (generationId == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('No generation ID received')),
+            );
+          }
+          return null;
+        }
+
+        final pollUrl = Uri.parse('https://cloud.leonardo.ai/api/rest/v1/generations/$generationId');
+        bool isCompleted = false;
+        String? imageUrl;
+
+        for (int i = 0; i < 30; i++) {
+          await Future.delayed(Duration(seconds: 1));
+          final pollResponse = await http.get(pollUrl, headers: headers);
+
+          if (pollResponse.statusCode == 200) {
+            final pollData = jsonDecode(pollResponse.body);
+            final status = pollData['generations_by_pk']?['status'];
+
+            if (status == 'COMPLETE') {
+              isCompleted = true;
+              imageUrl = pollData['generations_by_pk']?['generated_images']?[0]?['url'];
+              break;
+            }
+            else if (status == 'FAILED') {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Image generation failed')),
+                );
+              }
+              return null;
+            }
+          }
+          else {
+            print('Poll Error: ${pollResponse.statusCode} - ${pollResponse.body}');
+          }
+        }
+
+        if (!isCompleted || imageUrl == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Image generation timed out or no image received')),
+            );
+          }
+          return null;
+        }
+
+        print('Generated Image URL: $imageUrl'); // Debug URL
+        return imageUrl;
+      }
+      else {
+        print('API Error: ${response.statusCode} - ${response.body}');
+        String errorMsg;
+        switch (response.statusCode) {
+          case 401:
+            errorMsg = 'Invalid API key. Please check your credentials.';
+            break;
+          case 429:
+            errorMsg = 'Rate limit exceeded. Please try again later.';
+            break;
+          case 400:
+            errorMsg = 'Invalid request: ${response.body}';
+            break;
+          default:
+            errorMsg = 'Error: ${response.statusCode} - ${response.body}';
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMsg)),
+          );
+        }
+        return null;
+      }
+    }
+    catch (e) {
+      print('Request Error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+      return null;
+    }
+  }
+
+  void onEdit() {
+    Navigator.of(context).pop(); // Close the image dialog
+    setState(() {
+      _generatedImageUrl = null; // Clear the previous image
+      // _textFieldController.clear(); // Clear the text field for new input
+    });
+    _showAIPromptDialog();
+  }
+
+  void onSubmit() {
+    // call manny's function
+    print("Submit photo button");
+  }
+
+  // Helper function to handle image generation and display
+  Future<void> _generateAndShowImage(String prompt, BuildContext dialogContext) async {
+    final imageUrl = await _getAIPhoto(prompt, 1536, 864);
+    if (!dialogContext.mounted) return; // Prevent UI updates if unmounted
+    setState(() {
+      _generatedImageUrl = imageUrl;
+    });
+    if (imageUrl != null && imageUrl.isNotEmpty && Uri.parse(imageUrl).isAbsolute) {
+      if (dialogContext.mounted) {
+        ScaffoldMessenger.of(dialogContext).showSnackBar(
+          const SnackBar(content: Text('Image generated successfully')),
+        );
+        showDialog(
+          context: dialogContext,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              contentPadding: EdgeInsets.zero,
+              backgroundColor: Colors.transparent, // Set dialog background to transparent
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                  ),
+                  SizedBox(height:20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          onEdit();
+                        },
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit, color: Colors.orange),
+                            SizedBox(width: 8),
+                            Text('Edit Photo'),
+                          ]
+                        )
+                      ),
+                      ElevatedButton(
+                          onPressed: () {
+                            onSubmit();
+                          },
+                          child: Row(
+                              children: [
+                                Icon(Icons.check, color: Colors.orange),
+                                SizedBox(width: 8),
+                                Text('Submit Photo'),
+                              ]
+                          )
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      }
+    } else {
+      if (dialogContext.mounted) {
+        ScaffoldMessenger.of(dialogContext).showSnackBar(
+          const SnackBar(content: Text('Failed to generate a valid image URL')),
+        );
+      }
+    }
+  }
+
+  void _showAIPromptDialog() {
+    final dialogContext = context; // Store state context
+    showDialog(
+      context: dialogContext,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Center(
+            child: Text("Enter your prompt", style: TextStyle(color: Colors.white))
+          ),
+          backgroundColor: Colors.blueGrey,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          content: TextField(
+            controller: _textFieldController,
+            decoration: InputDecoration(
+              hintText: "Example: Show me happy cashier",
+              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black))
+            ),
+            onSubmitted: (value) async {
+              // Handle Enter key press
+              final prompt = value.trim();
+              if (prompt.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter a prompt')),
+                );
+                return;
+              }
+              Navigator.of(context).pop(); // Close prompt dialog
+              if (mounted) {
+                setState(() {
+                  _isGenerating = true; // Show loading circle
+                });
+              }
+              await _generateAndShowImage(prompt, dialogContext);
+              if (mounted) {
+                setState(() {
+                  _isGenerating = false; // Hide loading circle
+                });
+              }
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                // Handle button click
+                final prompt = _textFieldController.text.trim();
+                if (prompt.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please enter a prompt')),
+                  );
+                  return;
+                }
+                Navigator.of(context).pop(); // Close prompt dialog
+                if (mounted) {
+                  setState(() {
+                    _isGenerating = true; // Show loading circle
+                  });
+                }
+                await _generateAndShowImage(prompt, dialogContext);
+                if (mounted) {
+                  setState(() {
+                    _isGenerating = false; // Hide loading circle
+                  });
+                }
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.send, color: Colors.white),
+                  SizedBox(width: 4),
+                  Text('Create Image', style: TextStyle(color: Colors.white))
+                ]
+              )
+            ),
+          ],
+        );
+      },
+    );
   }
 
 
@@ -299,6 +606,7 @@ class _PlayersPageState extends State<PlayersPage> {
                             ],
                           ),
                         ),
+                        underline: Container(),
                         items: uploadOptions.map((String value) {
                           IconData iconData;
                           if (value == 'Camera') {
@@ -333,7 +641,8 @@ class _PlayersPageState extends State<PlayersPage> {
                                 SnackBar(content: Text('Image selected: ${image.name}')),
                               );
                             }
-                          } else if (newValue == 'Gallery') {
+                          }
+                          else if (newValue == 'Gallery') {
                             final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
                             if (image != null) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -341,16 +650,17 @@ class _PlayersPageState extends State<PlayersPage> {
                               );
                             }
                           } else if (newValue == 'Create Image') {
-                              Navigator.pop(context);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const WelcomePage(
-                                    pageTitle: "AI Image Creation",
-                                    pageSubTitle: "Welcome to the Future",
-                                  ),
-                                ),
-                              );
+                            // Navigator.pop(context);
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //     builder: (context) => const WelcomePage(
+                            //       pageTitle: "AI Image Creation",
+                            //       pageSubTitle: "Welcome to the Future",
+                            //     ),
+                            //   ),
+                            // );
+                            _showAIPromptDialog();
                           }
                         },
                         buttonStyleData: const ButtonStyleData(
@@ -359,10 +669,10 @@ class _PlayersPageState extends State<PlayersPage> {
                           width: 200,
                         ),
                         dropdownStyleData: const DropdownStyleData(
-                          maxHeight: 200,
-                          decoration: BoxDecoration(
-                            color: Color(0xFF424242),
-                          )
+                            maxHeight: 200,
+                            decoration: BoxDecoration(
+                              color: Color(0xFF424242),
+                            )
                         ),
                         menuItemStyleData: const MenuItemStyleData(
                           height: 40,
