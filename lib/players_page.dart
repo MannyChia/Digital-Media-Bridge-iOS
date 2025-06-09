@@ -593,6 +593,7 @@ class _PlayersPageState extends State<PlayersPage> {
   final List<String> uploadOptions = ['Camera', 'Gallery', 'Create Image'];
   String? selectedOption;
 
+  // menu side bar
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -600,7 +601,7 @@ class _PlayersPageState extends State<PlayersPage> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: Colors.white, // Fallback color if image fails to load
+      backgroundColor: Colors.white, // in case the image fails to load
       endDrawer: Drawer(
         child: Container(
           decoration: const BoxDecoration(
@@ -812,7 +813,7 @@ class _PlayersPageState extends State<PlayersPage> {
                                     Text(
                                       dmbMediaPlayers[index].name,
                                       style: const TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 20,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
                                       ),
@@ -875,7 +876,7 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
-            fontSize: 16,
+            fontSize: 20,
           ),
         ),
         Text(
@@ -883,7 +884,7 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
           style: const TextStyle(
             fontStyle: FontStyle.italic,
             color: Colors.white,
-            fontSize: 14,
+            fontSize: 17,
           ),
         ),
       ],
@@ -944,7 +945,8 @@ Text _inActiveScreenText(BuildContext context, pIndex) {
       .status} - Last Screen: ${dmbMediaPlayers[pIndex]
       .currentScreen}",
       style: const TextStyle(
-          fontSize: 10,
+          fontSize: 17,
           fontStyle: FontStyle.italic,
-          color: Colors.white70));
+          color: Colors.white70)
+  );
 }
