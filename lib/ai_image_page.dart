@@ -555,7 +555,7 @@ class ImageResultScreen extends StatelessWidget {
                       horizontal: 24.0,
                       vertical: 12.0,
                     ),
-                    backgroundColor: Colors.green,
+                    backgroundColor: Colors.blue,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
