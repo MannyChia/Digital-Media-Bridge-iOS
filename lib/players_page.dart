@@ -41,7 +41,7 @@ dynamic selectedPlayerName;
 //or a 'back' button when showing the user a list of DMB Media Players
 bool playersNoBackButton = true;
 
-///
+
 class PlayersPage extends StatefulWidget {
   //const PlayersPage({super.key, required this.pageTitle, required this.pageSubTitle});
   const PlayersPage({super.key, this.pageTitle, this.pageSubTitle});
@@ -53,7 +53,7 @@ class PlayersPage extends StatefulWidget {
   _PlayersPageState createState() => _PlayersPageState();
 }
 
-// main class that holds everything until line 611
+// main class
 class _PlayersPageState extends State<PlayersPage> {
   late String pageTitle;
   late String pageSubTitle;
@@ -212,9 +212,14 @@ class _PlayersPageState extends State<PlayersPage> {
   }
 
 
-  /// generates photo using Stability.ai API key
+  /// generates photo using Leonardo.ai API key
   /// edit this function if we change services (Leonardo, Open AI, etc)
-  Future<String?> _getAIPhoto(String prompt, int width, int height) async {
+  Future<Map<String, dynamic>?> _getAIPhoto(String prompt, int width, int height, {String? prevImageID}) async {
+    // model IDs
+    String phoenix = "de7d3faf-762f-48e0-b3b7-9d0ac3a3fcf3";
+    String creative = "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3";
+    String stable_diffusion = "aa77f04e-3eec-4034-9c07-d0f619684628";
+
     if (!dotenv.isInitialized) {
       if (mounted) { // checks is a state object is still part of the widget tree
         ScaffoldMessenger.of(context).showSnackBar(
@@ -246,21 +251,41 @@ class _PlayersPageState extends State<PlayersPage> {
 
     final url = Uri.parse('https://cloud.leonardo.ai/api/rest/v1/generations');
 
-    try {
-      final headers = {
-        'Authorization': 'Bearer $apiKey',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      };
+    final headers = {
+      'Authorization': 'Bearer $apiKey',
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    };
+    String body = ""; // define based on argument count
 
-      final body = jsonEncode({
+    // if prevUrl is not passed in, generate photo just based off prompt
+    if (prevImageID == null) {
+      print("generating body in _getAIPhoto using just prompt");
+      body = jsonEncode({
         'prompt': prompt,
-        'modelId': 'de7d3faf-762f-48e0-b3b7-9d0ac3a3fcf3', // Phoenix 1.0 model
+        'modelId': stable_diffusion, // Phoenix 1.0 model
         'num_images': 1,
         'width': width,
         'height': height,
       });
+    }
 
+    // else prevImageID was passed in, generate photo based off prevUrl and prompt
+    else {
+      print("generating body in _getAIPhoto using prompt and prevImageID");
+      body = jsonEncode({
+        'prompt': prompt,
+        'modelId': stable_diffusion, // Phoenix 1.0 model
+        'init_image_id': prevImageID,
+        'init_strength': 0.4, // how closely to stick to given image (0-1)
+        'num_images': 1,
+        'width': width,
+        'height': height,
+        // 'guidance_scale': 7.5,  // how closely to follow prompt (higher -> closer to prompt)
+      });
+    }
+
+    try {
       final response = await http.post(url, headers: headers, body: body);
 
       // response code == 200 means successful response
@@ -280,9 +305,10 @@ class _PlayersPageState extends State<PlayersPage> {
         final pollUrl = Uri.parse('https://cloud.leonardo.ai/api/rest/v1/generations/$generationId');
         bool isCompleted = false;
         String? imageUrl;
+        String? imageId;
 
         for (int i = 0; i < 30; i++) {
-          await Future.delayed(Duration(seconds: 1));
+          await Future.delayed(Duration(seconds: 2));
           final pollResponse = await http.get(pollUrl, headers: headers);
 
           if (pollResponse.statusCode == 200) {
@@ -291,7 +317,9 @@ class _PlayersPageState extends State<PlayersPage> {
 
             if (status == 'COMPLETE') {
               isCompleted = true;
-              imageUrl = pollData['generations_by_pk']?['generated_images']?[0]?['url'];
+              final generatedImage = pollData['generations_by_pk']?['generated_images']?[0]; // first image
+              imageUrl = generatedImage['url']?.toString();
+              imageId = generatedImage['id']?.toString();
               break;
             }
             else if (status == 'FAILED') {
@@ -318,7 +346,7 @@ class _PlayersPageState extends State<PlayersPage> {
         }
 
         print('Generated Image URL: $imageUrl'); // Debug URL
-        return imageUrl;
+        return {'image_id': imageId, 'image_url': imageUrl};
       }
       else {
         print('API Error: ${response.statusCode} - ${response.body}');
@@ -355,13 +383,23 @@ class _PlayersPageState extends State<PlayersPage> {
     }
   }
 
-  void onEdit() {
+  void onNewPhoto() {
     Navigator.of(context).pop(); // Close the image dialog
     setState(() {
       _generatedImageUrl = null; // Clear the previous image
       _textFieldController.clear(); // Clear the text field for new input
     });
     _showAIPromptDialog();
+  }
+
+  void onEdit(String prevImageID) {
+    Navigator.of(context).pop(); // Close the image dialog
+    setState(() {
+      _generatedImageUrl = null; // Clear the previous image
+      _textFieldController.clear(); // Clear the text field for new input
+    });
+    _showAIPromptDialog(prevImageID: prevImageID);
+
   }
 
   Future<void> onSubmit(String imageUrl, String username) async {
@@ -419,84 +457,202 @@ class _PlayersPageState extends State<PlayersPage> {
     Navigator.of(context).pop(); // Close the image dialog
   }
 
+  void showLoadingCircle(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevents tapping outside to dismiss
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.blueGrey.withOpacity(0.8),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    "Generating Image...",
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                  const SizedBox(height: 10),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close loading dialog
+                    },
+                    child: const Text(
+                      "Cancel",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   // Helper function to handle image generation and display
-  Future<void> _generateAndShowImage(String inputPrompt, BuildContext dialogContext) async {
-    final imageUrl = await _getAIPhoto(inputPrompt, 1536, 864);
-    if (!dialogContext.mounted) return; // Prevent UI updates if unmounted
+  Future<void> _generateAndShowImage(String inputPrompt, BuildContext dialogContext, {String? prevImageID}) async {
+    print("Starting _generateAndShowImage with prompt: $inputPrompt");
+    Map<String?, dynamic>? ai_image;
+    if (prevImageID == null) {
+      print("Calling _getAIPhoto just based on prompt");
+      ai_image = await _getAIPhoto(inputPrompt, 1536, 864);
+    } else {
+      print("Calling _getAIPhoto based on prompt and prevImageID");
+      ai_image = await _getAIPhoto(inputPrompt, 1536, 864, prevImageID: prevImageID);
+    }
+    String? imageUrl = ai_image?['image_url'];
+    String? imageId = ai_image?['image_id'];
+
+    print("Image generation result: URL=$imageUrl, ID=$imageId");
+
+    if (!dialogContext.mounted) {
+      print("Dialog context not mounted, using fallback context");
+      // Fallback to current context if dialogContext is unmounted
+      dialogContext = context;
+      if (!dialogContext.mounted) {
+        print("Fallback context also unmounted, aborting");
+        return;
+      }
+    }
+
+    // Dismiss the loading dialog
+    print("Dismissing loading dialog");
+    try {
+      Navigator.of(dialogContext).pop();
+    } catch (e) {
+      print("Error dismissing loading dialog: $e");
+    }
+
     setState(() {
       _generatedImageUrl = imageUrl;
     });
-    if (imageUrl != null) {
-      if (dialogContext.mounted) {
-        ScaffoldMessenger.of(dialogContext).showSnackBar(
-          const SnackBar(content: Text('Image generated successfully')),
-        );
-        showDialog(
+
+    if (imageUrl != null && imageId != null) {
+      print("Showing success snackbar and image dialog");
+      ScaffoldMessenger.of(dialogContext).showSnackBar(
+        const SnackBar(content: Text('Image generated successfully')),
+      );
+      try {
+        await showDialog(
           context: dialogContext,
           builder: (BuildContext context) {
+            print("Building image dialog");
             return AlertDialog(
               contentPadding: EdgeInsets.zero,
-              backgroundColor: Colors.transparent, // Set dialog background to transparent
+              backgroundColor: Colors.transparent,
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Image.network(
                     imageUrl,
                     fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      print("Error loading image: $error");
+                      return const Text(
+                        "Failed to load image",
+                        style: TextStyle(color: Colors.white),
+                      );
+                    },
                   ),
-                  SizedBox(height:20),
+                  const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       ElevatedButton(
                         onPressed: () {
-                          onEdit();
+                          print("New Photo button pressed");
+                          onNewPhoto();
                         },
-                        child: Row(
+                        child: const Row(
                           children: [
                             Icon(Icons.edit, color: Colors.orange),
                             SizedBox(width: 8),
-                            Text('Edit Photo'),
-                          ]
-                        )
+                            Text("New Photo"),
+                          ],
+                        ),
                       ),
                       ElevatedButton(
-                          onPressed: () {
-                            onSubmit(imageUrl, "billstantonthefourth@gmail.com");
-                          },
-                          child: Row(
-                              children: [
-                                Icon(Icons.check, color: Colors.orange),
-                                SizedBox(width: 8),
-                                Text('Submit Photo'),
-                              ]
-                          )
+                        onPressed: () {
+                          print("Edit Photo button pressed");
+                          onEdit(imageId);
+                        },
+                        child: const Row(
+                          children: [
+                            Icon(Icons.edit, color: Colors.orange),
+                            SizedBox(width: 8),
+                            Text("Edit Photo"),
+                          ],
+                        ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 15),
+                  ElevatedButton(
+                    onPressed: () {
+                      print("Submit Photo button pressed");
+                      onSubmit(imageUrl, "billstantonthefourth@gmail.com");
+                    },
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.check, color: Colors.orange),
+                        SizedBox(width: 8),
+                        Text("Submit Photo"),
+                      ],
+                    ),
                   ),
                 ],
               ),
             );
           },
         );
+        print("Image dialog shown successfully");
+      } catch (e) {
+        print("Error showing image dialog: $e");
+        if (dialogContext.mounted) {
+          ScaffoldMessenger.of(dialogContext).showSnackBar(
+            SnackBar(content: Text('Error displaying image: $e')),
+          );
+        }
       }
     } else {
+      print("Showing failure snackbar");
       if (dialogContext.mounted) {
         ScaffoldMessenger.of(dialogContext).showSnackBar(
-          const SnackBar(content: Text('Failed to generate a valid image URL')),
+          const SnackBar(content: Text('Failed to generate a valid image URL or ID')),
         );
       }
     }
   }
 
-  Future<void> _showAIPromptDialog() async {
+  Future<void> _showAIPromptDialog({String? prevImageID}) async {
     final dialogContext = context; // Store state context
     await showDialog(
       context: dialogContext,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Center(
-            child: Text("Enter your prompt", style: TextStyle(color: Colors.white))
+          title: const Center(
+            child: Text("Enter your prompt", style: TextStyle(color: Colors.white)),
           ),
           backgroundColor: Colors.blueGrey,
           shape: RoundedRectangleBorder(
@@ -504,12 +660,11 @@ class _PlayersPageState extends State<PlayersPage> {
           ),
           content: TextField(
             controller: _textFieldController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               hintText: "Example: Show me happy cashier",
-              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black))
+              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
             ),
             onSubmitted: (value) async {
-              // Handle Enter key press
               final prompt = value.trim();
               if (prompt.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -520,28 +675,30 @@ class _PlayersPageState extends State<PlayersPage> {
               Navigator.of(context).pop(); // Close prompt dialog
               if (mounted) {
                 setState(() {
-                  _isGenerating = true; // Show loading circle
+                  _isGenerating = true;
+                  print("IS GENERATING == TRUE");
                 });
-              }
-              // add prompt to prompts list
-              prompts.add(prompt);
-              // concatenate all strings in prompts into one
-              String totalPrompt = "";
-              for (String my_prompt in prompts) {
-                totalPrompt = "$totalPrompt, $my_prompt";
-              }
-              await _generateAndShowImage(totalPrompt, dialogContext);
-              if (mounted) {
-                setState(() {
-                  _isGenerating = false; // Hide loading circle
-                });
+                final startTime = DateTime.now();
+                showLoadingCircle(dialogContext);
+                await _generateAndShowImage(prompt, dialogContext, prevImageID: prevImageID);
+                final elapsed = DateTime.now().difference(startTime).inMilliseconds;
+                if (elapsed < 1000) {
+                  await Future.delayed(Duration(milliseconds: 1000 - elapsed));
+                }
+                if (mounted) {
+                  setState(() {
+                    _isGenerating = false;
+                    print("IS GENERATING == FALSE");
+                  });
+                }
               }
             },
           ),
           actions: [
             TextButton(
-              onPressed: () async {
-                // Handle button click
+              onPressed: _isGenerating
+                  ? null
+                  : () async {
                 final prompt = _textFieldController.text.trim();
                 if (prompt.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -552,41 +709,38 @@ class _PlayersPageState extends State<PlayersPage> {
                 Navigator.of(context).pop(); // Close prompt dialog
                 if (mounted) {
                   setState(() {
-                    _isGenerating = true; // Show loading circle
+                    _isGenerating = true;
+                    print("IS GENERATING == TRUE");
                   });
-                }
-                // add prompt to prompts list
-                prompts.add(prompt);
-                // concatenate all strings in prompts into one
-                String totalPrompt = "";
-                for (String my_prompt in prompts) {
-                  totalPrompt = "$totalPrompt, $my_prompt";
-                }
-
-                await _generateAndShowImage(totalPrompt, dialogContext);
-                if (mounted) {
-                  setState(() {
-                    _isGenerating = false; // Hide loading circle
-                  });
+                  final startTime = DateTime.now();
+                  showLoadingCircle(dialogContext);
+                  await _generateAndShowImage(prompt, dialogContext, prevImageID: prevImageID);
+                  final elapsed = DateTime.now().difference(startTime).inMilliseconds;
+                  if (elapsed < 1000) {
+                    await Future.delayed(Duration(milliseconds: 1000 - elapsed));
+                  }
+                  if (mounted) {
+                    setState(() {
+                      _isGenerating = false;
+                      print("IS GENERATING == FALSE");
+                    });
+                  }
                 }
               },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.send, color: Colors.white),
-                  SizedBox(width: 4),
-                  Text('Create Image', style: TextStyle(color: Colors.white))
-                ]
-              )
+                  SizedBox(width: _isGenerating ? 8 : 4),
+                  const Text('Create Image', style: TextStyle(color: Colors.white)),
+                ],
+              ),
             ),
           ],
         );
       },
     );
-    // when user taps away from dialog, clear input string
     prompts.clear();
-    _textFieldController.clear(); // Clear the text field for new input
-
+    _textFieldController.clear();
   }
 
 
@@ -605,7 +759,14 @@ class _PlayersPageState extends State<PlayersPage> {
       endDrawer: Drawer(
         child: Container(
           decoration: const BoxDecoration(
-            color: Colors.black87,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: <Color>[
+                Colors.blueGrey,
+                Color.fromRGBO(10, 85, 163, 1.0),
+              ],
+            ),
           ),
           child: SafeArea(
             child: Column(
@@ -717,7 +878,7 @@ class _PlayersPageState extends State<PlayersPage> {
                         dropdownStyleData: const DropdownStyleData(
                           maxHeight: 200,
                           decoration: BoxDecoration(
-                            color: Color(0xFF424242),
+                            color: Colors.blueGrey,
                           ),
                         ),
                         menuItemStyleData: const MenuItemStyleData(
@@ -795,7 +956,7 @@ class _PlayersPageState extends State<PlayersPage> {
                           decoration: BoxDecoration(
                             shape: BoxShape.rectangle,
                             border: Border.all(
-                              width: 0,
+                              width: 2,
                               color: const Color.fromRGBO(10, 85, 163, 1.0),
                             ),
                             borderRadius: const BorderRadius.all(Radius.circular(8.0)),
