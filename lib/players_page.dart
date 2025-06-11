@@ -13,15 +13,12 @@ import 'package:image_picker/image_picker.dart';
 import './main.dart';
 import './screens_page.dart';
 import './dmb_functions.dart';
-import './ai_image_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
-/*
-*/
 dynamic activeDMBPlayers = 0;
 
 //Create custom class to hold the media player data
@@ -41,9 +38,7 @@ dynamic selectedPlayerName;
 //or a 'back' button when showing the user a list of DMB Media Players
 bool playersNoBackButton = true;
 
-
 class PlayersPage extends StatefulWidget {
-  //const PlayersPage({super.key, required this.pageTitle, required this.pageSubTitle});
   const PlayersPage({super.key, this.pageTitle, this.pageSubTitle});
 
   final String? pageTitle;
@@ -53,7 +48,7 @@ class PlayersPage extends StatefulWidget {
   _PlayersPageState createState() => _PlayersPageState();
 }
 
-// main class
+/// main class
 class _PlayersPageState extends State<PlayersPage> {
   late String pageTitle;
   late String pageSubTitle;
@@ -62,8 +57,7 @@ class _PlayersPageState extends State<PlayersPage> {
   TextEditingController _textFieldController = TextEditingController();
   String? _generatedImageUrl;
   bool _isGenerating = false; // Track image generation state
-  List<String> prompts = []; // stores all the prompts given by the user
-  String backgroundURL = "https://lp-cms-production.imgix.net/2023-02/3cb45f6e59190e8213ce0a35394d0e11-nice.jpg";
+  String backgroundURL = "https://lp-cms-production.imgix.net/2023-02/3cb45f6e59190e8213ce0a35394d0e11-nice.jpg"; // URL for background image
 
   ///This 'override' function is called once when the class is loaded
   ///(is used to update the pageTitle * subTitle)
@@ -82,6 +76,7 @@ class _PlayersPageState extends State<PlayersPage> {
 
   int selectedIndex = 0;
 
+  /// shows the available screens
   void _showScreensPage() {
     Navigator.push(
       context,
@@ -89,37 +84,27 @@ class _PlayersPageState extends State<PlayersPage> {
         builder: (context) =>
             ScreensPage(
               pageTitle: "Player: $selectedPlayerName",
-              pageSubTitle: "Select Screen to Publish",
+              pageSubTitle: "Select Screen to Publish Stanton",
             ),
       ),
     );
   }
 
-  //As the list of players is being build, this function will determine
-  //whether we show a 'regular' color button or a 'red' one because
-  //the status of the player is inactive
-  // _checkPlayerStatus(index){
-  //
-  //   var pStatus = dmbMediaPlayers[index].status;
-  //   return pStatus == "Active" ? true : false;
-  // }
-
+  /// returns true if player status at given index is active, false otherwise
   bool _checkPlayerStatus(int index) {
     return dmbMediaPlayers[index].status == "Active";
   }
 
-  //In each view, provide a button to let the user logout
+  /// logs user out of their account
   void _userLogout() {
-    confirmLogout(
-        context); //*** CONFIRM USER LOGOUT (function is in: dmb_functions.dart)
+    confirmLogout(context); //*** CONFIRM USER LOGOUT (function is in: dmb_functions.dart)
   }
 
-  //Called this when the user pulls down the screen
+  /// Call this when the user pulls down the screen
   Future<void> _refreshData() async {
     try {
       //Go to the DMB server to get an updated list of players
-      getUserData("$loginUsername", "$loginPassword", "players-refresh").then((
-          result) {
+      getUserData("$loginUsername", "$loginPassword", "players-refresh").then((result) {
         //*** If the return value is a string, then there was an error
         // getting the data, so don't do anything.
         // Otherwise, should be Ok to set the
@@ -131,10 +116,15 @@ class _PlayersPageState extends State<PlayersPage> {
             pageSubTitle = "Select Player";
           });
         }
-      });
-    } catch (err) {}
+      }
+      );
+    }
+    catch (err) {
+      print("Error refreshing data");
+    }
   }
 
+  /// not working as of now - need Manny's version
   Future<void> _showUploadSheet(File imageFile) async {
     showModalBottomSheet(
       context: context,
@@ -172,7 +162,7 @@ class _PlayersPageState extends State<PlayersPage> {
                   ),
                   onPressed: () async {
                     Navigator.of(context).pop();
-                    bool success = await uploadImage(imageFile, "billstantonthefourth@gmail.com");
+                    bool success = await uploadImage(imageFile, loginUsername);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -191,6 +181,7 @@ class _PlayersPageState extends State<PlayersPage> {
     );
   }
 
+  /// call when user clicks 'Upload Image' from 'Camera'
   Future<void> _takePhoto() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
@@ -201,6 +192,7 @@ class _PlayersPageState extends State<PlayersPage> {
     }
   }
 
+  /// call when user clicks 'Upload Image' from 'Gallery'
   Future<void> _chooseFromGallery() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -210,7 +202,6 @@ class _PlayersPageState extends State<PlayersPage> {
       _showUploadSheet(_image!);
     }
   }
-
 
   /// generates photo using Leonardo.ai API key
   /// edit this function if we change services (Leonardo, Open AI, etc)
@@ -229,7 +220,7 @@ class _PlayersPageState extends State<PlayersPage> {
       return null;
     }
 
-    final apiKey = dotenv.env['LEONARDO_API_KEY'];
+    final apiKey = dotenv.env['LEONARDO_API_KEY']; // gets the API key, stored in the private .env file
 
     if (apiKey == null) {
       if (mounted) {
@@ -251,6 +242,7 @@ class _PlayersPageState extends State<PlayersPage> {
 
     final url = Uri.parse('https://cloud.leonardo.ai/api/rest/v1/generations');
 
+    // headers for API call
     final headers = {
       'Authorization': 'Bearer $apiKey',
       'Accept': 'application/json',
@@ -263,30 +255,30 @@ class _PlayersPageState extends State<PlayersPage> {
       print("generating body in _getAIPhoto using just prompt");
       body = jsonEncode({
         'prompt': prompt,
-        'modelId': stable_diffusion, // Phoenix 1.0 model
+        'modelId': stable_diffusion,
         'num_images': 1,
         'width': width,
         'height': height,
       });
     }
 
-    // else prevImageID was passed in, generate photo based off prevUrl and prompt
+    // else prevImageID was passed in, so generate photo based off prevUrl and prompt
     else {
       print("generating body in _getAIPhoto using prompt and prevImageID");
       body = jsonEncode({
         'prompt': prompt,
-        'modelId': stable_diffusion, // Phoenix 1.0 model
+        'modelId': stable_diffusion,
         'init_image_id': prevImageID,
         'init_strength': 0.4, // how closely to stick to given image (0-1)
         'num_images': 1,
         'width': width,
         'height': height,
-        // 'guidance_scale': 7.5,  // how closely to follow prompt (higher -> closer to prompt)
+        'guidance_scale': 5,  // how closely to follow prompt (higher -> closer to prompt)
       });
     }
 
     try {
-      final response = await http.post(url, headers: headers, body: body);
+      final response = await http.post(url, headers: headers, body: body); // call the API
 
       // response code == 200 means successful response
       if (response.statusCode == 200) {
@@ -304,22 +296,23 @@ class _PlayersPageState extends State<PlayersPage> {
 
         final pollUrl = Uri.parse('https://cloud.leonardo.ai/api/rest/v1/generations/$generationId');
         bool isCompleted = false;
-        String? imageUrl;
-        String? imageId;
+        String? imageUrl; // URL to the generated Image
+        String? imageId; // unique ID of the generated Image
 
+        // make continuous calls to the API until image is received or it times out
         for (int i = 0; i < 30; i++) {
-          await Future.delayed(Duration(seconds: 2));
+          await Future.delayed(Duration(seconds: 1));
           final pollResponse = await http.get(pollUrl, headers: headers);
 
           if (pollResponse.statusCode == 200) {
             final pollData = jsonDecode(pollResponse.body);
             final status = pollData['generations_by_pk']?['status'];
 
-            if (status == 'COMPLETE') {
+            if (status == 'COMPLETE') { // exit the loop - image has been received in full
               isCompleted = true;
               final generatedImage = pollData['generations_by_pk']?['generated_images']?[0]; // first image
-              imageUrl = generatedImage['url']?.toString();
-              imageId = generatedImage['id']?.toString();
+              imageUrl = generatedImage['url']?.toString(); // initialize imageUrl
+              imageId = generatedImage['id']?.toString(); // initialize imageID
               break;
             }
             else if (status == 'FAILED') {
@@ -345,13 +338,13 @@ class _PlayersPageState extends State<PlayersPage> {
           return null;
         }
 
-        print('Generated Image URL: $imageUrl'); // Debug URL
-        return {'image_id': imageId, 'image_url': imageUrl};
+        print('Generated Image URL: $imageUrl');
+        return {'image_id': imageId, 'image_url': imageUrl}; // return a Map with the imageId and imageUrl
       }
       else {
         print('API Error: ${response.statusCode} - ${response.body}');
         String errorMsg;
-        switch (response.statusCode) {
+        switch (response.statusCode) { // identify the error
           case 401:
             errorMsg = 'Invalid API key. Please check your credentials.';
             break;
@@ -383,68 +376,56 @@ class _PlayersPageState extends State<PlayersPage> {
     }
   }
 
+  /// call this function when the user clicks 'New Photo' after generating one
   void onNewPhoto() {
     Navigator.of(context).pop(); // Close the image dialog
     setState(() {
       _generatedImageUrl = null; // Clear the previous image
       _textFieldController.clear(); // Clear the text field for new input
     });
-    _showAIPromptDialog();
+    _showAIPromptDialog(); // let the user generate a new photo, forgetting the previous one
   }
 
+  /// call this function when the user clicks 'Edit Photo' after generating one
   void onEdit(String prevImageID) {
     Navigator.of(context).pop(); // Close the image dialog
     setState(() {
       _generatedImageUrl = null; // Clear the previous image
       _textFieldController.clear(); // Clear the text field for new input
     });
-    _showAIPromptDialog(prevImageID: prevImageID);
+    _showAIPromptDialog(prevImageID: prevImageID); // let the user generate a new photo based off of a new prompt and the previous photo
 
   }
 
+  /// call this function when the user clicks 'Submit Photo' after generating one
   Future<void> onSubmit(String imageUrl, String username) async {
     // convert imageUrl into File, upload to DMB server
     try {
       final response = await http.get(Uri.parse(imageUrl));
-      if (response.statusCode != 200) {
+      if (response.statusCode != 200) { // failure
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Failed to download image")),
         );
-        print("ERROR ON ONSUBMIT FUNCTION!");
+        print("ERROR ON onSubmit FUNCTION!");
         return;
       }
 
-      // extract the bytes from the url's image
-      final bytes = response.bodyBytes;
-      // dir to store the tempfile -> should be located in cache
-      final tempDir = await getTemporaryDirectory();
-      // extract the names of the file
-      final filename = path.basename(imageUrl);
-      final tempFile = File("${tempDir.path}/$filename");
+      final bytes = response.bodyBytes; // extract the bytes from the image
+      final tempDir = await getTemporaryDirectory(); // create a temporary directory
+      final filename = path.basename(imageUrl); // extract the names of the file
+      final tempFile = File("${tempDir.path}/$filename"); // create the tempFile
 
-      // use writeAsBytes
-      // this takes the bytes from the url and copies it directly into the tempfile
-      await tempFile.writeAsBytes(bytes);
+      await tempFile.writeAsBytes(bytes); // copy the bytes into the tempFile
+      bool success = await uploadImage(tempFile, loginUsername); // upload the tempFile to the DMB server
 
-      // call uploadImage with tempFile and userName
-      bool success = await uploadImage(tempFile, "billstantonthefourth@gmail.com");
-
-      // Only delete temp file if upload succeeded AND deleteAfter is true
-      // remember to delete from cache
       if (success) {
-        try {
-          await tempFile.delete();
-        }
-        catch (_) {
-          // ignore deletion errors first
-        }
+        await tempFile.delete(); // delete tempFile if upload was successful
       }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            success
-                ? "Image uploaded successfully"
-                : "Image upload failed",
+          content: Text( // tell user if image upload was successful or not
+            success ? "Image uploaded successfully" : "Image upload failed", // enhanced if/else
           ),
         ),
       );
@@ -457,6 +438,7 @@ class _PlayersPageState extends State<PlayersPage> {
     Navigator.of(context).pop(); // Close the image dialog
   }
 
+  /// show the loading circle between when user submits prompt to when photo is displayed
   void showLoadingCircle(BuildContext context) {
     showDialog(
       context: context,
@@ -468,13 +450,13 @@ class _PlayersPageState extends State<PlayersPage> {
             child: Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.blueGrey.withOpacity(0.8),
+                color: Colors.blueGrey,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const CircularProgressIndicator(
+                  const CircularProgressIndicator( // loading button
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
                   ),
                   const SizedBox(height: 10),
@@ -483,7 +465,7 @@ class _PlayersPageState extends State<PlayersPage> {
                     style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
                   const SizedBox(height: 10),
-                  TextButton(
+                  TextButton( // cancel button
                     onPressed: () {
                       Navigator.of(context).pop(); // Close loading dialog
                     },
@@ -501,14 +483,17 @@ class _PlayersPageState extends State<PlayersPage> {
     );
   }
 
-  // Helper function to handle image generation and display
+  /// helper function to create and display the image
   Future<void> _generateAndShowImage(String inputPrompt, BuildContext dialogContext, {String? prevImageID}) async {
     print("Starting _generateAndShowImage with prompt: $inputPrompt");
-    Map<String?, dynamic>? ai_image;
-    if (prevImageID == null) {
+
+    Map<String?, dynamic>? ai_image; // map that stores the ImageUrl and ImageID
+
+    if (prevImageID == null) { // generate just based off prompt
       print("Calling _getAIPhoto just based on prompt");
       ai_image = await _getAIPhoto(inputPrompt, 1536, 864);
-    } else {
+    }
+    else { // generate based off prompt and the previous Image
       print("Calling _getAIPhoto based on prompt and prevImageID");
       ai_image = await _getAIPhoto(inputPrompt, 1536, 864, prevImageID: prevImageID);
     }
@@ -517,117 +502,258 @@ class _PlayersPageState extends State<PlayersPage> {
 
     print("Image generation result: URL=$imageUrl, ID=$imageId");
 
-    if (!dialogContext.mounted) {
-      print("Dialog context not mounted, using fallback context");
-      // Fallback to current context if dialogContext is unmounted
-      dialogContext = context;
-      if (!dialogContext.mounted) {
-        print("Fallback context also unmounted, aborting");
-        return;
-      }
-    }
+    // if (!dialogContext.mounted) {
+    //   print("Dialog context not mounted, using fallback context");
+    //   // Fallback to current context if dialogContext is unmounted
+    //   dialogContext = context;
+    //   if (!dialogContext.mounted) {
+    //     print("Fallback context also unmounted, aborting");
+    //     return;
+    //   }
+    // }
 
-    // Dismiss the loading dialog
-    print("Dismissing loading dialog");
-    try {
-      Navigator.of(dialogContext).pop();
-    } catch (e) {
-      print("Error dismissing loading dialog: $e");
-    }
+    Navigator.of(dialogContext).pop(); // Dismiss the loading dialog
 
-    setState(() {
-      _generatedImageUrl = imageUrl;
-    });
+    // setState(() {
+    //   _generatedImageUrl = imageUrl;
+    // });
 
     if (imageUrl != null && imageId != null) {
-      print("Showing success snackbar and image dialog");
       ScaffoldMessenger.of(dialogContext).showSnackBar(
         const SnackBar(content: Text('Image generated successfully')),
       );
       try {
-        await showDialog(
-          context: dialogContext,
-          builder: (BuildContext context) {
-            print("Building image dialog");
-            return AlertDialog(
-              contentPadding: EdgeInsets.zero,
-              backgroundColor: Colors.transparent,
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return const Center(
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      print("Error loading image: $error");
-                      return const Text(
-                        "Failed to load image",
-                        style: TextStyle(color: Colors.white),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          print("New Photo button pressed");
-                          onNewPhoto();
-                        },
-                        child: const Row(
-                          children: [
-                            Icon(Icons.edit, color: Colors.orange),
-                            SizedBox(width: 8),
-                            Text("New Photo"),
-                          ],
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          print("Edit Photo button pressed");
-                          onEdit(imageId);
-                        },
-                        child: const Row(
-                          children: [
-                            Icon(Icons.edit, color: Colors.orange),
-                            SizedBox(width: 8),
-                            Text("Edit Photo"),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-                  ElevatedButton(
-                    onPressed: () {
-                      print("Submit Photo button pressed");
-                      onSubmit(imageUrl, "billstantonthefourth@gmail.com");
-                    },
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+        // show image in slide up box
+        await showModalBottomSheet(
+            context: dialogContext,
+            backgroundColor: Colors.grey[900],
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            isScrollControlled: true, // allows user to scroll
+            builder: (BuildContext context) {
+              return Padding(
+                  padding: const EdgeInsets.all(16.0), // padding on all sides
+                  child: Column(
+                      mainAxisSize: MainAxisSize.min, // take up minimum space
                       children: [
-                        Icon(Icons.check, color: Colors.orange),
-                        SizedBox(width: 8),
-                        Text("Submit Photo"),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
+                        const Text("AI Generated Image", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                        const SizedBox(height: 12),
+                        // first child - the image that was generated
+                        GestureDetector(
+                          onTap: () {
+                            // Show a dialog with the enlarged image
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return Dialog(
+                                  backgroundColor: Colors.black.withOpacity(0.8), // Semi-transparent background
+                                  child: Stack(
+                                    children: [
+                                      // Display the enlarged image
+                                      Center(
+                                        child: Image.network(
+                                          imageUrl,
+                                          fit: BoxFit.contain, // Ensure the image fits within the dialog
+                                          loadingBuilder: (context, child, loadingProgress) {
+                                            if (loadingProgress == null) return child;
+                                            return const Center(
+                                              child: CircularProgressIndicator(
+                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+                                              ),
+                                            );
+                                          },
+                                          errorBuilder: (context, error, stackTrace) {
+                                            print("Error loading image: $error");
+                                            return const Text(
+                                              "Failed to load image",
+                                              style: TextStyle(color: Colors.white),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      // Close button
+                                      Positioned(
+                                        top: 10,
+                                        right: 10,
+                                        child: IconButton(
+                                          icon: const Icon(Icons.close, color: Colors.white),
+                                          onPressed: () {
+                                            Navigator.of(context).pop(); // Close the dialog
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return const Center(
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                print("Error loading image: $error");
+                                return const Text(
+                                  "Failed to load image",
+                                  style: TextStyle(color: Colors.white),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        // second child - a row with buttons 'New Photo' and 'Edit Photo'
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                print("New Photo button pressed");
+                                onNewPhoto();
+                              },
+                              child: const Row(
+                                children: [
+                                  Icon(Icons.edit, color: Colors.orange),
+                                  SizedBox(width: 8),
+                                  Text("New Photo"),
+                                ],
+                              ),
+                            ),
+                            // ElevatedButton(
+                            //   onPressed: () {
+                            //     print("Edit Photo button pressed");
+                            //     onEdit(imageId);
+                            //   },
+                            //   child: const Row(
+                            //     children: [
+                            //       Icon(Icons.edit, color: Colors.orange),
+                            //       SizedBox(width: 8),
+                            //       Text("Edit Photo"),
+                            //     ],
+                            //   ),
+                            // ),
+                          ],
+                        ),
+                        const SizedBox(height: 15),
+                        // third child - 'Close' and 'Upload' buttons
+                        Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton( // close image pop up
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: const Text("Close", style: TextStyle(color: Colors.white)),
+                              ),
+                              const SizedBox(width: 10),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.greenAccent),
+                                onPressed: () async {
+                                  onSubmit(imageUrl, loginUsername);
+                                },
+                                child: const Text("Upload"),
+                              )
+                            ]
+                        )
+                      ]
+                  )
+              );
+            }
         );
+
+        // await showDialog(
+        //   context: dialogContext,
+        //   builder: (BuildContext context) {
+        //     print("Building image dialog");
+        //     return AlertDialog(
+        //       contentPadding: EdgeInsets.zero,
+        //       backgroundColor: Colors.transparent,
+        //       content: Column(
+        //         mainAxisSize: MainAxisSize.min,
+        //         children: [
+        //           Image.network(
+        //             imageUrl,
+        //             fit: BoxFit.cover,
+        //             loadingBuilder: (context, child, loadingProgress) {
+        //               if (loadingProgress == null) return child;
+        //               return const Center(
+        //                 child: CircularProgressIndicator(
+        //                   valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+        //                 ),
+        //               );
+        //             },
+        //             errorBuilder: (context, error, stackTrace) {
+        //               print("Error loading image: $error");
+        //               return const Text(
+        //                 "Failed to load image",
+        //                 style: TextStyle(color: Colors.white),
+        //               );
+        //             },
+        //           ),
+        //           const SizedBox(height: 20),
+        //           Row(
+        //             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        //             children: [
+        //               ElevatedButton(
+        //                 onPressed: () {
+        //                   print("New Photo button pressed");
+        //                   onNewPhoto();
+        //                 },
+        //                 child: const Row(
+        //                   children: [
+        //                     Icon(Icons.edit, color: Colors.orange),
+        //                     SizedBox(width: 8),
+        //                     Text("New Photo"),
+        //                   ],
+        //                 ),
+        //               ),
+        //               ElevatedButton(
+        //                 onPressed: () {
+        //                   print("Edit Photo button pressed");
+        //                   onEdit(imageId);
+        //                 },
+        //                 child: const Row(
+        //                   children: [
+        //                     Icon(Icons.edit, color: Colors.orange),
+        //                     SizedBox(width: 8),
+        //                     Text("Edit Photo"),
+        //                   ],
+        //                 ),
+        //               ),
+        //             ],
+        //           ),
+        //           const SizedBox(height: 15),
+        //           ElevatedButton(
+        //             onPressed: () {
+        //               print("Submit Photo button pressed");
+        //               onSubmit(imageUrl, "billstantonthefourth@gmail.com");
+        //             },
+        //             child: const Row(
+        //               mainAxisAlignment: MainAxisAlignment.center,
+        //               children: [
+        //                 Icon(Icons.check, color: Colors.orange),
+        //                 SizedBox(width: 8),
+        //                 Text("Submit Photo"),
+        //               ],
+        //             ),
+        //           ),
+        //         ],
+        //       ),
+        //     );
+        //   },
+        // );
         print("Image dialog shown successfully");
-      } catch (e) {
+      }
+      catch (e) {
         print("Error showing image dialog: $e");
         if (dialogContext.mounted) {
           ScaffoldMessenger.of(dialogContext).showSnackBar(
@@ -635,7 +761,8 @@ class _PlayersPageState extends State<PlayersPage> {
           );
         }
       }
-    } else {
+    }
+    else {
       print("Showing failure snackbar");
       if (dialogContext.mounted) {
         ScaffoldMessenger.of(dialogContext).showSnackBar(
@@ -645,6 +772,7 @@ class _PlayersPageState extends State<PlayersPage> {
     }
   }
 
+  /// shows the prompt text box and takes in user input
   Future<void> _showAIPromptDialog({String? prevImageID}) async {
     final dialogContext = context; // Store state context
     await showDialog(
@@ -661,11 +789,11 @@ class _PlayersPageState extends State<PlayersPage> {
           content: TextField(
             controller: _textFieldController,
             decoration: const InputDecoration(
-              hintText: "Example: Show me happy cashier",
+              hintText: "Example: Show me happy cashier", // goes away when user starts to input data
               enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
             ),
             onSubmitted: (value) async {
-              final prompt = value.trim();
+              final prompt = value.trim(); // save given prompt
               if (prompt.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Please enter a prompt')),
@@ -673,32 +801,31 @@ class _PlayersPageState extends State<PlayersPage> {
                 return;
               }
               Navigator.of(context).pop(); // Close prompt dialog
-              if (mounted) {
-                setState(() {
-                  _isGenerating = true;
-                  print("IS GENERATING == TRUE");
-                });
-                final startTime = DateTime.now();
-                showLoadingCircle(dialogContext);
-                await _generateAndShowImage(prompt, dialogContext, prevImageID: prevImageID);
-                final elapsed = DateTime.now().difference(startTime).inMilliseconds;
-                if (elapsed < 1000) {
-                  await Future.delayed(Duration(milliseconds: 1000 - elapsed));
-                }
-                if (mounted) {
-                  setState(() {
-                    _isGenerating = false;
-                    print("IS GENERATING == FALSE");
-                  });
-                }
-              }
+
+              showLoadingCircle(dialogContext);
+              await _generateAndShowImage(prompt, dialogContext, prevImageID: prevImageID);
+
+              // if (mounted) {
+              //   // setState(() {
+              //   //   _isGenerating = true;
+              //   //   print("IS GENERATING == TRUE");
+              //   // });
+              //
+              //   showLoadingCircle(dialogContext);
+              //   await _generateAndShowImage(prompt, dialogContext, prevImageID: prevImageID);
+              //
+              //   // if (mounted) {
+              //   //   setState(() {
+              //   //     _isGenerating = false;
+              //   //     print("IS GENERATING == FALSE");
+              //   //   });
+              //   // }
+              // }
             },
           ),
           actions: [
             TextButton(
-              onPressed: _isGenerating
-                  ? null
-                  : () async {
+              onPressed: () async {
                 final prompt = _textFieldController.text.trim();
                 if (prompt.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -707,25 +834,9 @@ class _PlayersPageState extends State<PlayersPage> {
                   return;
                 }
                 Navigator.of(context).pop(); // Close prompt dialog
-                if (mounted) {
-                  setState(() {
-                    _isGenerating = true;
-                    print("IS GENERATING == TRUE");
-                  });
-                  final startTime = DateTime.now();
-                  showLoadingCircle(dialogContext);
-                  await _generateAndShowImage(prompt, dialogContext, prevImageID: prevImageID);
-                  final elapsed = DateTime.now().difference(startTime).inMilliseconds;
-                  if (elapsed < 1000) {
-                    await Future.delayed(Duration(milliseconds: 1000 - elapsed));
-                  }
-                  if (mounted) {
-                    setState(() {
-                      _isGenerating = false;
-                      print("IS GENERATING == FALSE");
-                    });
-                  }
-                }
+
+                showLoadingCircle(dialogContext);
+                await _generateAndShowImage(prompt, dialogContext, prevImageID: prevImageID);
               },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -739,20 +850,16 @@ class _PlayersPageState extends State<PlayersPage> {
         );
       },
     );
-    prompts.clear();
-    _textFieldController.clear();
+    _textFieldController.clear(); // clear the text controller
   }
 
 
   final List<String> uploadOptions = ['Camera', 'Gallery', 'Create Image'];
   String? selectedOption;
 
-  // menu side bar
+  /// menu on the left of the screen
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.white, // in case the image fails to load
@@ -788,7 +895,7 @@ class _PlayersPageState extends State<PlayersPage> {
                           ),
                         ),
                       ),
-                      Padding(
+                      Padding( // My Screens Button
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Material(
                           color: Colors.transparent,
@@ -810,7 +917,7 @@ class _PlayersPageState extends State<PlayersPage> {
                       ),
                       // UPLOAD IMAGE DROP DOWN BUTTON
                       const Divider(color: Colors.black),
-                      DropdownButton2<String>(
+                      DropdownButton2<String>( // Upload Image Dropdown Button
                         isExpanded: true,
                         customButton: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -835,7 +942,7 @@ class _PlayersPageState extends State<PlayersPage> {
                           ),
                         ),
                         underline: Container(),
-                        items: uploadOptions.map((String value) {
+                        items: uploadOptions.map((String value) { // options for the upload image dropdown
                           IconData iconData;
                           if (value == 'Camera') {
                             iconData = Icons.camera_alt;
@@ -861,7 +968,7 @@ class _PlayersPageState extends State<PlayersPage> {
                           );
                         }).toList(),
                         value: selectedOption,
-                        onChanged: (String? newValue) async {
+                        onChanged: (String? newValue) async { // call functions based on which option is chosen
                           if (newValue == 'Camera') {
                             _takePhoto();
                           } else if (newValue == 'Gallery') {
@@ -892,7 +999,7 @@ class _PlayersPageState extends State<PlayersPage> {
                 // Bottom Section (Logout)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 5.0),
-                  child: Column(
+                  child: Column( // Logout button at bottom of screen
                     children: [
                       Material(
                         color: Colors.transparent,
@@ -1096,7 +1203,7 @@ Text _activeScreenText(BuildContext context, pIndex) {
       .status} - Current Screen: ${dmbMediaPlayers[pIndex]
       .currentScreen}",
       style: const TextStyle(
-          fontSize: 10,
+          fontSize: 14,
           fontStyle: FontStyle.italic,
           color: Colors.white70));
 }
