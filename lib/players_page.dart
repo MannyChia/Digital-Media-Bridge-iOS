@@ -18,6 +18,7 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 dynamic activeDMBPlayers = 0;
 
@@ -59,6 +60,7 @@ class _PlayersPageState extends State<PlayersPage> {
   bool _isGenerating = false; // Track image generation state
   String backgroundURL = "https://lp-cms-production.imgix.net/2023-02/3cb45f6e59190e8213ce0a35394d0e11-nice.jpg"; // URL for background image
 
+
   ///This 'override' function is called once when the class is loaded
   ///(is used to update the pageTitle * subTitle)
   @override
@@ -84,7 +86,7 @@ class _PlayersPageState extends State<PlayersPage> {
         builder: (context) =>
             ScreensPage(
               pageTitle: "Player: $selectedPlayerName",
-              pageSubTitle: "Select Screen to Publish Stanton",
+              pageSubTitle: "Select Screen to Publish",
             ),
       ),
     );
@@ -124,8 +126,14 @@ class _PlayersPageState extends State<PlayersPage> {
     }
   }
 
+
+
   /// not working as of now - need Manny's version
   Future<void> _showUploadSheet(File imageFile) async {
+    // save screen width and height
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.grey[900],
@@ -440,6 +448,10 @@ class _PlayersPageState extends State<PlayersPage> {
 
   /// show the loading circle between when user submits prompt to when photo is displayed
   void showLoadingCircle(BuildContext context) {
+    // save screen width and height
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+
     showDialog(
       context: context,
       barrierDismissible: false, // Prevents tapping outside to dismiss
@@ -459,10 +471,10 @@ class _PlayersPageState extends State<PlayersPage> {
                   const CircularProgressIndicator( // loading button
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
                   ),
-                  const SizedBox(height: 10),
-                  const Text(
+                  SizedBox(height: screenWidth * 0.1),
+                  Text(
                     "Generating Image...",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                    style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.1),
                   ),
                   const SizedBox(height: 10),
                   TextButton( // cancel button
@@ -485,6 +497,10 @@ class _PlayersPageState extends State<PlayersPage> {
 
   /// helper function to create and display the image
   Future<void> _generateAndShowImage(String inputPrompt, BuildContext dialogContext, {String? prevImageID}) async {
+    // save screen width and height
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+
     print("Starting _generateAndShowImage with prompt: $inputPrompt");
 
     Map<String?, dynamic>? ai_image; // map that stores the ImageUrl and ImageID
@@ -501,22 +517,7 @@ class _PlayersPageState extends State<PlayersPage> {
     String? imageId = ai_image?['image_id'];
 
     print("Image generation result: URL=$imageUrl, ID=$imageId");
-
-    // if (!dialogContext.mounted) {
-    //   print("Dialog context not mounted, using fallback context");
-    //   // Fallback to current context if dialogContext is unmounted
-    //   dialogContext = context;
-    //   if (!dialogContext.mounted) {
-    //     print("Fallback context also unmounted, aborting");
-    //     return;
-    //   }
-    // }
-
     Navigator.of(dialogContext).pop(); // Dismiss the loading dialog
-
-    // setState(() {
-    //   _generatedImageUrl = imageUrl;
-    // });
 
     if (imageUrl != null && imageId != null) {
       ScaffoldMessenger.of(dialogContext).showSnackBar(
@@ -774,13 +775,17 @@ class _PlayersPageState extends State<PlayersPage> {
 
   /// shows the prompt text box and takes in user input
   Future<void> _showAIPromptDialog({String? prevImageID}) async {
+    // save screen width and height
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+
     final dialogContext = context; // Store state context
     await showDialog(
       context: dialogContext,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Center(
-            child: Text("Enter your prompt", style: TextStyle(color: Colors.white)),
+          title: Center(
+            child: Text("Enter your prompt", style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.05)),
           ),
           backgroundColor: Colors.blueGrey,
           shape: RoundedRectangleBorder(
@@ -860,167 +865,210 @@ class _PlayersPageState extends State<PlayersPage> {
   /// menu on the left of the screen
   @override
   Widget build(BuildContext context) {
+    // save screen width and height
+    final double vw = MediaQuery.of(context).size.width / 100; // width of screen (by percentage)
+    final double vh = MediaQuery.of(context).size.height / 100; // height of screen (by percentage)
+
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.white, // in case the image fails to load
-      endDrawer: Drawer(
-        child: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: <Color>[
-                Colors.blueGrey,
-                Color.fromRGBO(10, 85, 163, 1.0),
-              ],
+      endDrawer: SizedBox(
+        width: vw * 60, // 60% of the screen
+        child: Drawer(
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: <Color>[
+                  Colors.blueGrey,
+                  Color.fromRGBO(10, 85, 163, 1.0),
+                ],
+              ),
             ),
-          ),
-          child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top Section
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Text(
-                          "Menu",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      Padding( // My Screens Button
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Material(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(8),
-                            onTap: () {
-                              Navigator.pop(context);
-                              _showScreensPage();
-                            },
-                            splashColor: Colors.white24,
-                            highlightColor: Colors.white10,
-                            child: ListTile(
-                              leading: const Icon(Icons.tv_outlined, color: Colors.orange),
-                              title: const Text("My Screens", style: TextStyle(color: Colors.white, fontSize: 20)),
+            child: SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.all(vw * 2),
+                          child: Text(
+                            "Menu",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: vw * 5,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                      ),
-                      // UPLOAD IMAGE DROP DOWN BUTTON
-                      const Divider(color: Colors.black),
-                      DropdownButton2<String>( // Upload Image Dropdown Button
-                        isExpanded: true,
-                        customButton: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          height: 60,
-                          width: 350,
-                          decoration: BoxDecoration(
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: vw * 2),
+                          child: Material(
                             color: Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              const SizedBox(width: 8),
-                              const Icon(Icons.upload, color: Colors.orange),
-                              const SizedBox(width: 15),
-                              const Text(
-                                "Upload Image",
-                                style: TextStyle(fontSize: 20, color: Colors.white),
+                            borderRadius: BorderRadius.circular(vw * 2),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(vw * 2),
+                              onTap: () {
+                                Navigator.pop(context);
+                                _showScreensPage();
+                              },
+                              splashColor: Colors.white24,
+                              highlightColor: Colors.white10,
+                              child: ListTile(
+                                leading: Icon(
+                                  Icons.tv_outlined,
+                                  color: Colors.orange,
+                                  size: vw * 6,
+                                ),
+                                title: Text(
+                                  "My Screens",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                  ),
+                                ),
                               ),
-                              const Spacer(),
-                              const Icon(Icons.arrow_drop_down, color: Colors.white),
-                            ],
+                            ),
                           ),
                         ),
-                        underline: Container(),
-                        items: uploadOptions.map((String value) { // options for the upload image dropdown
-                          IconData iconData;
-                          if (value == 'Camera') {
-                            iconData = Icons.camera_alt;
-                          } else if (value == 'Gallery') {
-                            iconData = Icons.photo_library;
-                          } else if (value == 'Create Image') {
-                            iconData = Icons.auto_awesome;
-                          } else {
-                            iconData = Icons.help_outline;
-                          }
-                          return DropdownMenuItem<String>(
-                            value: value,
+                        const Divider(color: Colors.black),
+                        DropdownButton2<String>(
+                          isExpanded: true,
+                          customButton: Container(
+                            padding: EdgeInsets.symmetric(horizontal: vw * 4),
+                            height: vh * 10,
+                            width: vw * 60,
+                            decoration: BoxDecoration(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(vw * 2),
+                            ),
                             child: Row(
                               children: [
-                                Icon(iconData, color: Colors.orange),
-                                const SizedBox(width: 8),
+                                SizedBox(width: 6),
+                                Icon(
+                                  Icons.upload,
+                                  color: Colors.orange,
+                                  size: vw * 6,
+                                ),
+                                SizedBox(width: 8),
                                 Text(
-                                  value,
-                                  style: const TextStyle(color: Colors.white),
+                                  "Upload Image",
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Icon(
+                                  Icons.arrow_drop_down,
+                                  color: Colors.white,
+                                  size: vw * 4,
                                 ),
                               ],
                             ),
-                          );
-                        }).toList(),
-                        value: selectedOption,
-                        onChanged: (String? newValue) async { // call functions based on which option is chosen
-                          if (newValue == 'Camera') {
-                            _takePhoto();
-                          } else if (newValue == 'Gallery') {
-                            _chooseFromGallery();
-                          } else if (newValue == 'Create Image') {
-                            _showAIPromptDialog();
-                          }
-                        },
-                        buttonStyleData: const ButtonStyleData(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          height: 60,
-                          width: 200,
-                        ),
-                        dropdownStyleData: const DropdownStyleData(
-                          maxHeight: 200,
-                          decoration: BoxDecoration(
-                            color: Colors.blueGrey,
                           ),
-                        ),
-                        menuItemStyleData: const MenuItemStyleData(
-                          height: 40,
-                        ),
-                      ),
-                      const Divider(color: Colors.black),
-                    ],
-                  ),
-                ),
-                // Bottom Section (Logout)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 5.0),
-                  child: Column( // Logout button at bottom of screen
-                    children: [
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(4),
-                          splashColor: Colors.white24,
-                          highlightColor: Colors.white10,
-                          onTap: () {
-                            Navigator.pop(context);
-                            _userLogout();
+                          underline: Container(),
+                          items: uploadOptions.map((String value) {
+                            IconData iconData;
+                            if (value == 'Camera') {
+                              iconData = Icons.camera_alt;
+                            } else if (value == 'Gallery') {
+                              iconData = Icons.photo_library;
+                            } else if (value == 'Create Image') {
+                              iconData = Icons.auto_awesome;
+                            } else {
+                              iconData = Icons.help_outline;
+                            }
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Row(
+                                children: [
+                                  SizedBox(width: 5),
+                                  Icon(
+                                    iconData,
+                                    color: Colors.orange,
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 5),
+                                  Text(
+                                    value,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                          value: selectedOption,
+                          onChanged: (String? newValue) async {
+                            if (newValue == 'Camera') {
+                              _takePhoto();
+                            } else if (newValue == 'Gallery') {
+                              _chooseFromGallery();
+                            } else if (newValue == 'Create Image') {
+                              _showAIPromptDialog();
+                            }
                           },
-                          child: const ListTile(
-                            leading: Icon(Icons.logout, color: Colors.orange),
-                            title: Text("Logout", style: TextStyle(color: Colors.white)),
+                          buttonStyleData: ButtonStyleData(
+                            padding: EdgeInsets.symmetric(horizontal: vw * 4),
+                            height: 8,
+                            width: 50,
+                          ),
+                          dropdownStyleData: DropdownStyleData(
+                            maxHeight: vh * 25,
+                            decoration: const BoxDecoration(
+                              color: Colors.blueGrey,
+                            ),
+                          ),
+                          menuItemStyleData: MenuItemStyleData(
+                            height: vh * 5,
                           ),
                         ),
-                      ),
-                    ],
+                        const Divider(color: Colors.black),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  Padding(
+                    padding: EdgeInsets.only(bottom: vh * 1),
+                    child: Column(
+                      children: [
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(vw * 1),
+                            splashColor: Colors.white24,
+                            highlightColor: Colors.white10,
+                            onTap: () {
+                              Navigator.pop(context);
+                              _userLogout();
+                            },
+                            child: ListTile(
+                              leading: Icon(
+                                Icons.logout,
+                                color: Colors.orange,
+                                size: vw * 5,
+                              ),
+                              title: Text(
+                                "Logout",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: vw * 5,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -1040,9 +1088,10 @@ class _PlayersPageState extends State<PlayersPage> {
             },
           ),
         ),
-        child: RefreshIndicator(
+        child: RefreshIndicator( // list of players
           onRefresh: _refreshData,
           child: ListView.separated(
+            padding: EdgeInsets.only(top: vh * 1, left: vw * 6, right: vw * 6, bottom: vh * 1.5), // 1% of screen padding above first Player
             itemCount: dmbMediaPlayers.length,
             physics: const AlwaysScrollableScrollPhysics(),
             itemBuilder: (BuildContext context, int index) {
@@ -1058,8 +1107,6 @@ class _PlayersPageState extends State<PlayersPage> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Ink(
-                          width: MediaQuery.of(context).size.width * 0.8,
-                          height: MediaQuery.of(context).size.height * 0.1,
                           decoration: BoxDecoration(
                             shape: BoxShape.rectangle,
                             border: Border.all(
@@ -1080,8 +1127,8 @@ class _PlayersPageState extends State<PlayersPage> {
                                   children: [
                                     Text(
                                       dmbMediaPlayers[index].name,
-                                      style: const TextStyle(
-                                        fontSize: 20,
+                                      style: TextStyle(
+                                        fontSize: (vw * 5),
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
                                       ),
@@ -1092,8 +1139,8 @@ class _PlayersPageState extends State<PlayersPage> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     _checkPlayerStatus(index)
-                                        ? _activeScreenText(context, index)
-                                        : _inActiveScreenText(context, index),
+                                        ? _activeScreenText(context, index, vw)
+                                        : _inActiveScreenText(context, index, vw),
                                   ],
                                 ),
                               ],
@@ -1124,48 +1171,62 @@ class _PlayersPageState extends State<PlayersPage> {
 ///**** This is the 'App bar' to the players tab when you don't want
 /// to show a 'back' btn
 PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
-  return AppBar(
-    flexibleSpace: Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF424242),
-        gradient: LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: <Color>[Colors.black87, Color.fromRGBO(10, 85, 163, 1.0)],
-        ),
-      ),
-    ),
-    automaticallyImplyLeading: false,
-    title: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          pageTitle,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            fontSize: 20,
+  // Calculate viewport units
+  final double vw = MediaQuery.of(context).size.width / 100;
+  final double vh = MediaQuery.of(context).size.height / 100;
+
+  return PreferredSize(
+    preferredSize: Size.fromHeight(vh * 11), // 11% of screen height
+    child: AppBar(
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF424242),
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: <Color>[Colors.black87, Color.fromRGBO(10, 85, 163, 1.0)],
           ),
         ),
-        Text(
-          pageSubTitle,
-          style: const TextStyle(
-            fontStyle: FontStyle.italic,
-            color: Colors.white,
-            fontSize: 17,
+      ),
+      automaticallyImplyLeading: false,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            pageTitle,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontSize: vw * 6, // Increase font size to 6% of smaller dimension
+            ),
+          ),
+          Text(
+            pageSubTitle,
+            style: TextStyle(
+              fontStyle: FontStyle.italic,
+              color: Colors.white,
+              fontSize: vw * 5.5, // Increase font size to 5% of smaller dimension
+            ),
+          ),
+        ],
+      ),
+      titleSpacing: vw * 4, // Add padding to the left of the title (4% of screen width)
+      toolbarHeight: vh * 12, // Match toolbarHeight to preferredSize height
+      actions: [
+        Builder(
+          builder: (context) => IconButton(
+            icon: Icon(
+              Icons.menu,
+              color: Colors.white,
+              size: vw * 8, // Increase icon size to 8% of smaller dimension
+            ),
+            onPressed: () => Scaffold.of(context).openEndDrawer(),
+            padding: EdgeInsets.all(vw * 2), // Add padding around icon
           ),
         ),
       ],
     ),
-    actions: [
-      Builder(
-        builder: (context) =>
-            IconButton(
-              icon: const Icon(Icons.menu, color: Colors.white),
-              onPressed: () => Scaffold.of(context).openEndDrawer(),
-            ),
-      ),
-    ],
   );
 }
 
@@ -1198,22 +1259,22 @@ LinearGradient _gradientInActiveMediaPlayer(BuildContext context) {
 
 ///*** As the list is being displayed, show a (slightly) different
 /// text (label) to the user for players that are active vs. inactive
-Text _activeScreenText(BuildContext context, pIndex) {
+Text _activeScreenText(BuildContext context, pIndex, vw) {
   return Text("${dmbMediaPlayers[pIndex]
       .status} - Current Screen: ${dmbMediaPlayers[pIndex]
       .currentScreen}",
-      style: const TextStyle(
-          fontSize: 14,
+      style: TextStyle(
+          fontSize: vw * 4,
           fontStyle: FontStyle.italic,
           color: Colors.white70));
 }
 
-Text _inActiveScreenText(BuildContext context, pIndex) {
+Text _inActiveScreenText(BuildContext context, pIndex, vw) {
   return Text("${dmbMediaPlayers[pIndex]
       .status} - Last Screen: ${dmbMediaPlayers[pIndex]
       .currentScreen}",
-      style: const TextStyle(
-          fontSize: 17,
+      style: TextStyle(
+          fontSize: vw * 4,
           fontStyle: FontStyle.italic,
           color: Colors.white70)
   );
