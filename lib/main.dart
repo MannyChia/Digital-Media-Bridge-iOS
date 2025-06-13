@@ -13,7 +13,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import './players_page.dart';
 import './screens_page.dart';
 import './dmb_functions.dart';
-
 import 'package:flutter/widgets.dart'; // or material.dart depending on your structure
 
 //This is the global vars used to know which "page" the user
@@ -36,7 +35,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await dotenv.load(fileName: ".env");
-  } catch (e) {
+  }
+  catch (e) {
     print("Error loading .env file: $e");
   }
 
