@@ -1101,12 +1101,14 @@ class _PlayersPageState extends State<PlayersPage> {
                   color: Colors.transparent,
                   child: Card(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(),
+                      padding: EdgeInsets.symmetric(),
                       child: InkWell(
                         customBorder: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Ink(
+                          width: vw * 90,
+                          height: vh * 10, // 10% of the screen height
                           decoration: BoxDecoration(
                             shape: BoxShape.rectangle,
                             border: Border.all(
