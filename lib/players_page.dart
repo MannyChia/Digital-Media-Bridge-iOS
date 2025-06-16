@@ -18,6 +18,8 @@ import './dmb_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'Models/playlist_preview.dart';
+
 /*
 */
 dynamic activeDMBPlayers = 0;
@@ -48,6 +50,7 @@ class PlaylistSheet extends StatefulWidget {
 }
 
 class _PlaylistSheetState extends State<PlaylistSheet> {
+  String? _currentScreenName;
   int _pageIndex = 0;
   String _currentPlaylist = '';
   List<String> _playlistImages = [];
@@ -55,55 +58,49 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
 
   Set<String> originalPlaylistImages = {};
 
-  void _openPlaylist(String playlistName) async {
+  void _openPlaylist(String screenName, String playlistName) async {
     try {
-      // Got to fetch all image filenames from API
+      _currentScreenName = screenName;
+      _currentPlaylist   = playlistName;
+
+      // 1) fetch all image URLs (unchanged)
       final apiUrl =
-          'https://digitalmediabridge.tv/screen-builder/assets/api/get_images.php?email=${Uri.encodeComponent(widget.userEmail)}';
+          'https://digitalmediabridge.tv/screen-builder/assets/api/'
+          'get_images.php?email=${Uri.encodeComponent(widget.userEmail)}';
       final response = await http.get(Uri.parse(apiUrl));
-
-      if (response.statusCode != 200) {
-        throw Exception('Failed to fetch image filenames');
-      }
-
-      // remember the lists have to be dynamic
-      final List<dynamic> filenames = json.decode(response.body);
-      final List<String> allImageUrls = filenames
-          .map((f) =>
-      'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(widget.userEmail)}/images/$f')
+      if (response.statusCode != 200) throw Exception('Failed to fetch image filenames');
+      final filenames = json.decode(response.body) as List<dynamic>;
+      final allImageUrls = filenames
+          .map((f) => 'https://digitalmediabridge.tv/screen-builder-test/assets/content/'
+          '${Uri.encodeComponent(widget.userEmail)}/images/$f')
           .toList();
 
-      // load playlist file to get data like: selected filenames
+      // 2) load the .pl file under its screen folder
+      final encodedScreen = Uri.encodeComponent(screenName);
+      final encodedPl     = Uri.encodeComponent(playlistName);
       final playlistFileUrl =
-          'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(widget.userEmail)}/others/$playlistName';
+          'https://digitalmediabridge.tv/screen-builder-test/assets/content/'
+          '${Uri.encodeComponent(widget.userEmail)}/others/'
+          '$encodedScreen/$encodedPl';
 
       final playlistResponse = await http.get(Uri.parse(playlistFileUrl));
-      if (playlistResponse.statusCode != 200) {
-        throw Exception('Failed to load playlist');
-      }
+      if (playlistResponse.statusCode != 200) throw Exception('Failed to load playlist');
 
-      final lines = LineSplitter()
+      final lines = const LineSplitter()
           .convert(playlistResponse.body)
-          .where((line) => line.trim().isNotEmpty)
+          .where((l) => l.trim().isNotEmpty)
           .toList();
-
-      final selectedFilenames =
-      lines.map((line) => line.split(',').first.trim()).toSet();
-
+      final selectedFilenames = lines.map((l) => l.split(',').first.trim()).toSet();
       final preSelected = <String>{
         for (final url in allImageUrls)
           if (selectedFilenames.contains(url.split('/').last)) url
       };
 
-      //store the original set of playlist to change the comparison
-      originalPlaylistImages =
-          preSelected.map((url) => url.split('/').last).toSet();
-
+      originalPlaylistImages = preSelected.map((url) => url.split('/').last).toSet();
       setState(() {
         _playlistImages = allImageUrls;
-        selectedImages = preSelected;
-        _currentPlaylist = playlistName;
-        _pageIndex = 1; // probably just going to stick to 1 page index for animation to go bakc and forth in sheet
+        selectedImages  = preSelected;
+        _pageIndex      = 1;
       });
     } catch (e) {
       print("ERROR: $e");
@@ -163,17 +160,15 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
   }
 
   Widget _buildPlaylistView(ScrollController scrollController) {
-    // If there are no playlists at all, we just print "No playlists available" message
+    // error check when there is no playlists
     if (cachedPlaylistPreviews.isEmpty) {
       return Column(
         key: const ValueKey(0),
         children: [
-          // ── Drag Handle ──
           const SizedBox(height: 12),
           Center(
             child: Container(
-              width: 40,
-              height: 5,
+              width: 40, height: 5,
               decoration: BoxDecoration(
                 color: Colors.grey[600],
                 borderRadius: BorderRadius.circular(10),
@@ -181,37 +176,23 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
             ),
           ),
           const SizedBox(height: 12),
-
-          // ── Header Row ──
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: const [
-                Text(
-                  'Edit Playlist',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Text('Edit Playlist',
+                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                 SizedBox(width: 6),
                 Icon(Icons.playlist_add, color: Colors.white, size: 20),
               ],
             ),
           ),
           const SizedBox(height: 8),
-
-          // send the message with a Center "No playlists" message
           Expanded(
             child: Center(
               child: Text(
-                'No playlists available',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 16,
-                  fontStyle: FontStyle.italic,
-                ),
+                'No current playlist',
+                style: TextStyle(color: Colors.white70, fontSize: 16, fontStyle: FontStyle.italic),
               ),
             ),
           ),
@@ -219,15 +200,19 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
       );
     }
 
-    // ── Otherwise, show the grid of existing playlists ──
+    // Nested group by screenName
+    final Map<String, List<PlaylistPreview>> groups = {};
+    for (final p in cachedPlaylistPreviews) {
+      groups.putIfAbsent(p.screenName, () => []).add(p);
+    }
+
     return Column(
       key: const ValueKey(0),
       children: [
         const SizedBox(height: 12),
         Center(
           child: Container(
-            width: 40,
-            height: 5,
+            width: 40, height: 5,
             decoration: BoxDecoration(
               color: Colors.grey[600],
               borderRadius: BorderRadius.circular(10),
@@ -235,89 +220,102 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
           ),
         ),
         const SizedBox(height: 12),
+
+        //
+        //got to make header not scrollable later!!*
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: const [
-              Text(
-                'Edit Playlist',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('Edit Playlist',
+                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
               SizedBox(width: 6),
               Icon(Icons.playlist_add, color: Colors.white, size: 20),
             ],
           ),
         ),
         const SizedBox(height: 8),
+
         Expanded(
-          child: GridView.builder(
+          child: ListView(
             controller: scrollController,
-            padding: const EdgeInsets.all(12),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 0.85,
-            ),
-            itemCount: cachedPlaylistPreviews.length,
-            itemBuilder: (context, index) {
-              final preview = cachedPlaylistPreviews[index];
-              return InkWell(
-                onTap: () => _openPlaylist(preview.name),
-                borderRadius: BorderRadius.circular(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          width: double.infinity,
-                          color: Colors.grey[700],
-                          child: preview.previewImageUrl != null
-                              ? Image.network(
-                            preview.previewImageUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                            const Center(
-                              child: Icon(
-                                Icons.broken_image,
-                                color: Colors.white70,
-                              ),
-                            ),
-                          )
-                              : Container(
-                            color: Colors.grey[800],
-                            child: const Center(
-                              child: Icon(
-                                Icons.image_not_supported,
-                                color: Colors.white70,
-                                size: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            children: [
+              for (final entry in groups.entries) ...[
+                // ... is a spread tool (jsyk)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                  child: Text(
+                    entry.key,
+                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
+                  ),
+                ),
+
+                // Grid layout
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.85,
+                  ),
+                  itemCount: entry.value.length,
+                  itemBuilder: (context, idx) {
+                    final preview = entry.value[idx];
+                    // If playlist ends with ".pl" then drop those 3 chars
+                    final displayName = preview.name.endsWith('.pl')
+                        ? preview.name.substring(0, preview.name.length - 3)
+                        : preview.name;
+
+                    return InkWell(
+                      onTap: () => _openPlaylist(preview.screenName, preview.name),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                width: double.infinity,
+                                color: Colors.grey[700],
+                                child: preview.previewImageUrl != null
+                                    ? Image.network(
+                                  preview.previewImageUrl!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                  const Center(child: Icon(Icons.broken_image, color: Colors.white70)),
+                                )
+                                    : Container(
+                                  color: Colors.grey[800],
+                                  child: const Center(
+                                    child: Icon(Icons.image_not_supported, color: Colors.white70, size: 40),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '$displayName (${preview.itemCount})',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '${preview.name} (${preview.itemCount})',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                    );
+                  },
                 ),
-              );
-            },
+
+              ],
+            ],
           ),
         ),
       ],
@@ -325,8 +323,12 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
   }
 
 
-
   Widget _buildImageView(ScrollController scrollController) {
+    // Got to remove the “.pl” from the header title if present
+    final displayTitle = _currentPlaylist.endsWith('.pl')
+        ? _currentPlaylist.substring(0, _currentPlaylist.length - 3)
+        : _currentPlaylist;
+
     return Stack(
       children: [
         Column(
@@ -347,16 +349,18 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.white),
                 onPressed: () async {
-                  await _refreshPlaylistPreviews(); //This re-fetches the updated data -> remember, it goes back to the cache to fetch it
+                  await _refreshPlaylistPreviews();
                   setState(() {
                     _pageIndex = 0;
                   });
                 },
-
               ),
               title: Text(
-                _currentPlaylist,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                displayTitle,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               trailing: Text(
                 "${selectedImages.length} selected",
@@ -366,7 +370,8 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
             Expanded(
               child: GridView.builder(
                 controller: scrollController,
-                padding: const EdgeInsets.only(left: 12, right: 12, bottom: 70, top: 12), // leaving space for the Save button
+                padding: const EdgeInsets.only(
+                    left: 12, right: 12, bottom: 70, top: 12),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
                   crossAxisSpacing: 8,
@@ -378,34 +383,32 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                   final imageUrl = _playlistImages[index];
                   final isSelected = selectedImages.contains(imageUrl);
 
-                  // vibration when a user clicks on an image for better UX, HApticFeedback could change to heavier if needed
                   return GestureDetector(
                     onTap: () {
                       HapticFeedback.lightImpact();
                       setState(() {
-                        isSelected
-                            ? selectedImages.remove(imageUrl)
-                            : selectedImages.add(imageUrl);
+                        if (isSelected) {
+                          selectedImages.remove(imageUrl);
+                        } else {
+                          selectedImages.add(imageUrl);
+                        }
                       });
                     },
-
                     child: Stack(
                       children: [
-                        // ClipRREact when deco images, can use same dimentions with playlist
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: AspectRatio(
                             aspectRatio: 1,
                             child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.grey[800],
-                              ),
+                              color: Colors.grey[800],
                               child: Image.network(
                                 imageUrl,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) =>
                                 const Center(
-                                  child: Icon(Icons.broken_image, color: Colors.white70),
+                                  child: Icon(Icons.broken_image,
+                                      color: Colors.white70),
                                 ),
                               ),
                             ),
@@ -420,8 +423,6 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                               ),
                             ),
                           ),
-                        // going to put a circle selected thingie like gallery stuff here
-                        // green if selected, else just a circle
                         Positioned(
                           top: 6,
                           left: 6,
@@ -429,7 +430,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: isSelected
-                                  ? Colors.greenAccent.withOpacity(0.9)
+                                  ? Colors.greenAccent
                                   : Colors.black45,
                             ),
                             padding: const EdgeInsets.all(4),
@@ -453,12 +454,15 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
           left: 16,
           right: 16,
           child: ElevatedButton(
-            onPressed: _hasPlaylistChanged() ? () => _onSavePressed() : null,
+            onPressed: _hasPlaylistChanged() ? _onSavePressed : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: _hasPlaylistChanged() ? Colors.greenAccent : Colors.grey[700],
-              foregroundColor: _hasPlaylistChanged() ? Colors.black : Colors.white54,
+              backgroundColor:
+              _hasPlaylistChanged() ? Colors.greenAccent : Colors.grey[700],
+              foregroundColor:
+              _hasPlaylistChanged() ? Colors.black : Colors.white54,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             child: const Text(
               'Save Playlist',
@@ -468,23 +472,31 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
         )
       ],
     );
-
   }
+
 
   // remember to save it in cache later.
   // for future got to update locally first and let backend update gradually
   void _onSavePressed() async {
-    final selectedFilenames = selectedImages.map((url) => url.split('/').last).toList();
+    // Build bare filenames from selected URLs
+    final selectedFilenames = selectedImages
+        .map((url) => url.split('/').last)
+        .toList();
+
+    // Include screen folder in the playlistFileName
+    final fullFileName = '$_currentScreenName/$_currentPlaylist';
 
     final success = await updatePlaylist(
       userEmail: widget.userEmail,
-      playlistFileName: _currentPlaylist,
+      playlistFileName: fullFileName,
       selectedFilenames: selectedFilenames,
     );
 
     if (success) {
       originalPlaylistImages = selectedFilenames.toSet();
-      setState(() {}); // Refresh UI to disable Save button
+      // Refresh previews so the counts & images update
+      cachedPlaylistPreviews = await fetchPlaylistPreviews(widget.userEmail);
+      setState(() {}); // rebuild UI
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Playlist updated")),
       );
@@ -494,6 +506,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
       );
     }
   }
+
 
 
 
@@ -665,7 +678,7 @@ class _PlayersPageState extends State<PlayersPage> {
 
                       showDialog(
                         context: context,
-                        barrierColor: Colors.black.withOpacity(0.5),
+                        barrierColor: Colors.black,
                         builder: (_) => AlertDialog(
                           backgroundColor: const Color(0xFF1E1E1E),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -727,11 +740,13 @@ class _PlayersPageState extends State<PlayersPage> {
   }
 
   Future<void> _showPlaylistBottomSheet(BuildContext context, String userEmail) async {
-    if (!hasLoadedPlaylistPreviews) {
+    // 1) preload playlists
+    await preloadPlaylistPreviews(userEmail);
+
+    // 2) if still empty, show a SnackBar and bail
+    if (cachedPlaylistPreviews.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        // changed to avoid this. got to make sure that playlist are already loaded before logging in
-        // fetched data from cache to avoid this. BUT, just in case
-        const SnackBar(content: Text("Playlists are still loading...")),
+        const SnackBar(content: Text("No playlists available")),
       );
       return;
     }

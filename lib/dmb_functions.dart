@@ -15,27 +15,69 @@ import './screens_page.dart';
 import 'package:flutter/material.dart';
 
 import 'package:http_parser/http_parser.dart'; // for MediaType
-import '/models/playlist_preview.dart';
+import '/Models/playlist_preview.dart';
 
 
 List<PlaylistPreview> cachedPlaylistPreviews = [];
 bool hasLoadedPlaylistPreviews = false;
 
-Future<void> preloadPlaylistPreviews(String userEmail) async {
-  print("Starting to preload playlists for $userEmail");
+Future<List<PlaylistPreview>> fetchPlaylistPreviews(String userEmail) async {
+  // Fetch the JSON of screens -> playlists
+  final metaResp = await http.get(
+      Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/GetPlaylist/$userEmail')
+  );
+  if (metaResp.statusCode != 200) {
+    throw Exception('Failed to load playlist metadata');
+  }
+  final Map<String, dynamic> meta = jsonDecode(metaResp.body);
+  final List<dynamic> screens = meta['data'] as List<dynamic>;
 
-  if (!hasLoadedPlaylistPreviews) {
-    try {
-      cachedPlaylistPreviews = await fetchPlaylistPreviews(userEmail);
-      hasLoadedPlaylistPreviews = true;
-      print("Preloaded ${cachedPlaylistPreviews.length} playlists");
-    } catch (e) {
-      print("Failed to preload playlist previews: $e");
+  final List<PlaylistPreview> previews = [];
+
+  for (final screenEntry in screens) {
+    final screenName    = screenEntry['screenName'] as String;
+    final playlistFiles = screenEntry['playLists']  as List<dynamic>;
+
+    for (final rawName in playlistFiles) {
+      final fileName      = rawName as String;
+      final encodedScreen = Uri.encodeComponent(screenName);
+
+      final plUrl =
+          'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(userEmail)}/others/$encodedScreen/$fileName';
+
+      final plResp = await http.get(Uri.parse(plUrl));
+      if (plResp.statusCode != 200) continue;
+
+      final lines = LineSplitter()
+          .convert(plResp.body)
+          .where((l) => l.trim().isNotEmpty)
+          .toList();
+
+      final String? previewUrl = lines.isNotEmpty
+          ? 'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(userEmail)}/images/${Uri.encodeComponent(lines.first.split(",").first)}'
+          : null;
+
+      // add screenName into the model for mapping in players_page
+      previews.add(PlaylistPreview(
+        screenName:      screenName,
+        name:            fileName,
+        previewImageUrl: previewUrl,
+        itemCount:       lines.length,
+      ));
     }
-  } else {
-    print("Playlists already loaded");
+  }
+
+  return previews;
+}
+
+
+Future<void> preloadPlaylistPreviews(String userEmail) async {
+  if (!hasLoadedPlaylistPreviews) {
+    cachedPlaylistPreviews = await fetchPlaylistPreviews(userEmail);
+    hasLoadedPlaylistPreviews = true;
   }
 }
+
 
 Future<List<String>> fetchAllUserImages(String userEmail) async {
   final url = 'https://digitalmediabridge.tv/screen-builder/assets/api/get_images.php?email=$userEmail';
@@ -117,134 +159,14 @@ Future<Map<String, dynamic>> uploadImage(File imageFile, String username) async 
   }
 }
 
-
-
-
-
-Future<List<String>> getUserPlaylists(String email) async {
-  final response = await http.get(
-    Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/GetPlaylist/$email'),
-  );
-
-  print("Raw response body: ${response.body}");
-
-  if (response.statusCode == 200) {
-    final Map<String, dynamic> jsonData = jsonDecode(response.body);
-
-    if (jsonData.containsKey('data') && jsonData['data'] is List) {
-      return List<String>.from(jsonData['data']);
-    } else {
-      throw Exception("Invalid data format in response");
-    }
-  } else {
-    throw Exception('Failed to load playlists');
-  }
-}
-
-// Future<PlaylistPreview> parsePlaylistFile(String playlistName, String userEmail) async {
-//   final url = 'https://digitalmediabridge.tv/screen-builder-test/assets/content/$userEmail/others/$playlistName';
-//   final response = await http.get(Uri.parse(url));
-//
-//   if (response.statusCode == 200) {
-//     final lines = LineSplitter().convert(response.body)
-//         .where((line) => line.trim().isNotEmpty)
-//         .toList();
-//
-//     if (lines.isEmpty) {
-//       throw Exception('Playlist file is empty');
-//     }
-//
-//     final firstImageName = lines.first.split(',').first.trim();
-//     final itemCount = lines.length;
-//
-//     final previewImageUrl =
-//         'https://digitalmediabridge.tv/screen-builder-test/assets/content/$userEmail/images/$firstImageName';
-//
-//     return PlaylistPreview(
-//       name: playlistName,
-//       previewImageUrl: previewImageUrl,
-//       itemCount: itemCount,
-//     );
-//   } else {
-//     throw Exception('Failed to load playlist file: $playlistName');
-//   }
-// }
-
-Future<PlaylistPreview> parsePlaylistFile(String playlistName, String userEmail) async {
-  final url =
-      'https://digitalmediabridge.tv/screen-builder-test/assets/content/$userEmail/others/$playlistName';
-  final response = await http.get(Uri.parse(url));
-
-  if (response.statusCode == 200) {
-    final lines = LineSplitter()
-        .convert(response.body)
-        .where((line) => line.trim().isNotEmpty)
-        .toList();
-
-    if (lines.isNotEmpty) {
-      final firstImageName = lines.first.split(',').first.trim();
-      final itemCount = lines.length;
-      final previewImageUrl =
-          'https://digitalmediabridge.tv/screen-builder-test/assets/content/$userEmail/images/$firstImageName';
-      return PlaylistPreview(
-        name: playlistName,
-        previewImageUrl: previewImageUrl,
-        itemCount: itemCount,
-      );
-    } else {
-      // empty playlist: return a null previewImageUrl and we'll probably set the count = 0
-      return PlaylistPreview(
-        name: playlistName,
-        previewImageUrl: null,
-        itemCount: 0,
-      );
-    }
-  } else {
-    throw Exception('Failed to load playlist file: $playlistName');
-  }
-}
-
-
-Future<List<PlaylistPreview>> fetchPlaylistPreviews(String userEmail) async {
-  final playlistNames = await getUserPlaylists(userEmail); // This already gives you the list
-
-  List<PlaylistPreview> previews = [];
-
-  for (final name in playlistNames) {
-    try {
-      final preview = await parsePlaylistFile(name, userEmail);
-      previews.add(preview);
-    } catch (e) {
-      print("Error parsing $name: $e");
-    }
-  }
-
-  return previews;
-}
-
-Future<List<String>> fetchPlaylistFilenames(String playlistName, String userEmail) async {
-  final url = 'https://digitalmediabridge.tv/screen-builder-test/assets/content/$userEmail/others/$playlistName';
-  final response = await http.get(Uri.parse(url));
-
-  if (response.statusCode == 200) {
-    final lines = LineSplitter()
-        .convert(response.body)
-        .where((line) => line.trim().isNotEmpty)
-        .toList();
-
-    // Extract just the image filenames (before the first comma)
-    return lines.map((line) => line.split(',').first.trim()).toList();
-  } else {
-    throw Exception('Failed to load playlist file');
-  }
-}
-
 Future<bool> updatePlaylist({
   required String userEmail,
-  required String playlistFileName,
+  required String playlistFileName,    // now this includes “ScreenName/Playlist.pl”
   required List<String> selectedFilenames,
 }) async {
-  final url = Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/file/updateplaylist');
+  final url = Uri.parse(
+      'https://digitalmediabridge.tv/screenbuilderserver-test/api/file/updateplaylist'
+  );
 
   final body = jsonEncode({
     "userName": userEmail,
@@ -258,63 +180,18 @@ Future<bool> updatePlaylist({
       headers: {'Content-Type': 'application/json'},
       body: body,
     );
-
+    final decoded = json.decode(response.body);
     print("Server status: ${response.statusCode}");
-    print("Server response: ${response.body}");
+    print("Server response: $decoded");
 
-    if (response.statusCode == 200) {
-      return true;
-    } else {
-      // Optionally decode the error message if it's in JSON format
-      try {
-        final decoded = json.decode(response.body);
-        print("Server error message: ${decoded['message']}");
-      } catch (_) {
-        // If it's not valid JSON
-        print("Server returned non-JSON error");
-      }
-      return false;
-    }
+    // Only succeed if HTTP 200 AND backend says “success”
+    // watch for errors
+    return response.statusCode == 200 && decoded['status'] == 'success';
   } catch (e) {
     print("Update playlist exception: $e");
     return false;
   }
 }
-
-
-// Future<bool> updatePlaylist({
-//   required String userEmail,
-//   required String playlistFileName,
-//   required List<String> selectedFilenames,
-// }) async {
-//   final url = Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/file/updateplaylist');
-//
-//   final body = jsonEncode({
-//     "userName": userEmail,
-//     "fileName": playlistFileName,
-//     "images": selectedFilenames,
-//   });
-//
-//   try {
-//     final response = await http.post(
-//       url,
-//       headers: {'Content-Type': 'application/json'},
-//       body: body,
-//     );
-//
-//     print("Server response: ${response.body}");
-//
-//     if (response.statusCode == 200) {
-//       return true;
-//     } else {
-//       return false;
-//     }
-//   } catch (e) {
-//     print("Update playlist exception: $e");
-//     return false;
-//   }
-// }
-
 
 /// *************************************************
 /// *** AFTER THE USER PROVIDES A DMB USERNAME & PASSWORD ***
