@@ -15,8 +15,116 @@ import './screens_page.dart';
 import 'package:flutter/material.dart';
 
 import 'package:http_parser/http_parser.dart'; // for MediaType
+import '/Models/playlist_preview.dart';
 
-Future<bool> uploadImage(File imageFile, String username) async {
+
+List<PlaylistPreview> cachedPlaylistPreviews = [];
+bool hasLoadedPlaylistPreviews = false;
+
+Future<List<PlaylistPreview>> fetchPlaylistPreviews(String userEmail) async {
+  // Fetch the JSON of screens -> playlists
+  final metaResp = await http.get(
+      Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/GetPlaylist/$userEmail')
+  );
+  if (metaResp.statusCode != 200) {
+    throw Exception('Failed to load playlist metadata');
+  }
+  final Map<String, dynamic> meta = jsonDecode(metaResp.body);
+  final List<dynamic> screens = meta['data'] as List<dynamic>;
+
+  final List<PlaylistPreview> previews = [];
+
+  for (final screenEntry in screens) {
+    final screenName    = screenEntry['screenName'] as String;
+    final playlistFiles = screenEntry['playLists']  as List<dynamic>;
+
+    for (final rawName in playlistFiles) {
+      final fileName      = rawName as String;
+      final encodedScreen = Uri.encodeComponent(screenName);
+
+      final plUrl =
+          'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(userEmail)}/others/$encodedScreen/$fileName';
+
+      final plResp = await http.get(Uri.parse(plUrl));
+      if (plResp.statusCode != 200) continue;
+
+      final lines = LineSplitter()
+          .convert(plResp.body)
+          .where((l) => l.trim().isNotEmpty)
+          .toList();
+
+      final String? previewUrl = lines.isNotEmpty
+          ? 'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(userEmail)}/images/${Uri.encodeComponent(lines.first.split(",").first)}'
+          : null;
+
+      // add screenName into the model for mapping in players_page
+      previews.add(PlaylistPreview(
+        screenName:      screenName,
+        name:            fileName,
+        previewImageUrl: previewUrl,
+        itemCount:       lines.length,
+      ));
+    }
+  }
+
+  return previews;
+}
+
+
+Future<void> preloadPlaylistPreviews(String userEmail) async {
+  if (!hasLoadedPlaylistPreviews) {
+    cachedPlaylistPreviews = await fetchPlaylistPreviews(userEmail);
+    hasLoadedPlaylistPreviews = true;
+  }
+}
+
+
+Future<List<String>> fetchAllUserImages(String userEmail) async {
+  final url = 'https://digitalmediabridge.tv/screen-builder/assets/api/get_images.php?email=$userEmail';
+  final response = await http.get(Uri.parse(url));
+
+  if (response.statusCode == 200) {
+    final List<dynamic> data = jsonDecode(response.body);
+    return List<String>.from(data);
+  } else {
+    throw Exception('Failed to fetch user image filenames');
+  }
+}
+
+//TODO this is the main code, use this api!
+/// THIS SUBMITS ALL PICTURES (FROM CAMERA OR GALLERY) TO THE ACCOUNT
+// Future<bool> uploadImage(File imageFile, String username) async {
+//   var uri = Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/upload');
+//
+//   var request = http.MultipartRequest('POST', uri)
+//     ..fields['filetype'] = 'images'
+//     ..fields['username'] = username
+//     ..files.add(
+//       await http.MultipartFile.fromPath(
+//         'file',
+//         imageFile.path,
+//         contentType: MediaType('image', 'jpeg'), // or use `image/png` as needed
+//       ),
+//     );
+//
+//   try {
+//     var response = await request.send();
+//
+//     if (response.statusCode == 200) {
+//       print("Upload successful");
+//       return true;
+//     } else {
+//       print("Upload failed with status: ${response.statusCode}");
+//       return false;
+//     }
+//   } catch (e) {
+//     print("Upload exception: $e");
+//     return false;
+//   }
+// }
+
+//TODO remove this api! this is not the main api
+Future<Map<String, dynamic>> uploadImage(File imageFile, String username) async {
   var uri = Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/upload');
 
   var request = http.MultipartRequest('POST', uri)
@@ -26,22 +134,61 @@ Future<bool> uploadImage(File imageFile, String username) async {
       await http.MultipartFile.fromPath(
         'file',
         imageFile.path,
-        contentType: MediaType('image', 'jpeg'), // or use `image/png` as needed
+        contentType: MediaType('image', 'jpeg'), // or adjust if needed
       ),
     );
 
   try {
     var response = await request.send();
+    final responseBody = await response.stream.bytesToString();
+    final decoded = json.decode(responseBody);
 
-    if (response.statusCode == 200) {
-      print("Upload successful");
-      return true;
+    print("Server Response Body: $decoded");
+
+    if (response.statusCode == 200 && decoded['status'] == 'success') {
+      return {'success': true, 'message': 'Image uploaded successfully'};
     } else {
-      print("Upload failed with status: ${response.statusCode}");
-      return false;
+      return {
+        'success': false,
+        'message': decoded['message'] ?? 'Unknown error occurred'
+      };
     }
   } catch (e) {
     print("Upload exception: $e");
+    return {'success': false, 'message': 'Upload failed with exception'};
+  }
+}
+
+Future<bool> updatePlaylist({
+  required String userEmail,
+  required String playlistFileName,    // now this includes “ScreenName/Playlist.pl”
+  required List<String> selectedFilenames,
+}) async {
+  final url = Uri.parse(
+      'https://digitalmediabridge.tv/screenbuilderserver-test/api/file/updateplaylist'
+  );
+
+  final body = jsonEncode({
+    "userName": userEmail,
+    "fileName": playlistFileName,
+    "images": selectedFilenames,
+  });
+
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: body,
+    );
+    final decoded = json.decode(response.body);
+    print("Server status: ${response.statusCode}");
+    print("Server response: $decoded");
+
+    // Only succeed if HTTP 200 AND backend says “success”
+    // watch for errors
+    return response.statusCode == 200 && decoded['status'] == 'success';
+  } catch (e) {
+    print("Update playlist exception: $e");
     return false;
   }
 }
