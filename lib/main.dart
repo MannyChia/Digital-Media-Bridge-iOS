@@ -8,11 +8,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import './players_page.dart';
 import './screens_page.dart';
 import './dmb_functions.dart';
-
 import 'package:flutter/widgets.dart'; // or material.dart depending on your structure
 
 //This is the global vars used to know which "page" the user
@@ -30,8 +30,15 @@ dynamic loginPassword = "none";
 ///**** STORE THE PROVIDED USERNAME & PASSWORD
 const systemStorage = FlutterSecureStorage();
 
-void main() {
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await dotenv.load(fileName: ".env");
+  }
+  catch (e) {
+    print("Error loading .env file: $e");
+  }
 
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.dumpErrorToConsole(details);
@@ -44,6 +51,7 @@ void main() {
     print("Caught zoned error: $error");
   });
 }
+
 
 /// **********************************************************
 /// *********************************************************
@@ -60,7 +68,7 @@ class DmbApp extends StatelessWidget {
       title: 'Digital Media Bridge',
       initialRoute: '/',
       theme: ThemeData(
-        scaffoldBackgroundColor: Colors.blueGrey,
+        scaffoldBackgroundColor: Color(0xFF0B0B0B),
         inputDecorationTheme: const InputDecorationTheme(
           border:
           OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
@@ -196,9 +204,6 @@ class _BypassloginPageState extends State<BypassloginPage> {
     }
   }
 
-
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -244,7 +249,7 @@ class LoginPage extends StatelessWidget {
                 foreground: Paint()
                   ..style = PaintingStyle.stroke
                   ..strokeWidth = 6
-                  ..color = Colors.blueGrey,
+                  ..color = Colors.white,
               ),
             ),
             // main text (fill)
