@@ -124,6 +124,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
 // this updates the preview image and playlist number using cache data
   Future<void> _refreshPlaylistPreviews() async {
     try {
+      print(widget.userEmail);
       final updated = await fetchPlaylistPreviews(widget.userEmail);
       setState(() {
         // remember data stored in cache UPDATES the current playlist previes when reloaded
@@ -561,7 +562,7 @@ class _PlayersPageState extends State<PlayersPage> {
   TextEditingController _textFieldController = TextEditingController();
   String? _generatedImageUrl;
   bool _isGenerating = false; // Track image generation state
-  String backgroundURL = "https://lp-cms-production.imgix.net/2023-02/3cb45f6e59190e8213ce0a35394d0e11-nice.jpg"; // URL for background image
+  String backgroundURL = dotenv.env['BACKGROUND_IMAGE_URL']!;
 
   ///This 'override' function is called once when the class is loaded
   ///(is used to update the pageTitle * subTitle)
@@ -810,7 +811,7 @@ class _PlayersPageState extends State<PlayersPage> {
       return null;
     }
 
-    final apiKey = dotenv.env['LEONARDO_API_KEY']; // gets the API key, stored in the private .env file
+    final apiKey = dotenv.env['LEONARDO_API_KEY_2']; // gets the API key, stored in the private .env file
 
     if (apiKey == null) {
       if (mounted) {
@@ -1045,7 +1046,7 @@ class _PlayersPageState extends State<PlayersPage> {
             child: Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.blueGrey,
+                color: Colors.black,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Column(
@@ -1275,12 +1276,15 @@ class _PlayersPageState extends State<PlayersPage> {
           title: Center(
             child: Text("Enter your prompt", style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.05)),
           ),
-          backgroundColor: Colors.blueGrey,
+          backgroundColor: Colors.black,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           content: TextField(
             controller: _textFieldController,
+            style: const TextStyle(
+              color: Colors.white, // Set input text color to white
+            ),
             decoration: const InputDecoration(
               hintText: "Example: Show me happy cashier", // goes away when user starts to input data
               enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
@@ -1310,7 +1314,6 @@ class _PlayersPageState extends State<PlayersPage> {
                   return;
                 }
                 Navigator.of(context).pop(); // Close prompt dialog
-
                 showLoadingCircle(dialogContext);
                 await _generateAndShowImage(prompt, dialogContext, prevImageID: prevImageID);
               },
@@ -1329,351 +1332,367 @@ class _PlayersPageState extends State<PlayersPage> {
     _textFieldController.clear(); // clear the text controller
   }
 
-
   final List<String> uploadOptions = ['Camera', 'Gallery', 'Create Image'];
   String? selectedOption;
 
-  /// menu on the left of the screen
+  /// menu on the right of the screen
   @override
   Widget build(BuildContext context) {
     // save screen width and height
     final double vw = MediaQuery.of(context).size.width / 100; // width of screen (by percentage)
     final double vh = MediaQuery.of(context).size.height / 100; // height of screen (by percentage)
 
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: Colors.white, // in case the image fails to load
-      endDrawer: SizedBox(
-        width: vw * 60, // 60% of the screen
-        child: Drawer(
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: <Color>[
-                  Colors.blueGrey,
-                  Color.fromRGBO(10, 85, 163, 1.0),
-                ],
+    return Container(
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: NetworkImage(backgroundURL),
+          fit: BoxFit.cover, // cover whole screen
+        ),
+      ),
+      child: Scaffold(
+        key: _scaffoldKey,
+        backgroundColor: Colors.transparent, // in case the image fails to load
+        endDrawer: SizedBox( // side menu on right side of the screen
+          width: vw * 60, // 60% of the screen
+          child: Drawer(
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.black,
               ),
-            ),
-            child: SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.all(vw * 2),
-                          child: Text(
-                            "Menu",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: vw * 5,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: vw * 2),
-                          child: Material(
-                            color: Colors.transparent,
-                            borderRadius: BorderRadius.circular(vw * 2),
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(vw * 2),
-                              onTap: () {
-                                Navigator.pop(context);
-                                _showScreensPage();
-                              },
-                              splashColor: Colors.white24,
-                              highlightColor: Colors.white10,
-                              child: ListTile(
-                                leading: Icon(
-                                  Icons.tv_outlined,
-                                  color: Colors.orange,
-                                  size: vw * 6,
-                                ),
-                                title: Text(
-                                  "My Screens",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                  ),
+              child: SafeArea(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Padding( // menu button
+                            padding: EdgeInsets.only(bottom: vh * 2),
+                            child: Center(
+                              child: Text(
+                                "Menu",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: vw * 5,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        const Divider(color: Colors.black),
-                        DropdownButton2<String>(
-                          isExpanded: true,
-                          customButton: Container(
-                            padding: EdgeInsets.symmetric(horizontal: vw * 4),
-                            height: vh * 10,
-                            width: vw * 60,
-                            decoration: BoxDecoration(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(vw * 2),
-                            ),
-                            child: Row(
-                              children: [
-                                SizedBox(width: 6),
-                                Icon(
-                                  Icons.upload,
-                                  color: Colors.orange,
-                                  size: vw * 6,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  "Upload Image",
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const Spacer(),
-                                Icon(
-                                  Icons.arrow_drop_down,
-                                  color: Colors.white,
-                                  size: vw * 4,
-                                ),
-                              ],
-                            ),
-                          ),
-                          underline: Container(),
-                          items: uploadOptions.map((String value) {
-                            IconData iconData;
-                            if (value == 'Camera') {
-                              iconData = Icons.camera_alt;
-                            } else if (value == 'Gallery') {
-                              iconData = Icons.photo_library;
-                            } else if (value == 'Create Image') {
-                              iconData = Icons.auto_awesome;
-                            } else {
-                              iconData = Icons.help_outline;
-                            }
-                            return DropdownMenuItem<String>(
-                              value: value,
+                          Padding( // my screens button
+                            padding: EdgeInsets.symmetric(horizontal: vw * 4, vertical: vh * 1), // padding around the button
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _showScreensPage();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 4), // padding between button and text
+                                backgroundColor: Color(0xFF1E1E1E), // dark gray
+                              ),
                               child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  SizedBox(width: 5),
                                   Icon(
-                                    iconData,
+                                    Icons.tv_outlined,
                                     color: Colors.orange,
                                     size: 20,
                                   ),
-                                  SizedBox(width: 5),
+                                  SizedBox(width: vw * 3), // Space between icon and text
                                   Text(
-                                    value,
+                                    "My Screens",
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: 15,
+                                      fontSize: 20,
                                     ),
                                   ),
                                 ],
                               ),
-                            );
-                          }).toList(),
-                          value: selectedOption,
-                          onChanged: (String? newValue) async {
-                            if (newValue == 'Camera') {
-                              _takePhoto();
-                            } else if (newValue == 'Gallery') {
-                              _chooseFromGallery();
-                            } else if (newValue == 'Create Image') {
-                              _showAIPromptDialog();
-                            }
-                          },
-                          buttonStyleData: ButtonStyleData(
-                            padding: EdgeInsets.symmetric(horizontal: vw * 4),
-                            height: 8,
-                            width: 50,
-                          ),
-                          dropdownStyleData: DropdownStyleData(
-                            maxHeight: vh * 25,
-                            decoration: const BoxDecoration(
-                              color: Colors.blueGrey,
                             ),
                           ),
-                          menuItemStyleData: MenuItemStyleData(
-                            height: vh * 5,
-                          ),
-                        ),
-                        const Divider(color: Colors.black),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: vw * 2),
-                          child: Material(
-                            color: Colors.transparent,
-                            borderRadius: BorderRadius.circular(vw * 2),
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(vw * 2),
-                              onTap: () async {
+                          const Divider(color: Colors.black),
+                          Padding( // edit playlists button
+                            padding: EdgeInsets.symmetric(horizontal: vw * 4, vertical: vh * 1), // padding around the button
+                            child: ElevatedButton(
+                              onPressed: () {
                                 Navigator.pop(context); // Close the drawer first
-                                await _showPlaylistBottomSheet(context, loginUsername);
+                                _showPlaylistBottomSheet(context, loginUsername);
 
                                 // Then refresh and rebuild
-                                await preloadPlaylistPreviews(loginUsername);
+                                preloadPlaylistPreviews(loginUsername);
                                 setState(() {}); // Rebuild UI with updated cachedPlaylistPreviews
                               },
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 4), // padding between button and text
+                                backgroundColor: Color(0xFF1E1E1E), // dark gray
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.collections,
+                                    color: Colors.orange,
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: vw * 3), // Space between icon and text
+                                  Text(
+                                    "Edit Playlists",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const Divider(color: Colors.black),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: vw * 4, vertical: vh * 1), // Match external padding
+                            child: DropdownButton2<String>(
+                              isExpanded: true,
+                              customButton: Container(
+                                padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 4), // Match internal padding
+                                decoration: BoxDecoration(
+                                  color: Color(0xFF1E1E1E), // Match ElevatedButton background
+                                  borderRadius: BorderRadius.circular(20), // Match ElevatedButton border radius
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.upload,
+                                      color: Colors.orange,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: vw * 3),
+                                    Text(
+                                      "Upload Image",
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Icon(
+                                      Icons.arrow_drop_down,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              underline: Container(), // Remove default underline
+                              items: uploadOptions.map((String value) {
+                                IconData iconData;
+                                if (value == 'Camera') {
+                                  iconData = Icons.camera_alt;
+                                } else if (value == 'Gallery') {
+                                  iconData = Icons.photo_library;
+                                } else if (value == 'Create Image') {
+                                  iconData = Icons.auto_awesome;
+                                } else {
+                                  iconData = Icons.help_outline;
+                                }
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 1),
+                                    decoration: BoxDecoration(
+                                      color: Color(0xFF1E1E1E),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        SizedBox(width: 5),
+                                        Icon(
+                                          iconData,
+                                          color: Colors.orange,
+                                          size: 20, // Match menu item icon size
+                                        ),
+                                        SizedBox(width: 5),
+                                        Text(
+                                          value,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                              value: selectedOption,
+                              onChanged: (String? newValue) async {
+                                if (newValue == 'Camera') {
+                                  _takePhoto();
+                                } else if (newValue == 'Gallery') {
+                                  _chooseFromGallery();
+                                } else if (newValue == 'Create Image') {
+                                  _showAIPromptDialog();
+                                }
+                              },
+                              buttonStyleData: ButtonStyleData(
+                                padding: EdgeInsets.symmetric(horizontal: vw * 2),
+                                height: vh * 4,
+                              ),
+                              dropdownStyleData: DropdownStyleData(
+                                maxHeight: vh * 25,
+                                decoration: const BoxDecoration(
+                                  color: Colors.black12,
+                                ),
+                              ),
+                              menuItemStyleData: MenuItemStyleData(
+                                height: vh * 5,
+                              ),
+                            ),
+                          ),
+                          const Divider(color: Colors.black),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(bottom: vh * 1),
+                      child: Column(
+                        children: [
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(vw * 1),
                               splashColor: Colors.white24,
                               highlightColor: Colors.white10,
+                              onTap: () {
+                                Navigator.pop(context);
+                                _userLogout();
+                              },
                               child: ListTile(
                                 leading: Icon(
-                                  Icons.collections,
+                                  Icons.logout,
                                   color: Colors.orange,
-                                  size: vw * 6,
+                                  size: vw * 5,
                                 ),
                                 title: Text(
-                                  "Edit Playlists",
+                                  "Logout",
                                   style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: 20,
+                                    fontSize: vw * 5,
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        const Divider(color: Colors.black),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(bottom: vh * 1),
-                    child: Column(
-                      children: [
-                        Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(vw * 1),
-                            splashColor: Colors.white24,
-                            highlightColor: Colors.white10,
-                            onTap: () {
-                              Navigator.pop(context);
-                              _userLogout();
-                            },
-                            child: ListTile(
-                              leading: Icon(
-                                Icons.logout,
-                                color: Colors.orange,
-                                size: vw * 5,
-                              ),
-                              title: Text(
-                                "Logout",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: vw * 5,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ),
-      appBar: _appBarNoBackBtn(context),
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: NetworkImage(
-              backgroundURL.isNotEmpty
-                  ? backgroundURL
-                  : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?fit=crop&w=1536&h=864', // Fallback image
+        appBar: _appBarNoBackBtn(context),
+        body: Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: NetworkImage(
+                backgroundURL.isNotEmpty
+                    ? backgroundURL
+                    : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?fit=crop&w=1536&h=864', // Fallback image
+              ),
+              fit: BoxFit.cover, // Adjusts image to cover the entire background
+              onError: (exception, stackTrace) {
+                print('Failed to load background image: $exception');
+              },
             ),
-            fit: BoxFit.cover, // Adjusts image to cover the entire background
-            onError: (exception, stackTrace) {
-              print('Failed to load background image: $exception');
-            },
           ),
-        ),
-        child: RefreshIndicator( // list of players
-          onRefresh: _refreshData,
-          child: ListView.separated(
-            padding: EdgeInsets.only(top: vh * 1, left: vw * 6, right: vw * 6, bottom: vh * 1.5), // 1% of screen padding above first Player
-            itemCount: dmbMediaPlayers.length,
-            physics: const AlwaysScrollableScrollPhysics(),
-            itemBuilder: (BuildContext context, int index) {
-              return Align(
-                alignment: Alignment.center,
-                child: Container(
-                  color: Colors.transparent,
-                  child: Card(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(),
-                      child: InkWell(
-                        customBorder: RoundedRectangleBorder(
+          child: RefreshIndicator(
+            onRefresh: _refreshData,
+            child: ListView.separated(
+              padding: EdgeInsets.only(top: vh * 2, left: vw * 6, right: vw * 6, bottom: vh * 1.5),
+              itemCount: dmbMediaPlayers.length,
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemBuilder: (BuildContext context, int index) {
+                return Align(
+                  alignment: Alignment.center,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Ink(
-                          width: vw * 90,
-                          height: vh * 10, // 10% of the screen height
-                          decoration: BoxDecoration(
-                            shape: BoxShape.rectangle,
-                            border: Border.all(
-                              width: 2,
-                              color: const Color.fromRGBO(10, 85, 163, 1.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.white.withOpacity(0.3), // White shadow with opacity
+                              spreadRadius: 6, // How far the shadow spreads
+                              blurRadius: 6, // How blurry the shadow is
                             ),
-                            borderRadius: const BorderRadius.all(Radius.circular(8.0)),
-                            gradient: _checkPlayerStatus(index)
-                                ? _gradientActiveMediaPlayer(context)
-                                : _gradientInActiveMediaPlayer(context),
-                          ),
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      dmbMediaPlayers[index].name,
-                                      style: TextStyle(
-                                        fontSize: (vw * 5),
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
+                          ],
+                        ),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(10),
+                          onTap: () {
+                            selectedPlayerName = dmbMediaPlayers[index].name;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("${dmbMediaPlayers[index].name} Selected")),
+                            );
+                            _showScreensPage();
+                          },
+                          child: Ink(
+                            decoration: BoxDecoration(
+                              gradient: _checkPlayerStatus(index)
+                                  ? _gradientActiveMediaPlayer(context)
+                                  : _gradientInActiveMediaPlayer(context),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            width: vw * 90,
+                            height: vh * 10,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        dmbMediaPlayers[index].name,
+                                        style: TextStyle(
+                                          fontSize: (vw * 5),
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    _checkPlayerStatus(index)
-                                        ? _activeScreenText(context, index, vw)
-                                        : _inActiveScreenText(context, index, vw),
-                                  ],
-                                ),
-                              ],
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      _checkPlayerStatus(index)
+                                          ? _activeScreenText(context, index, vw)
+                                          : _inActiveScreenText(context, index, vw),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-
                           ),
-
                         ),
-                        onTap: () {
-                          selectedPlayerName = dmbMediaPlayers[index].name;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("${dmbMediaPlayers[index].name} Selected")),
-                          );
-                          _showScreensPage();
-                        },
                       ),
                     ),
                   ),
-                ),
-              );
-            },
-            separatorBuilder: (context, index) => const Divider(color: Colors.black),
+                );
+              },
+              separatorBuilder: (context, index) => const Divider(color: Colors.black),
+            ),
           ),
         ),
-      ),
+      )
     );
   }
 }
@@ -1688,16 +1707,7 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
   return PreferredSize(
     preferredSize: Size.fromHeight(vh * 11), // 11% of screen height
     child: AppBar(
-      flexibleSpace: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF424242),
-          gradient: LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: <Color>[Colors.black87, Color.fromRGBO(10, 85, 163, 1.0)],
-          ),
-        ),
-      ),
+      backgroundColor: Colors.black.withOpacity(0.8), // app bar background
       automaticallyImplyLeading: false,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1748,8 +1758,8 @@ LinearGradient _gradientActiveMediaPlayer(BuildContext context) {
     begin: AlignmentDirectional.topCenter,
     end: AlignmentDirectional.bottomCenter,
     colors: [
-      Colors.blueGrey,
-      Color.fromRGBO(10, 85, 163, 1.0),
+      Colors.black,
+      Color(0xFF06470C), // dark green
     ],
   );
 }
@@ -1761,8 +1771,8 @@ LinearGradient _gradientInActiveMediaPlayer(BuildContext context) {
     begin: AlignmentDirectional.topCenter,
     end: AlignmentDirectional.bottomCenter,
     colors: [
-      Colors.blueGrey,
-      Colors.red,
+      Colors.black,
+      Color(0xFF8B0000), // dark red
     ],
   );
 }
@@ -1774,7 +1784,7 @@ Text _activeScreenText(BuildContext context, pIndex, vw) {
       .status} - Current Screen: ${dmbMediaPlayers[pIndex]
       .currentScreen}",
       style: TextStyle(
-          fontSize: vw * 4,
+          fontSize: vw * 4.5,
           fontStyle: FontStyle.italic,
           color: Colors.white70));
 }
