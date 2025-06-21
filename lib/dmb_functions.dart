@@ -90,39 +90,6 @@ Future<List<String>> fetchAllUserImages(String userEmail) async {
   }
 }
 
-//TODO this is the main code, use this api!
-/// THIS SUBMITS ALL PICTURES (FROM CAMERA OR GALLERY) TO THE ACCOUNT
-// Future<bool> uploadImage(File imageFile, String username) async {
-//   var uri = Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/upload');
-//
-//   var request = http.MultipartRequest('POST', uri)
-//     ..fields['filetype'] = 'images'
-//     ..fields['username'] = username
-//     ..files.add(
-//       await http.MultipartFile.fromPath(
-//         'file',
-//         imageFile.path,
-//         contentType: MediaType('image', 'jpeg'), // or use `image/png` as needed
-//       ),
-//     );
-//
-//   try {
-//     var response = await request.send();
-//
-//     if (response.statusCode == 200) {
-//       print("Upload successful");
-//       return true;
-//     } else {
-//       print("Upload failed with status: ${response.statusCode}");
-//       return false;
-//     }
-//   } catch (e) {
-//     print("Upload exception: $e");
-//     return false;
-//   }
-// }
-
-//TODO remove this api! this is not the main api
 Future<Map<String, dynamic>> uploadImage(File imageFile, String username) async {
   var uri = Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/upload');
 

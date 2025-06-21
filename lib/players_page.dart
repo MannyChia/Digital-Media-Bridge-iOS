@@ -184,19 +184,31 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: const [
-                Text('Edit Playlist',
-                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                Text(
+                  'Edit Playlist',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
                 SizedBox(width: 6),
-                Icon(Icons.playlist_add, color: Colors.white, size: 20),
+                Icon(Icons.playlist_add, color: Colors.white, size: 23),
               ],
             ),
           ),
+          Divider(color: Colors.white70, thickness: 1, height: 1),
+
           const SizedBox(height: 8),
           Expanded(
             child: Center(
               child: Text(
                 'No current playlist',
-                style: TextStyle(color: Colors.white70, fontSize: 16, fontStyle: FontStyle.italic),
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ),
           ),
@@ -209,6 +221,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
     for (final p in cachedPlaylistPreviews) {
       groups.putIfAbsent(p.screenName, () => []).add(p);
     }
+    final entries = groups.entries.toList();
 
     return Column(
       key: const ValueKey(0),
@@ -231,13 +244,20 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: const [
-              Text('Edit Playlist',
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                'Edit Playlist',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
               SizedBox(width: 6),
-              Icon(Icons.playlist_add, color: Colors.white, size: 20),
+              Icon(Icons.playlist_add, color: Colors.white, size: 23),
             ],
           ),
         ),
+
         const SizedBox(height: 8),
 
         Expanded(
@@ -245,15 +265,22 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
             controller: scrollController,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             children: [
-              for (final entry in groups.entries) ...[
+              for (var i = 0; i < entries.length; i++) ...[
+                if (i > 0) const SizedBox(height: 16),
                 // ... is a spread tool (jsyk)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
                   child: Text(
-                    entry.key,
-                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
+                    entries[i].key,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
+
+                const SizedBox(height: 8),
 
                 // Grid layout
                 GridView.builder(
@@ -265,9 +292,9 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                     mainAxisSpacing: 12,
                     childAspectRatio: 0.85,
                   ),
-                  itemCount: entry.value.length,
+                  itemCount: entries[i].value.length,
                   itemBuilder: (context, idx) {
-                    final preview = entry.value[idx];
+                    final preview = entries[i].value[idx];
                     // If playlist ends with ".pl" then drop those 3 chars
                     final displayName = preview.name.endsWith('.pl')
                         ? preview.name.substring(0, preview.name.length - 3)
@@ -317,7 +344,6 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                     );
                   },
                 ),
-
               ],
             ],
           ),
@@ -530,9 +556,12 @@ class PlayersPage extends StatefulWidget {
 class _PlayersPageState extends State<PlayersPage> {
   late String pageTitle;
   late String pageSubTitle;
-
   File? _image;
   final ImagePicker _picker = ImagePicker();
+  TextEditingController _textFieldController = TextEditingController();
+  String? _generatedImageUrl;
+  bool _isGenerating = false; // Track image generation state
+  String backgroundURL = "https://lp-cms-production.imgix.net/2023-02/3cb45f6e59190e8213ce0a35394d0e11-nice.jpg"; // URL for background image
 
   ///This 'override' function is called once when the class is loaded
   ///(is used to update the pageTitle * subTitle)
@@ -661,15 +690,12 @@ class _PlayersPageState extends State<PlayersPage> {
                   onPressed: () async {
                     Navigator.of(context).pop();
 
-                    // Call uploadImage and handle result.
-                    // got to update user if there's any errors
-                    // got to keep testing to prompt user ALL errors
-                    ///TODO  bool success = await uploadImage(imageFile, loginUsername);
-                    final result = await uploadImage(imageFile, "mannychia7@gmail.com");
+                    final result = await uploadImage(imageFile, loginUsername);
 
-                    if (!result['success']) {
-                      final String message = result['message'];
+                    final bool success = result['success'] as bool;
+                    final String message = result['message'] as String;
 
+                    if (!success) {
                       showDialog(
                         context: context,
                         barrierColor: Colors.black,
@@ -677,9 +703,7 @@ class _PlayersPageState extends State<PlayersPage> {
                           backgroundColor: const Color(0xFF1E1E1E),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           title: Text(
-                            message.contains('20')
-                                ? "Upload Limit Reached"
-                                : "Upload Failed",
+                            message.contains('20') ? "Upload Limit Reached" : "Upload Failed",
                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                           ),
                           content: Text(
@@ -698,7 +722,7 @@ class _PlayersPageState extends State<PlayersPage> {
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Image uploaded successfully")),
+                        SnackBar(content: Text(message)),
                       );
                     }
                   },
@@ -733,9 +757,17 @@ class _PlayersPageState extends State<PlayersPage> {
 
   Future<void> _showPlaylistBottomSheet(BuildContext context, String userEmail) async {
     // 1) preload playlists
-    await preloadPlaylistPreviews(userEmail);
+    try {
+      await preloadPlaylistPreviews(userEmail);
+    } catch (e) {
+      print("Error preloading playlists: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to load playlists")),
+      );
+      return;
+    }
 
-    // 2) if still empty, show a SnackBar and bail
+    // 2) if still empty, show a SnackBar and bail lol
     if (cachedPlaylistPreviews.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("No playlists available")),
@@ -743,6 +775,7 @@ class _PlayersPageState extends State<PlayersPage> {
       return;
     }
 
+    // 3) safe to show the sheet
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -753,9 +786,7 @@ class _PlayersPageState extends State<PlayersPage> {
       builder: (context) => PlaylistSheet(userEmail: userEmail),
     );
 
-    //Refresh preview after sheet is closed
-    // slight delay though, got to fix this in the future
-    // for local load and then backend functions
+    // 4) refresh previews after closing
     try {
       cachedPlaylistPreviews = await fetchPlaylistPreviews(userEmail);
       hasLoadedPlaylistPreviews = true;
@@ -764,24 +795,10 @@ class _PlayersPageState extends State<PlayersPage> {
     }
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
   /// generates photo using Leonardo.ai API key
   /// edit this function if we change services (Leonardo, Open AI, etc)
   Future<Map<String, dynamic>?> _getAIPhoto(String prompt, int width, int height, {String? prevImageID}) async {
     // model IDs
-    String phoenix = "de7d3faf-762f-48e0-b3b7-9d0ac3a3fcf3";
-    String creative = "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3";
     String stable_diffusion = "aa77f04e-3eec-4034-9c07-d0f619684628";
 
     if (!dotenv.isInitialized) {
@@ -970,12 +987,10 @@ class _PlayersPageState extends State<PlayersPage> {
 
   }
 
-  /// call this function when the user clicks 'Submit Photo' after generating one
   Future<void> onSubmit(String imageUrl, String username) async {
-    // convert imageUrl into File, upload to DMB server
     try {
       final response = await http.get(Uri.parse(imageUrl));
-      if (response.statusCode != 200) { // failure
+      if (response.statusCode != 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Failed to download image")),
         );
@@ -983,33 +998,36 @@ class _PlayersPageState extends State<PlayersPage> {
         return;
       }
 
-      final bytes = response.bodyBytes; // extract the bytes from the image
-      final tempDir = await getTemporaryDirectory(); // create a temporary directory
-      final filename = path.basename(imageUrl); // extract the names of the file
-      final tempFile = File("${tempDir.path}/$filename"); // create the tempFile
+      final bytes = response.bodyBytes;
+      final tempDir = await getTemporaryDirectory();
+      final filename = path.basename(imageUrl);
+      final tempFile = File("${tempDir.path}/$filename");
+      await tempFile.writeAsBytes(bytes);
 
-      await tempFile.writeAsBytes(bytes); // copy the bytes into the tempFile
-      bool success = await uploadImage(tempFile, loginUsername); // upload the tempFile to the DMB server
+      // Change upload and get back a Map<String, dynamic>
+      final result = await uploadImage(tempFile, username);
+      final bool success = result['success'] as bool;
+      final String message = result['message'] as String;
 
+      // delete the temp file if upload succeeded
       if (success) {
-        await tempFile.delete(); // delete tempFile if upload was successful
+        await tempFile.delete();
       }
 
+      // grab server’s message
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text( // tell user if image upload was successful or not
-            success ? "Image uploaded successfully" : "Image upload failed", // enhanced if/else
-          ),
-        ),
+        SnackBar(content: Text(message)),
       );
-    }
-    catch (e) {
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
       );
+    } finally {
+      // Close the image dialog no matter what
+      Navigator.of(context).pop();
     }
-    Navigator.of(context).pop(); // Close the image dialog
   }
+
 
   /// show the loading circle between when user submits prompt to when photo is displayed
   void showLoadingCircle(BuildContext context) {
@@ -1196,19 +1214,6 @@ class _PlayersPageState extends State<PlayersPage> {
                                 ],
                               ),
                             ),
-                            // ElevatedButton(
-                            //   onPressed: () {
-                            //     print("Edit Photo button pressed");
-                            //     onEdit(imageId);
-                            //   },
-                            //   child: const Row(
-                            //     children: [
-                            //       Icon(Icons.edit, color: Colors.orange),
-                            //       SizedBox(width: 8),
-                            //       Text("Edit Photo"),
-                            //     ],
-                            //   ),
-                            // ),
                           ],
                         ),
                         const SizedBox(height: 15),
@@ -1235,88 +1240,6 @@ class _PlayersPageState extends State<PlayersPage> {
               );
             }
         );
-
-        // await showDialog(
-        //   context: dialogContext,
-        //   builder: (BuildContext context) {
-        //     print("Building image dialog");
-        //     return AlertDialog(
-        //       contentPadding: EdgeInsets.zero,
-        //       backgroundColor: Colors.transparent,
-        //       content: Column(
-        //         mainAxisSize: MainAxisSize.min,
-        //         children: [
-        //           Image.network(
-        //             imageUrl,
-        //             fit: BoxFit.cover,
-        //             loadingBuilder: (context, child, loadingProgress) {
-        //               if (loadingProgress == null) return child;
-        //               return const Center(
-        //                 child: CircularProgressIndicator(
-        //                   valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
-        //                 ),
-        //               );
-        //             },
-        //             errorBuilder: (context, error, stackTrace) {
-        //               print("Error loading image: $error");
-        //               return const Text(
-        //                 "Failed to load image",
-        //                 style: TextStyle(color: Colors.white),
-        //               );
-        //             },
-        //           ),
-        //           const SizedBox(height: 20),
-        //           Row(
-        //             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        //             children: [
-        //               ElevatedButton(
-        //                 onPressed: () {
-        //                   print("New Photo button pressed");
-        //                   onNewPhoto();
-        //                 },
-        //                 child: const Row(
-        //                   children: [
-        //                     Icon(Icons.edit, color: Colors.orange),
-        //                     SizedBox(width: 8),
-        //                     Text("New Photo"),
-        //                   ],
-        //                 ),
-        //               ),
-        //               ElevatedButton(
-        //                 onPressed: () {
-        //                   print("Edit Photo button pressed");
-        //                   onEdit(imageId);
-        //                 },
-        //                 child: const Row(
-        //                   children: [
-        //                     Icon(Icons.edit, color: Colors.orange),
-        //                     SizedBox(width: 8),
-        //                     Text("Edit Photo"),
-        //                   ],
-        //                 ),
-        //               ),
-        //             ],
-        //           ),
-        //           const SizedBox(height: 15),
-        //           ElevatedButton(
-        //             onPressed: () {
-        //               print("Submit Photo button pressed");
-        //               onSubmit(imageUrl, "billstantonthefourth@gmail.com");
-        //             },
-        //             child: const Row(
-        //               mainAxisAlignment: MainAxisAlignment.center,
-        //               children: [
-        //                 Icon(Icons.check, color: Colors.orange),
-        //                 SizedBox(width: 8),
-        //                 Text("Submit Photo"),
-        //               ],
-        //             ),
-        //           ),
-        //         ],
-        //       ),
-        //     );
-        //   },
-        // );
         print("Image dialog shown successfully");
       }
       catch (e) {
@@ -1374,23 +1297,6 @@ class _PlayersPageState extends State<PlayersPage> {
 
               showLoadingCircle(dialogContext);
               await _generateAndShowImage(prompt, dialogContext, prevImageID: prevImageID);
-
-              // if (mounted) {
-              //   // setState(() {
-              //   //   _isGenerating = true;
-              //   //   print("IS GENERATING == TRUE");
-              //   // });
-              //
-              //   showLoadingCircle(dialogContext);
-              //   await _generateAndShowImage(prompt, dialogContext, prevImageID: prevImageID);
-              //
-              //   // if (mounted) {
-              //   //   setState(() {
-              //   //     _isGenerating = false;
-              //   //     print("IS GENERATING == FALSE");
-              //   //   });
-              //   // }
-              // }
             },
           ),
           actions: [
@@ -1591,33 +1497,43 @@ class _PlayersPageState extends State<PlayersPage> {
                               color: Colors.blueGrey,
                             ),
                           ),
-
-                          // ListTile(
-                          //   leading: const Icon(Icons.collections, color: Colors.white), // or Icons.collections
-                          //   title: const Text("Edit Playlists", style: TextStyle(color: Colors.white)),
-                          //   // onTap: () async {
-                          //   //   Navigator.pop(context); // close drawer
-                          //   //   try {
-                          //   //     // final playlists = await getUserPlaylists("billstanton@gmail.com");
-                          //   //     // _showPlaylistBottomSheet(context, playlists);
-                          //   //     _showPlaylistBottomSheet(context, "billstanton@gmail.com");
-                          //   //   } catch (e) {
-                          //   //     ScaffoldMessenger.of(context).showSnackBar(
-                          //   //       SnackBar(content: Text('Error loading playlists')),
-                          //   //     );
-                          //   //   }
-                          //   // },
-                          //   onTap: () async {
-                          //     Navigator.pop(context); // Close the drawer first
-                          //     await _showPlaylistBottomSheet(context, "mannychia7@gmail.com");
-                          //
-                          //     // Then refresh and rebuild
-                          //     await preloadPlaylistPreviews("mannychia7@gmail.com");
-                          //     setState(() {}); // Rebuild UI with updated cachedPlaylistPreviews
-                          //   },
-                          // ),
                           menuItemStyleData: MenuItemStyleData(
                             height: vh * 5,
+                          ),
+                        ),
+                        const Divider(color: Colors.black),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: vw * 2),
+                          child: Material(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(vw * 2),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(vw * 2),
+                              onTap: () async {
+                                Navigator.pop(context); // Close the drawer first
+                                await _showPlaylistBottomSheet(context, loginUsername);
+
+                                // Then refresh and rebuild
+                                await preloadPlaylistPreviews(loginUsername);
+                                setState(() {}); // Rebuild UI with updated cachedPlaylistPreviews
+                              },
+                              splashColor: Colors.white24,
+                              highlightColor: Colors.white10,
+                              child: ListTile(
+                                leading: Icon(
+                                  Icons.collections,
+                                  color: Colors.orange,
+                                  size: vw * 6,
+                                ),
+                                title: Text(
+                                  "Edit Playlists",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                         const Divider(color: Colors.black),

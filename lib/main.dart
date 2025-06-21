@@ -35,6 +35,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await dotenv.load(fileName: ".env");
+    print("Loaded key: ${dotenv.env['LEONARDO_API_KEY']}");
+
   }
   catch (e) {
     print("Error loading .env file: $e");
@@ -188,8 +190,7 @@ class _BypassloginPageState extends State<BypassloginPage> {
       loginUsername = storedUsername;
       loginPassword = storedPassword;
 
-      //TODO please remove hard code
-      await preloadPlaylistPreviews("mannychia7@gmail.com");
+      await preloadPlaylistPreviews(loginUsername);
 
       Navigator.push(
         context,
@@ -374,7 +375,7 @@ class LoginPage extends StatelessWidget {
                           loginPassword = passwordController.text;
 
                           ///TODO please remove hard code
-                          await preloadPlaylistPreviews("mannychia7@gmail.com");
+                          await preloadPlaylistPreviews(loginUsername);
 
                           try {
                             _saveUsername(loginUsername, loginPassword);
