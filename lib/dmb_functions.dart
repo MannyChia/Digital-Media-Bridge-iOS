@@ -175,6 +175,7 @@ getUserData(String username, String password, String requestType) async {
     }),
   );
 
+
   //if we're able to get to the URL (not necessarily a successful login)
   if(response.statusCode == 200){
 
