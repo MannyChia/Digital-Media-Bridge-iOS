@@ -42,7 +42,7 @@ Future<List<PlaylistPreview>> fetchPlaylistPreviews(String userEmail) async {
       final encodedScreen = Uri.encodeComponent(screenName);
 
       final plUrl =
-          'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(userEmail)}/others/$encodedScreen/$fileName';
+          'https://digitalmediabridge.tv/screen-builder/assets/content/${Uri.encodeComponent(userEmail)}/others/$encodedScreen/$fileName';
 
       final plResp = await http.get(Uri.parse(plUrl));
       if (plResp.statusCode != 200) continue;
@@ -53,7 +53,7 @@ Future<List<PlaylistPreview>> fetchPlaylistPreviews(String userEmail) async {
           .toList();
 
       final String? previewUrl = lines.isNotEmpty
-          ? 'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(userEmail)}/images/${Uri.encodeComponent(lines.first.split(",").first)}'
+          ? 'https://digitalmediabridge.tv/screen-builder/assets/content/${Uri.encodeComponent(userEmail)}/images/${Uri.encodeComponent(lines.first.split(",").first)}'
           : null;
 
       // add screenName into the model for mapping in players_page

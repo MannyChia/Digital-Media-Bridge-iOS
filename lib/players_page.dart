@@ -75,7 +75,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
       if (response.statusCode != 200) throw Exception('Failed to fetch image filenames');
       final filenames = json.decode(response.body) as List<dynamic>;
       final allImageUrls = filenames
-          .map((f) => 'https://digitalmediabridge.tv/screen-builder-test/assets/content/'
+          .map((f) => 'https://digitalmediabridge.tv/screen-builder/assets/content/'
           '${Uri.encodeComponent(widget.userEmail)}/images/$f')
           .toList();
 
@@ -83,7 +83,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
       final encodedScreen = Uri.encodeComponent(screenName);
       final encodedPl     = Uri.encodeComponent(playlistName);
       final playlistFileUrl =
-          'https://digitalmediabridge.tv/screen-builder-test/assets/content/'
+          'https://digitalmediabridge.tv/screen-builder/assets/content/'
           '${Uri.encodeComponent(widget.userEmail)}/others/'
           '$encodedScreen/$encodedPl';
 
@@ -545,18 +545,18 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
 ///
 class PlayersPage extends StatefulWidget {
   //const PlayersPage({super.key, required this.pageTitle, required this.pageSubTitle});
-  const PlayersPage({super.key, this.pageTitle, this.pageSubTitle});
+  const PlayersPage({super.key, this.mainPageTitle, this.mainPageSubTitle});
 
-  final String? pageTitle;
-  final String? pageSubTitle;
+  final String? mainPageTitle;
+  final String? mainPageSubTitle;
 
   @override
   _PlayersPageState createState() => _PlayersPageState();
 }
 
 class _PlayersPageState extends State<PlayersPage> {
-  late String pageTitle;
-  late String pageSubTitle;
+  late String mainPageTitle;
+  late String mainPageSubTitle;
   File? _image;
   final ImagePicker _picker = ImagePicker();
   TextEditingController _textFieldController = TextEditingController();
@@ -573,25 +573,39 @@ class _PlayersPageState extends State<PlayersPage> {
   }
 
   void _updateTitle() {
-    pageTitle = "${widget.pageTitle} (${dmbMediaPlayers.length})";
-    pageSubTitle = widget.pageSubTitle ?? "";
+    mainPageTitle = "${widget.mainPageTitle} (${dmbMediaPlayers.length})";
+    mainPageSubTitle = widget.mainPageSubTitle ?? "";
   }
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   int selectedIndex = 0;
 
-  void _showScreensPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            ScreensPage(
-              pageTitle: "Player: $selectedPlayerName",
-              pageSubTitle: "Select Screen to Publish",
-            ),
-      ),
-    );
+  void _showScreensPage(bool onPlayer) {
+    if (onPlayer) { // user just clicked on a player
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              ScreensPage(
+                screensPageTitle: "Player: $selectedPlayerName",
+                screensPageSubTitle: "Select Screen to Publish",
+              ),
+        ),
+      );
+    }
+    else { // user clicked 'My Screens' on Menu
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              ScreensPage(
+                screensPageTitle: "Available Screens",
+                screensPageSubTitle: " ",
+              ),
+        ),
+      );
+    }
   }
 
   /// returns true if player status at given index is active, false otherwise
@@ -616,8 +630,8 @@ class _PlayersPageState extends State<PlayersPage> {
         if (result.runtimeType != String) {
           setState(() {
             dmbMediaPlayers = result;
-            pageTitle = "Media Players (${dmbMediaPlayers.length})";
-            pageSubTitle = "Select Player";
+            mainPageTitle = "Media Players (${dmbMediaPlayers.length})";
+            mainPageSubTitle = "Select Player";
           });
         }
       }
@@ -1058,7 +1072,7 @@ class _PlayersPageState extends State<PlayersPage> {
                   SizedBox(height: screenWidth * 0.1),
                   Text(
                     "Generating Image...",
-                    style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.1),
+                    style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.05),
                   ),
                   const SizedBox(height: 10),
                   TextButton( // cancel button
@@ -1321,7 +1335,7 @@ class _PlayersPageState extends State<PlayersPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SizedBox(width: _isGenerating ? 8 : 4),
-                  const Text('Create Image', style: TextStyle(color: Colors.white)),
+                  const Text('Create Image', style: TextStyle(color: Colors.white, fontSize: 18)),
                 ],
               ),
             ),
@@ -1341,6 +1355,8 @@ class _PlayersPageState extends State<PlayersPage> {
     // save screen width and height
     final double vw = MediaQuery.of(context).size.width / 100; // width of screen (by percentage)
     final double vh = MediaQuery.of(context).size.height / 100; // height of screen (by percentage)
+    Color buttonColor = Color(0xFF2C2C2C);
+    Color backgroundColor = Color(0xFF2C2C2C);
 
     return Container(
       decoration: BoxDecoration(
@@ -1351,14 +1367,12 @@ class _PlayersPageState extends State<PlayersPage> {
       ),
       child: Scaffold(
         key: _scaffoldKey,
-        backgroundColor: Colors.transparent, // in case the image fails to load
+        backgroundColor: Colors.transparent,
         endDrawer: SizedBox( // side menu on right side of the screen
-          width: vw * 60, // 60% of the screen
+          width: vw * 60, // 60% of the screen (width)
           child: Drawer(
             child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.black,
-              ),
+              decoration: BoxDecoration(color: backgroundColor), // color of menu side bar),
               child: SafeArea(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1367,7 +1381,7 @@ class _PlayersPageState extends State<PlayersPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Padding( // menu button
+                          Padding( // menu text
                             padding: EdgeInsets.only(bottom: vh * 2),
                             child: Center(
                               child: Text(
@@ -1380,17 +1394,18 @@ class _PlayersPageState extends State<PlayersPage> {
                               ),
                             ),
                           ),
-                          Padding( // my screens button
+                          const Divider(color: Colors.transparent),
+                          Padding( // My Screens button
                             padding: EdgeInsets.symmetric(horizontal: vw * 4, vertical: vh * 1), // padding around the button
                             child: ElevatedButton(
                               onPressed: () {
                                 Navigator.pop(context);
-                                _showScreensPage();
+                                _showScreensPage(false);
                               },
                               style: ElevatedButton.styleFrom(
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                 padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 4), // padding between button and text
-                                backgroundColor: Color(0xFF1E1E1E), // dark gray
+                                backgroundColor: buttonColor,
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -1412,7 +1427,7 @@ class _PlayersPageState extends State<PlayersPage> {
                               ),
                             ),
                           ),
-                          const Divider(color: Colors.black),
+                          const Divider(color: Colors.transparent),
                           Padding( // edit playlists button
                             padding: EdgeInsets.symmetric(horizontal: vw * 4, vertical: vh * 1), // padding around the button
                             child: ElevatedButton(
@@ -1427,7 +1442,7 @@ class _PlayersPageState extends State<PlayersPage> {
                               style: ElevatedButton.styleFrom(
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                 padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 4), // padding between button and text
-                                backgroundColor: Color(0xFF1E1E1E), // dark gray
+                                backgroundColor: buttonColor,
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -1449,15 +1464,15 @@ class _PlayersPageState extends State<PlayersPage> {
                               ),
                             ),
                           ),
-                          const Divider(color: Colors.black),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: vw * 4, vertical: vh * 1), // Match external padding
+                          const Divider(color: Colors.transparent),
+                          Padding( // upload image button
+                            padding: EdgeInsets.symmetric(horizontal: vw * 4, vertical: vh * 1), // padding around the button
                             child: DropdownButton2<String>(
                               isExpanded: true,
                               customButton: Container(
-                                padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 4), // Match internal padding
+                                padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 4), // padding between the button and text
                                 decoration: BoxDecoration(
-                                  color: Color(0xFF1E1E1E), // Match ElevatedButton background
+                                  color: buttonColor,
                                   borderRadius: BorderRadius.circular(20), // Match ElevatedButton border radius
                                 ),
                                 child: Row(
@@ -1502,7 +1517,8 @@ class _PlayersPageState extends State<PlayersPage> {
                                   child: Container(
                                     padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 1),
                                     decoration: BoxDecoration(
-                                      color: Color(0xFF1E1E1E),
+                                      // color: Color(0xFF1E1E1E),
+                                      color: buttonColor,
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Row(
@@ -1542,8 +1558,8 @@ class _PlayersPageState extends State<PlayersPage> {
                               ),
                               dropdownStyleData: DropdownStyleData(
                                 maxHeight: vh * 25,
-                                decoration: const BoxDecoration(
-                                  color: Colors.black12,
+                                decoration: BoxDecoration(
+                                  color: buttonColor,
                                 ),
                               ),
                               menuItemStyleData: MenuItemStyleData(
@@ -1551,7 +1567,7 @@ class _PlayersPageState extends State<PlayersPage> {
                               ),
                             ),
                           ),
-                          const Divider(color: Colors.black),
+                          const Divider(color: Colors.transparent),
                         ],
                       ),
                     ),
@@ -1642,7 +1658,7 @@ class _PlayersPageState extends State<PlayersPage> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text("${dmbMediaPlayers[index].name} Selected")),
                             );
-                            _showScreensPage();
+                            _showScreensPage(true);
                           },
                           child: Ink(
                             decoration: BoxDecoration(
@@ -1714,7 +1730,7 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            pageTitle,
+            mainPageTitle,
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -1722,7 +1738,7 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
             ),
           ),
           Text(
-            pageSubTitle,
+            mainPageSubTitle,
             style: TextStyle(
               fontStyle: FontStyle.italic,
               color: Colors.white,

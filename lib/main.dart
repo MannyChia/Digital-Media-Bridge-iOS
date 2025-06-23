@@ -18,8 +18,8 @@ import 'package:flutter/widgets.dart'; // or material.dart depending on your str
 //This is the global vars used to know which "page" the user
 //selected (i.e., Players or Screens)
 dynamic selectedIndex = 0; //PUBLIC variable
-dynamic pageTitle = "DMB Media Players"; //PUBLIC variable
-dynamic pageSubTitle = "Select Player"; //PUBLIC variable
+dynamic mainPageTitle = "DMB Media Players"; //PUBLIC variable
+dynamic mainPageSubTitle = "Select Player"; //PUBLIC variable
 dynamic storedUsername = "none";
 dynamic storedPassword = "none";
 
@@ -421,8 +421,8 @@ class _HomePageState extends State<HomePage> {
 
   void _updateTitle(title, subTitle, selIndex) {
     setState(() {
-      pageTitle = title;
-      pageSubTitle = subTitle;
+      mainPageTitle = title;
+      mainPageSubTitle = subTitle;
       selectedIndex = selIndex;
     });
   }
@@ -443,8 +443,8 @@ class _HomePageState extends State<HomePage> {
       MaterialPageRoute(
           builder: (context) =>
               ScreensPage(
-                  pageTitle: "Screens (${dmbScreens.length})",
-                  pageSubTitle: selectedPlayerName != null
+                  screensPageTitle: "Screens (${dmbScreens.length})",
+                  screensPageSubTitle: selectedPlayerName != null
                       ? _PlayerSelectedText()
                       : _PlayerNotSelectedText())),
     ).then((context) {
@@ -464,8 +464,8 @@ class _HomePageState extends State<HomePage> {
         child: Builder(
           builder: (_) {
             return PlayersPage(
-              pageTitle: "Media Players",
-              pageSubTitle: "Select Player",
+              mainPageTitle: "Media Players",
+              mainPageSubTitle: "Select Player",
             );
           },
         ),
