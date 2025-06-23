@@ -23,7 +23,7 @@ bool hasLoadedPlaylistPreviews = false;
 Future<List<PlaylistPreview>> fetchPlaylistPreviews(String userEmail) async {
   // Fetch the JSON of screens -> playlists
   final metaResp = await http.get(
-      Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/GetPlaylist/$userEmail')
+      Uri.parse('https://digitalmediabridge.tv/screenbuilder-server/api/GetPlaylist/$userEmail')
   );
   if (metaResp.statusCode != 200) {
     throw Exception('Failed to load playlist metadata');
@@ -42,7 +42,7 @@ Future<List<PlaylistPreview>> fetchPlaylistPreviews(String userEmail) async {
       final encodedScreen = Uri.encodeComponent(screenName);
 
       final plUrl =
-          'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(userEmail)}/others/$encodedScreen/$fileName';
+          'https://digitalmediabridge.tv/screen-builder/assets/content/${Uri.encodeComponent(userEmail)}/others/$encodedScreen/$fileName';
 
       final plResp = await http.get(Uri.parse(plUrl));
       if (plResp.statusCode != 200) continue;
@@ -53,7 +53,7 @@ Future<List<PlaylistPreview>> fetchPlaylistPreviews(String userEmail) async {
           .toList();
 
       final String? previewUrl = lines.isNotEmpty
-          ? 'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(userEmail)}/images/${Uri.encodeComponent(lines.first.split(",").first)}'
+          ? 'https://digitalmediabridge.tv/screen-builder/assets/content/${Uri.encodeComponent(userEmail)}/images/${Uri.encodeComponent(lines.first.split(",").first)}'
           : null;
 
       // add screenName into the model for mapping in players_page
@@ -91,7 +91,7 @@ Future<List<String>> fetchAllUserImages(String userEmail) async {
 }
 
 Future<Map<String, dynamic>> uploadImage(File imageFile, String username) async {
-  var uri = Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/upload');
+  var uri = Uri.parse('https://digitalmediabridge.tv/screenbuilder-server/api/upload');
 
   var request = http.MultipartRequest('POST', uri)
     ..fields['filetype'] = 'images'
@@ -131,7 +131,7 @@ Future<bool> updatePlaylist({
   required List<String> selectedFilenames,
 }) async {
   final url = Uri.parse(
-      'https://digitalmediabridge.tv/screenbuilderserver-test/api/file/updateplaylist'
+      'https://digitalmediabridge.tv/screenbuilder-server/api/file/updateplaylist'
   );
 
   final body = jsonEncode({

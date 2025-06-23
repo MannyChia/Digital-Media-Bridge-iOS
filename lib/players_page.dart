@@ -75,7 +75,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
       if (response.statusCode != 200) throw Exception('Failed to fetch image filenames');
       final filenames = json.decode(response.body) as List<dynamic>;
       final allImageUrls = filenames
-          .map((f) => 'https://digitalmediabridge.tv/screen-builder-test/assets/content/'
+          .map((f) => 'https://digitalmediabridge.tv/screen-builder/assets/content/'
           '${Uri.encodeComponent(widget.userEmail)}/images/$f')
           .toList();
 
@@ -83,7 +83,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
       final encodedScreen = Uri.encodeComponent(screenName);
       final encodedPl     = Uri.encodeComponent(playlistName);
       final playlistFileUrl =
-          'https://digitalmediabridge.tv/screen-builder-test/assets/content/'
+          'https://digitalmediabridge.tv/screen-builder/assets/content/'
           '${Uri.encodeComponent(widget.userEmail)}/others/'
           '$encodedScreen/$encodedPl';
 
@@ -197,7 +197,6 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
               ],
             ),
           ),
-          Divider(color: Colors.white70, thickness: 1, height: 1),
 
           const SizedBox(height: 8),
           Expanded(
@@ -206,7 +205,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                 'No current playlist',
                 style: TextStyle(
                   color: Colors.white70,
-                  fontSize: 16,
+                  fontSize: 24,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -241,7 +240,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
         //
         //got to make header not scrollable later!!*
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.fromLTRB(16,0,16,12),
           child: Row(
             children: const [
               Text(
@@ -257,8 +256,12 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
             ],
           ),
         ),
-
-        const SizedBox(height: 8),
+        // const Divider(
+        //   color: Colors.grey,
+        //   thickness: 1,
+        //   height: 1,
+        // ),
+        // const SizedBox(height: 8),
 
         Expanded(
           child: ListView(
@@ -756,26 +759,10 @@ class _PlayersPageState extends State<PlayersPage> {
   }
 
   Future<void> _showPlaylistBottomSheet(BuildContext context, String userEmail) async {
-    // 1) preload playlists
-    try {
-      await preloadPlaylistPreviews(userEmail);
-    } catch (e) {
-      print("Error preloading playlists: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to load playlists")),
-      );
-      return;
-    }
+    // 1) Ensure we've preloaded the playlist data
+    await preloadPlaylistPreviews(userEmail);
 
-    // 2) if still empty, show a SnackBar and bail lol
-    if (cachedPlaylistPreviews.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No playlists available")),
-      );
-      return;
-    }
-
-    // 3) safe to show the sheet
+    // 2) Open the bottom sheet (it will render "No current playlist" itself if the list is empty)
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -786,7 +773,7 @@ class _PlayersPageState extends State<PlayersPage> {
       builder: (context) => PlaylistSheet(userEmail: userEmail),
     );
 
-    // 4) refresh previews after closing
+    // 3) When the sheet closes, refresh the cached previews for next time
     try {
       cachedPlaylistPreviews = await fetchPlaylistPreviews(userEmail);
       hasLoadedPlaylistPreviews = true;
