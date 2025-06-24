@@ -237,8 +237,6 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
         ),
         const SizedBox(height: 12),
 
-        //
-        //got to make header not scrollable later!!*
         Padding(
           padding: const EdgeInsets.fromLTRB(16,0,16,12),
           child: Row(
