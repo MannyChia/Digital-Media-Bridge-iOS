@@ -1132,6 +1132,7 @@ class _PlayersPageState extends State<PlayersPage> {
                                               ),
                                             );
                                           },
+
                                           errorBuilder: (context, error, stackTrace) {
                                             print("Error loading image: $error");
                                             return const Text(
