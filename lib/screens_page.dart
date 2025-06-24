@@ -54,6 +54,9 @@ class _ScreensPageState extends State<ScreensPage> {
     final double vw = MediaQuery.of(context).size.width / 100;
     final double vh = MediaQuery.of(context).size.height / 100;
 
+    final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
+    final int colorNum = int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
+
     return Scaffold(
       extendBodyBehindAppBar: true,  // allow body under AppBar
       appBar: _appBarBackBtn(context, screensPageTitle, screensPageSubTitle),
@@ -98,8 +101,6 @@ class _ScreensPageState extends State<ScreensPage> {
                           );
                         }
                       },
-                      splashColor: Colors.yellow,
-                      highlightColor: Colors.blue,
                       customBorder: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -107,15 +108,8 @@ class _ScreensPageState extends State<ScreensPage> {
                         color: Colors.transparent,
                         child: Ink(
                           decoration: BoxDecoration(
-                            color: Colors.lightGreen.withOpacity(0.65), // background for screens buttons
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.white.withOpacity(0.2), // White shadow with opacity
-                                spreadRadius: 6, // How far the shadow spreads
-                                blurRadius: 6, // How blurry the shadow is
-                              ),
-                            ],
+                            color: Color(colorNum).withOpacity(0.8), // Background for screens buttons
+                            borderRadius: BorderRadius.circular(20), // Rounded corners
                           ),
                           height: 75,
                           width: double.infinity,
@@ -124,7 +118,7 @@ class _ScreensPageState extends State<ScreensPage> {
                               dmbScreens[index].name,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black,
+                                color: Colors.white,
                                 fontSize: 20,
                               ),
                             ),
@@ -153,10 +147,13 @@ PreferredSizeWidget _appBarBackBtn(BuildContext context, String title, String su
   return PreferredSize(
     preferredSize: Size.fromHeight(vh * 11), // 11% of screen height
     child: AppBar(
-      iconTheme: const IconThemeData(color: Colors.white), //change your color here
+      iconTheme: IconThemeData( // style the back arrow
+        color: Colors.white,
+        size: vw * 8,
+      ), //change your color here
       backgroundColor: Colors.black.withOpacity(0.8), // app bar background
       automaticallyImplyLeading: true, // show back button
-      centerTitle: title == "Available Screens", // center title if title is "Available Screens"
+      // centerTitle: title == "Available Screens", // center title if title is "Available Screens"
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -179,7 +176,7 @@ PreferredSizeWidget _appBarBackBtn(BuildContext context, String title, String su
           ),
         ],
       ),
-      titleSpacing: title == "Available Screens" ? 0: vw * 4, // add padding if title is not "Available Screens"
+      titleSpacing: vw * 4, // add padding if title is not "Available Screens"
       toolbarHeight: vh * 12, // Match toolbarHeight to preferredSize height
     ),
   );

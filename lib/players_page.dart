@@ -62,6 +62,8 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
 
   Set<String> originalPlaylistImages = {};
 
+
+
   void _openPlaylist(String screenName, String playlistName) async {
     try {
       _currentScreenName = screenName;
@@ -139,6 +141,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
 
   @override
   Widget build(BuildContext context) {
+
     return DraggableScrollableSheet(
         expand: false,
         initialChildSize: 0.6,
@@ -165,6 +168,9 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
   }
 
   Widget _buildPlaylistView(ScrollController scrollController) {
+    final double vw = MediaQuery.of(context).size.width / 100;
+    final double vh = MediaQuery.of(context).size.height / 100;
+
     // error check when there is no playlists
     if (cachedPlaylistPreviews.isEmpty) {
       return Column(
@@ -239,22 +245,21 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
         ),
         const SizedBox(height: 12),
 
-        //
         //got to make header not scrollable later!!*
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
-            children: const [
+            children: [
               Text(
-                'Edit Playlist',
+                'Edit Image Playlists',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 22,
+                  fontSize: vw * 7,
                   fontWeight: FontWeight.w900,
                 ),
               ),
               SizedBox(width: 6),
-              Icon(Icons.playlist_add, color: Colors.white, size: 23),
+              Icon(Icons.playlist_add, color: Colors.white, size: vw * 7),
             ],
           ),
         ),
@@ -273,9 +278,9 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                   padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
                   child: Text(
                     entries[i].key,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
-                      fontSize: 18,
+                      fontSize: vw * 6, // size of each screen title (that has a playlist)
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -500,7 +505,8 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
-        )
+        ),
+        SizedBox(height: 40),
       ],
     );
   }
@@ -523,6 +529,8 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
       selectedFilenames: selectedFilenames,
     );
 
+    print("Email: $widget.userEmail");
+
     if (success) {
       originalPlaylistImages = selectedFilenames.toSet();
       // Refresh previews so the counts & images update
@@ -531,6 +539,10 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Playlist updated")),
       );
+
+      // close the dialog box
+      Navigator.of(context).pop();
+
     }
     else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -599,7 +611,7 @@ class _PlayersPageState extends State<PlayersPage> {
           builder: (context) =>
               ScreensPage(
                 screensPageTitle: "Available Screens",
-                screensPageSubTitle: " ",
+                screensPageSubTitle: "Return to Menu to Select Player",
               ),
         ),
       );
@@ -669,7 +681,7 @@ class _PlayersPageState extends State<PlayersPage> {
               ),
             ),
             const Text(
-              "Upload Image",
+              "Upload Image to Account",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             const SizedBox(height: 12),
@@ -1152,27 +1164,45 @@ class _PlayersPageState extends State<PlayersPage> {
                                   child: Stack(
                                     children: [
                                       // Display the enlarged image
-                                      Center(
-                                        child: Image.network(
-                                          imageUrl,
-                                          fit: BoxFit.contain, // Ensure the image fits within the dialog
-                                          loadingBuilder: (context, child, loadingProgress) {
-                                            if (loadingProgress == null) return child;
-                                            return const Center(
-                                              child: CircularProgressIndicator(
-                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
-                                              ),
-                                            );
-                                          },
-                                          errorBuilder: (context, error, stackTrace) {
-                                            print("Error loading image: $error");
-                                            return const Text(
-                                              "Failed to load image",
-                                              style: TextStyle(color: Colors.white),
-                                            );
-                                          },
+                                      SingleChildScrollView(
+                                        scrollDirection: Axis.vertical,
+                                        child: SingleChildScrollView(
+                                          scrollDirection: Axis.horizontal,
+                                          child: Image.network(
+                                            imageUrl,
+                                            fit: BoxFit.contain,
+                                            loadingBuilder: (context, child, loadingProgress) {
+                                              if (loadingProgress == null) {
+                                                return child;
+                                              }
+                                              return const Center(
+                                                child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.orange)),
+                                              );
+                                            },
+                                          )
                                         ),
                                       ),
+                                      // Center(
+                                      //   child: Image.network(
+                                      //     imageUrl,
+                                      //     fit: BoxFit.contain, // Ensure the image fits within the dialog
+                                      //     loadingBuilder: (context, child, loadingProgress) {
+                                      //       if (loadingProgress == null) return child;
+                                      //       return const Center(
+                                      //         child: CircularProgressIndicator(
+                                      //           valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+                                      //         ),
+                                      //       );
+                                      //     },
+                                      //     errorBuilder: (context, error, stackTrace) {
+                                      //       print("Error loading image: $error");
+                                      //       return const Text(
+                                      //         "Failed to load image",
+                                      //         style: TextStyle(color: Colors.white),
+                                      //       );
+                                      //     },
+                                      //   ),
+                                      // ),
                                       // Close button
                                       Positioned(
                                         top: 10,
@@ -1226,7 +1256,7 @@ class _PlayersPageState extends State<PlayersPage> {
                                 children: [
                                   Icon(Icons.edit, color: Colors.orange),
                                   SizedBox(width: 8),
-                                  Text("New Photo"),
+                                  Text("Try Again"),
                                 ],
                               ),
                             ),
@@ -1247,7 +1277,7 @@ class _PlayersPageState extends State<PlayersPage> {
                               onPressed: () async {
                                 onSubmit(imageUrl, loginUsername);
                               },
-                              child: const Text("Upload"),
+                              child: const Text("Save & Upload"),
                             ),
                           ],
                         ),
@@ -1299,7 +1329,7 @@ class _PlayersPageState extends State<PlayersPage> {
             return AlertDialog(
               title: Center(
                 child: Text(
-                  "Enter your prompt",
+                  "Describe Your Image",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: screenWidth * 0.06,
@@ -1341,9 +1371,9 @@ class _PlayersPageState extends State<PlayersPage> {
                   ),
                   SizedBox(height: screenHeight * 0.03),
                   Text(
-                    "Choose Image Dimensions",
+                    "Image Dimensions",
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.white24,
                       fontSize: screenWidth * 0.04,
                     ),
                   ),
@@ -1426,16 +1456,11 @@ class _PlayersPageState extends State<PlayersPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Create Image  ',
+                            'Generate New Image ',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: screenWidth * 0.05,
                             ),
-                          ),
-                          Icon(
-                            Icons.check_circle,
-                            color: Colors.green,
-                            size: screenWidth * 0.04,
                           ),
                         ],
                       ),
@@ -1451,7 +1476,8 @@ class _PlayersPageState extends State<PlayersPage> {
     _textFieldController.clear(); // Clear the text controller
   }
 
-  final List<String> uploadOptions = ['Camera', 'Gallery', 'Create Image'];
+  final List<String> uploadOptions = ['Camera', 'Gallery', 'Create AI Image'];
+
   String? selectedOption;
 
   /// menu on the right of the screen
@@ -1484,11 +1510,11 @@ class _PlayersPageState extends State<PlayersPage> {
               decoration: BoxDecoration(color: backgroundColor), // color of menu side bar),
               child: SafeArea(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Expanded(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Padding( // menu text
                             padding: EdgeInsets.only(bottom: vh * 2),
@@ -1496,7 +1522,7 @@ class _PlayersPageState extends State<PlayersPage> {
                               child: Text(
                                 "Menu",
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: Colors.white70,
                                   fontSize: vw * 7,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -1517,7 +1543,7 @@ class _PlayersPageState extends State<PlayersPage> {
                                 backgroundColor: buttonColor,
                               ),
                               child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
                                   Icon(
                                     Icons.tv_outlined,
@@ -1526,7 +1552,7 @@ class _PlayersPageState extends State<PlayersPage> {
                                   ),
                                   SizedBox(width: vw * 3), // Space between icon and text
                                   Text(
-                                    "My Screens",
+                                    "Screens",
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: vw * 5,
@@ -1554,7 +1580,7 @@ class _PlayersPageState extends State<PlayersPage> {
                                 backgroundColor: buttonColor,
                               ),
                               child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
                                   Icon(
                                     Icons.collections,
@@ -1563,7 +1589,7 @@ class _PlayersPageState extends State<PlayersPage> {
                                   ),
                                   SizedBox(width: vw * 3), // Space between icon and text
                                   Text(
-                                    "Edit Playlists",
+                                    "Image Playlists",
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: vw * 5,
@@ -1585,7 +1611,7 @@ class _PlayersPageState extends State<PlayersPage> {
                                   borderRadius: BorderRadius.circular(20), // Match ElevatedButton border radius
                                 ),
                                 child: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
                                     Icon(
                                       Icons.upload,
@@ -1616,7 +1642,7 @@ class _PlayersPageState extends State<PlayersPage> {
                                   iconData = Icons.camera_alt;
                                 } else if (value == 'Gallery') {
                                   iconData = Icons.photo_library;
-                                } else if (value == 'Create Image') {
+                                } else if (value == 'Create AI Image') {
                                   iconData = Icons.auto_awesome;
                                 } else {
                                   iconData = Icons.help_outline;
@@ -1656,7 +1682,7 @@ class _PlayersPageState extends State<PlayersPage> {
                                   _takePhoto();
                                 } else if (newValue == 'Gallery') {
                                   _chooseFromGallery();
-                                } else if (newValue == 'Create Image') {
+                                } else if (newValue == 'Create AI Image') {
                                   _showAIPromptDialog();
                                 }
                               },
@@ -1679,12 +1705,13 @@ class _PlayersPageState extends State<PlayersPage> {
                         ],
                       ),
                     ),
-                    Padding(
+                    Padding( // logout button
                       padding: EdgeInsets.only(bottom: vh * 1),
                       child: Column(
                         children: [
                           Material(
-                            color: Colors.transparent,
+                            color: buttonColor,
+                            borderRadius: BorderRadius.circular(vw * 1),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(vw * 1),
                               splashColor: Colors.white24,
@@ -1693,18 +1720,18 @@ class _PlayersPageState extends State<PlayersPage> {
                                 Navigator.pop(context);
                                 _userLogout();
                               },
-                              child: ListTile(
-                                leading: Icon(
-                                  Icons.logout,
-                                  color: Colors.orange,
-                                  size: vw * 5,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 2),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(vw * 1),
                                 ),
-                                title: Text(
-                                  "Logout",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: vw * 5,
-                                  ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end, // right align
+                                  children: [
+                                    Text("Logout", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
+                                    SizedBox(width: vw * 3),
+                                    Icon(Icons.logout, color: Colors.orange, size: vw * 5),
+                                  ],
                                 ),
                               ),
                             ),
