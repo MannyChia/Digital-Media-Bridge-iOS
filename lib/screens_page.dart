@@ -56,50 +56,6 @@ class _ScreensPageState extends State<ScreensPage> {
 
     return Scaffold(
       extendBodyBehindAppBar: true,  // allow body under AppBar
-      // **********
-      /* THE TITLE OF THE 'SCREENS' PAGE */
-      // **********
-      //   appBar: AppBar(
-      //     iconTheme: const IconThemeData(
-      //       color: Colors.white, //change your color here
-      //     ),
-      //     // TRY THIS: Try changing the color here to a specific color (to
-      //     // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-      //     // change color while the other colors stay the same.
-      //     flexibleSpace: Container(
-      //       decoration: const BoxDecoration(
-      //         gradient: LinearGradient(
-      //             begin: Alignment.centerLeft,
-      //             end: Alignment.centerRight,
-      //             colors: <Color>[Colors.black87, Color.fromRGBO(10, 85, 163, 1.0)]),  //DMB BLUE
-      //       ),
-      //     ),
-      //     // Here we take the value from the MyHomePage object that was created by
-      //     // the App.build method, and use it to set our appbar title.
-      //     title: Column(
-      //       mainAxisAlignment: MainAxisAlignment.start,
-      //       children: [
-      //         Row(
-      //           mainAxisAlignment: MainAxisAlignment.start,
-      //           children: [
-      //             Text(pageTitle,
-      //                 style: const TextStyle(fontWeight: FontWeight.bold,
-      //                     color:Colors.white,
-      //                     fontSize: 20)),
-      //           ],
-      //         ),
-      //         Row(
-      //           mainAxisAlignment: MainAxisAlignment.start,
-      //           children: [
-      //             Text(pageSubTitle,
-      //                 style: const TextStyle(fontStyle: FontStyle.italic,
-      //                     color:Colors.white70,
-      //                     fontSize: 17)),
-      //           ],
-      //         ),
-      //       ],
-      //     ),
-      //   ),
       appBar: _appBarBackBtn(context, screensPageTitle, screensPageSubTitle),
       body: Stack(
         children: [
@@ -121,19 +77,24 @@ class _ScreensPageState extends State<ScreensPage> {
                 itemCount: dmbScreens.length,
                 itemBuilder: (BuildContext context, int index) {
                   return InkWell(
-                      onTap: (){   /// *** WHEN A SCREEN IS CLICKED
-                        ///*** ONLY IF THE USER IS COMING FROM THE 'PLAYERS' PAGE:
-                        ///show a pop-up window and ask the user to confirm publish
-                        ///(function is in dmb_functions.dart)
-                        if(selectedPlayerName != null) {
-                          confirmPublish(
-                              context, selectedPlayerName, dmbScreens[index].name);
+                      onTap: (){
+                        // only allow them to publish a screen if they have already selected a player
+                        if (screensPageTitle != "Available Screens") {
+                          if(selectedPlayerName != null) {
+                            confirmPublish(
+                                context, selectedPlayerName, dmbScreens[index].name);
+                          }
+                          else{  //NO MEDIA PLAYER SELECTED
+                            ///show the user (in a small pop-up) informing
+                            ///them that they don't have a player selected
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Select Media Player First")),
+                            );
+                          }
                         }
-                        else{  //NO MEDIA PLAYER SELECTED
-                          ///show the user (in a small pop-up) informing
-                          ///them that they don't have a player selected
+                        else { // tell the user to select a player first
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Select Media Player First")),
+                            SnackBar(content: Text("Select a Player First"), duration: Duration(seconds: 1)),
                           );
                         }
                       },
@@ -192,11 +153,10 @@ PreferredSizeWidget _appBarBackBtn(BuildContext context, String title, String su
   return PreferredSize(
     preferredSize: Size.fromHeight(vh * 11), // 11% of screen height
     child: AppBar(
-      iconTheme: const IconThemeData(
-        color: Colors.white, //change your color here
-      ),
+      iconTheme: const IconThemeData(color: Colors.white), //change your color here
       backgroundColor: Colors.black.withOpacity(0.8), // app bar background
       automaticallyImplyLeading: true, // show back button
+      centerTitle: title == "Available Screens", // center title if title is "Available Screens"
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -219,22 +179,8 @@ PreferredSizeWidget _appBarBackBtn(BuildContext context, String title, String su
           ),
         ],
       ),
-      titleSpacing: vw * 4, // Add padding to the left of the title (4% of screen width)
+      titleSpacing: title == "Available Screens" ? 0: vw * 4, // add padding if title is not "Available Screens"
       toolbarHeight: vh * 12, // Match toolbarHeight to preferredSize height
-      // BELOW SHOWS THE HAMBURGER MENU (UNNECESSARY HERE)
-      // actions: [
-      //   Builder(
-      //     builder: (context) => IconButton(
-      //       icon: Icon(
-      //         Icons.menu,
-      //         color: Colors.white,
-      //         size: vw * 8, // Increase icon size to 8% of smaller dimension
-      //       ),
-      //       onPressed: () => Scaffold.of(context).openEndDrawer(),
-      //       padding: EdgeInsets.all(vw * 2), // Add padding around icon
-      //     ),
-      //   ),
-      // ],
     ),
   );
 }

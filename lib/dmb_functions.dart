@@ -10,6 +10,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 ///
 import './main.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import './players_page.dart';
 import './screens_page.dart';
 import 'package:flutter/material.dart';
@@ -23,7 +24,7 @@ bool hasLoadedPlaylistPreviews = false;
 Future<List<PlaylistPreview>> fetchPlaylistPreviews(String userEmail) async {
   // Fetch the JSON of screens -> playlists
   final metaResp = await http.get(
-      Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/GetPlaylist/$userEmail')
+      Uri.parse('https://digitalmediabridge.tv/screenbuilder-server/api/GetPlaylist/$userEmail')
   );
   if (metaResp.statusCode != 200) {
     throw Exception('Failed to load playlist metadata');
@@ -251,6 +252,8 @@ getUserData(String username, String password, String requestType) async {
 /// *** AFTER A PLAYER & SCREEN IS SELECTED ***
 /// *************************************************
 confirmPublish(BuildContext context, String playername, String screenname) {
+  final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
+  final int colorNum = int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
 
   // set up the buttons
   Widget cancelButton = OutlinedButton(
@@ -286,7 +289,7 @@ confirmPublish(BuildContext context, String playername, String screenname) {
             color: Colors.white
         )
     ),
-    backgroundColor: const Color.fromRGBO(10, 85, 163, 1.0),
+    backgroundColor: Color(colorNum),
     title: const Text(
       "CONFIRM PUBLISH",
       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -346,12 +349,14 @@ publishScreen(String userName, String playerName, String screenName) async {
 /// TO A PLAYER, TELL THE USER ***
 /// *************************************************
 publishSuccess(BuildContext context) {
+  final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
+  final int colorNum = int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
 
   // set up the buttons
   Widget okButton = OutlinedButton(
     child: const Text(
       "OK",
-      style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
     ),
     onPressed:(){
       Navigator.of(context).pop();
@@ -361,16 +366,20 @@ publishSuccess(BuildContext context) {
   // set up the AlertDialog
   AlertDialog alert = AlertDialog(
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.all(Radius.circular(0.0)),
+        borderRadius: BorderRadius.all(Radius.circular(0.0)),
+        side: BorderSide(
+            width: 5,
+            color: Colors.white
+        )
     ),
-    backgroundColor: Colors.lightGreen,
+    backgroundColor: Color(colorNum),
     title: const Text(
       "PUBLISH SUCCESS",
-      style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
     ),
     content: const Text(
       "Note: It may take up to 30 seconds for the screen change to take effect",
-      style: TextStyle(color: Colors.black, fontWeight: FontWeight.normal),
+      style: TextStyle(color: Colors.white, fontWeight: FontWeight.normal),
     ),
     actions: [
       okButton

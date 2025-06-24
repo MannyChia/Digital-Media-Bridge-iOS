@@ -531,15 +531,13 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Playlist updated")),
       );
-    } else {
+    }
+    else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to update playlist")),
       );
     }
   }
-
-
-
 
 }
 ///
@@ -743,6 +741,7 @@ class _PlayersPageState extends State<PlayersPage> {
                   },
                   child: const Text("Upload"),
                 ),
+                SizedBox(height: 20) // extra space between buttons and bottom of screen
               ],
             ),
           ],
@@ -815,6 +814,9 @@ class _PlayersPageState extends State<PlayersPage> {
   Future<Map<String, dynamic>?> _getAIPhoto(String prompt, int width, int height, {String? prevImageID}) async {
     // model IDs
     String stable_diffusion = "aa77f04e-3eec-4034-9c07-d0f619684628";
+    String lucid_realism = "05ce0082-2d80-4a2d-8653-4d1c85e2418e";
+    String kino_XL = "aa77f04e-3eec-4034-9c07-d0f619684628";
+    String lightning_XL = "b24e16ff-06e3-43eb-8d33-4416c2d75876";
 
     if (!dotenv.isInitialized) {
       if (mounted) { // checks is a state object is still part of the widget tree
@@ -860,7 +862,7 @@ class _PlayersPageState extends State<PlayersPage> {
       print("generating body in _getAIPhoto using just prompt");
       body = jsonEncode({
         'prompt': prompt,
-        'modelId': stable_diffusion,
+        'modelId': lucid_realism,
         'num_images': 1,
         'width': width,
         'height': height,
@@ -1094,7 +1096,7 @@ class _PlayersPageState extends State<PlayersPage> {
   }
 
   /// helper function to create and display the image
-  Future<void> _generateAndShowImage(String inputPrompt, BuildContext dialogContext, {String? prevImageID}) async {
+  Future<void> _generateAndShowImage(String inputPrompt, BuildContext dialogContext, int width, int height, {String? prevImageID}) async {
     // save screen width and height
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
@@ -1105,11 +1107,11 @@ class _PlayersPageState extends State<PlayersPage> {
 
     if (prevImageID == null) { // generate just based off prompt
       print("Calling _getAIPhoto just based on prompt");
-      ai_image = await _getAIPhoto(inputPrompt, 1536, 864);
+      ai_image = await _getAIPhoto(inputPrompt, width, height);
     }
     else { // generate based off prompt and the previous Image
       print("Calling _getAIPhoto based on prompt and prevImageID");
-      ai_image = await _getAIPhoto(inputPrompt, 1536, 864, prevImageID: prevImageID);
+      ai_image = await _getAIPhoto(inputPrompt, width, height, prevImageID: prevImageID);
     }
     String? imageUrl = ai_image?['image_url'];
     String? imageId = ai_image?['image_id'];
@@ -1218,7 +1220,6 @@ class _PlayersPageState extends State<PlayersPage> {
                           children: [
                             ElevatedButton(
                               onPressed: () {
-                                print("New Photo button pressed");
                                 onNewPhoto();
                               },
                               child: const Row(
@@ -1231,25 +1232,26 @@ class _PlayersPageState extends State<PlayersPage> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 15),
+                        const SizedBox(height: 10),
                         // third child - 'Close' and 'Upload' buttons
                         Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              TextButton( // close image pop up
-                                onPressed: () => Navigator.of(context).pop(),
-                                child: const Text("Close", style: TextStyle(color: Colors.white)),
-                              ),
-                              const SizedBox(width: 10),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.greenAccent),
-                                onPressed: () async {
-                                  onSubmit(imageUrl, loginUsername);
-                                },
-                                child: const Text("Upload"),
-                              )
-                            ]
-                        )
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton( // close image pop up
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text("Close", style: TextStyle(color: Colors.white)),
+                            ),
+                            const SizedBox(width: 10),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(backgroundColor: Colors.greenAccent),
+                              onPressed: () async {
+                                onSubmit(imageUrl, loginUsername);
+                              },
+                              child: const Text("Upload"),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 25), // added space between buttons and bottom of screen
                       ]
                   )
               );
@@ -1278,72 +1280,175 @@ class _PlayersPageState extends State<PlayersPage> {
 
   /// shows the prompt text box and takes in user input
   Future<void> _showAIPromptDialog({String? prevImageID}) async {
-    // save screen width and height
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
+
+    // Set default dimensions (16x9)
+    int desiredImageWidth = 1536;
+    int desiredImageHeight = 864;
+
+    // Initialize with 16x9 selected by default
+    List<bool> isSelected = [true, false, false];
 
     final dialogContext = context; // Store state context
     await showDialog(
       context: dialogContext,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Center(
-            child: Text("Enter your prompt", style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.05)),
-          ),
-          backgroundColor: Colors.black,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          content: TextField(
-            controller: _textFieldController,
-            style: const TextStyle(
-              color: Colors.white, // Set input text color to white
-            ),
-            decoration: const InputDecoration(
-              hintText: "Example: Show me happy cashier", // goes away when user starts to input data
-              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
-            ),
-            onSubmitted: (value) async {
-              final prompt = value.trim(); // save given prompt
-              if (prompt.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please enter a prompt')),
-                );
-                return;
-              }
-              Navigator.of(context).pop(); // Close prompt dialog
-
-              showLoadingCircle(dialogContext);
-              await _generateAndShowImage(prompt, dialogContext, prevImageID: prevImageID);
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                final prompt = _textFieldController.text.trim();
-                if (prompt.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please enter a prompt')),
-                  );
-                  return;
-                }
-                Navigator.of(context).pop(); // Close prompt dialog
-                showLoadingCircle(dialogContext);
-                await _generateAndShowImage(prompt, dialogContext, prevImageID: prevImageID);
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: Center(
+                child: Text(
+                  "Enter your prompt",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: screenWidth * 0.06,
+                  ),
+                ),
+              ),
+              backgroundColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  SizedBox(width: _isGenerating ? 8 : 4),
-                  const Text('Create Image', style: TextStyle(color: Colors.white, fontSize: 18)),
+                  TextField(
+                    controller: _textFieldController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      hintText: "Example: Show me happy cashier",
+                      hintStyle: TextStyle(color: Colors.grey),
+                    ),
+                    onSubmitted: (value) async {
+                      final prompt = value.trim();
+                      if (prompt.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please enter a prompt')),
+                        );
+                        return;
+                      }
+                      Navigator.of(context).pop(); // Close prompt dialog
+                      showLoadingCircle(dialogContext);
+                      await _generateAndShowImage(
+                        prompt,
+                        dialogContext,
+                        desiredImageWidth,
+                        desiredImageHeight,
+                        prevImageID: prevImageID,
+                      );
+                    },
+                  ),
+                  SizedBox(height: screenHeight * 0.03),
+                  Text(
+                    "Choose Image Dimensions",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: screenWidth * 0.04,
+                    ),
+                  ),
+                  SizedBox(height: screenHeight * 0.01),
+                  Wrap(
+                    spacing: screenWidth * 0.01,
+                    runSpacing: 8.0,
+                    children: [
+                      ToggleButtons(
+                        isSelected: isSelected,
+                        onPressed: (index) {
+                          setState(() {
+                            // Ensure only one button is selected
+                            for (int i = 0; i < isSelected.length; i++) {
+                              isSelected[i] = i == index;
+                            }
+                            // Update dimensions
+                            if (index == 0) {
+                              desiredImageWidth = 1536;
+                              desiredImageHeight = 864;
+                            } else if (index == 1) {
+                              desiredImageWidth = 1024;
+                              desiredImageHeight = 1024;
+                            } else if (index == 2) {
+                              desiredImageWidth = 864;
+                              desiredImageHeight = 1536;
+                            }
+                          });
+                        },
+                        selectedColor: Colors.white, // selected text color
+                        fillColor: Colors.orange, // selected button color
+                        color: Colors.white, // unselected text color
+                        borderColor: Colors.grey,
+                        selectedBorderColor: Colors.orange,
+                        borderRadius: BorderRadius.circular(8),
+                        children: const [
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: Text("16 x 9"),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: Text("10 x 10"),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: Text("9 x 16"),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ],
               ),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: () async {
+                    final prompt = _textFieldController.text.trim();
+                    if (prompt.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please enter a prompt')),
+                      );
+                      return;
+                    }
+                    Navigator.of(context).pop(); // Close prompt dialog
+                    showLoadingCircle(dialogContext);
+                    await _generateAndShowImage(
+                      prompt,
+                      dialogContext,
+                      desiredImageWidth,
+                      desiredImageHeight,
+                      prevImageID: prevImageID,
+                    );
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(width: _isGenerating ? 8 : 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Create Image  ',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: screenWidth * 0.05,
+                            ),
+                          ),
+                          Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                            size: screenWidth * 0.04,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );
-    _textFieldController.clear(); // clear the text controller
+    _textFieldController.clear(); // Clear the text controller
   }
 
   final List<String> uploadOptions = ['Camera', 'Gallery', 'Create Image'];
@@ -1355,8 +1460,12 @@ class _PlayersPageState extends State<PlayersPage> {
     // save screen width and height
     final double vw = MediaQuery.of(context).size.width / 100; // width of screen (by percentage)
     final double vh = MediaQuery.of(context).size.height / 100; // height of screen (by percentage)
-    Color buttonColor = Color(0xFF2C2C2C);
-    Color backgroundColor = Color(0xFF2C2C2C);
+
+    final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
+    final int colorNum = int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
+
+    Color buttonColor = Color(colorNum);
+    Color backgroundColor = Color(colorNum);
 
     return Container(
       decoration: BoxDecoration(
@@ -1388,7 +1497,7 @@ class _PlayersPageState extends State<PlayersPage> {
                                 "Menu",
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: vw * 5,
+                                  fontSize: vw * 7,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -1404,7 +1513,7 @@ class _PlayersPageState extends State<PlayersPage> {
                               },
                               style: ElevatedButton.styleFrom(
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 4), // padding between button and text
+                                padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 2), // padding between button and text
                                 backgroundColor: buttonColor,
                               ),
                               child: Row(
@@ -1413,14 +1522,14 @@ class _PlayersPageState extends State<PlayersPage> {
                                   Icon(
                                     Icons.tv_outlined,
                                     color: Colors.orange,
-                                    size: 20,
+                                    size: vw * 5,
                                   ),
                                   SizedBox(width: vw * 3), // Space between icon and text
                                   Text(
                                     "My Screens",
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: 20,
+                                      fontSize: vw * 5,
                                     ),
                                   ),
                                 ],
@@ -1441,7 +1550,7 @@ class _PlayersPageState extends State<PlayersPage> {
                               },
                               style: ElevatedButton.styleFrom(
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 4), // padding between button and text
+                                padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 2), // padding between button and text
                                 backgroundColor: buttonColor,
                               ),
                               child: Row(
@@ -1450,14 +1559,14 @@ class _PlayersPageState extends State<PlayersPage> {
                                   Icon(
                                     Icons.collections,
                                     color: Colors.orange,
-                                    size: 20,
+                                    size: vw * 5,
                                   ),
                                   SizedBox(width: vw * 3), // Space between icon and text
                                   Text(
                                     "Edit Playlists",
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: 20,
+                                      fontSize: vw * 5,
                                     ),
                                   ),
                                 ],
@@ -1470,7 +1579,7 @@ class _PlayersPageState extends State<PlayersPage> {
                             child: DropdownButton2<String>(
                               isExpanded: true,
                               customButton: Container(
-                                padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 4), // padding between the button and text
+                                padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 2), // padding between the button and text
                                 decoration: BoxDecoration(
                                   color: buttonColor,
                                   borderRadius: BorderRadius.circular(20), // Match ElevatedButton border radius
@@ -1481,13 +1590,13 @@ class _PlayersPageState extends State<PlayersPage> {
                                     Icon(
                                       Icons.upload,
                                       color: Colors.orange,
-                                      size: 20,
+                                      size: vw * 5,
                                     ),
                                     SizedBox(width: vw * 3),
                                     Text(
                                       "Upload Image",
                                       style: TextStyle(
-                                        fontSize: 20,
+                                        fontSize: vw * 5,
                                         color: Colors.white,
                                       ),
                                     ),
@@ -1495,7 +1604,7 @@ class _PlayersPageState extends State<PlayersPage> {
                                     Icon(
                                       Icons.arrow_drop_down,
                                       color: Colors.white,
-                                      size: 20,
+                                      size: vw * 5,
                                     ),
                                   ],
                                 ),
@@ -1515,9 +1624,8 @@ class _PlayersPageState extends State<PlayersPage> {
                                 return DropdownMenuItem<String>(
                                   value: value,
                                   child: Container(
-                                    padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 1),
+                                    padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 0.5),
                                     decoration: BoxDecoration(
-                                      // color: Color(0xFF1E1E1E),
                                       color: buttonColor,
                                       borderRadius: BorderRadius.circular(20),
                                     ),
@@ -1527,14 +1635,14 @@ class _PlayersPageState extends State<PlayersPage> {
                                         Icon(
                                           iconData,
                                           color: Colors.orange,
-                                          size: 20, // Match menu item icon size
+                                          size: vw * 4,
                                         ),
-                                        SizedBox(width: 5),
+                                        SizedBox(width: vw * 1),
                                         Text(
                                           value,
                                           style: TextStyle(
                                             color: Colors.white,
-                                            fontSize: 15,
+                                            fontSize: vw * 4,
                                           ),
                                         ),
                                       ],
