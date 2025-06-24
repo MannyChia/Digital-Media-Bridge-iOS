@@ -1276,6 +1276,9 @@ class _PlayersPageState extends State<PlayersPage> {
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
 
+    final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
+    final int colorNum = int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
+
     // Set default dimensions (16x9)
     int desiredImageWidth = 1536;
     int desiredImageHeight = 864;
@@ -1332,11 +1335,11 @@ class _PlayersPageState extends State<PlayersPage> {
                       );
                     },
                   ),
-                  SizedBox(height: screenHeight * 0.03),
+                  SizedBox(height: screenHeight * 0.02),
                   Text(
                     "Image Dimensions",
                     style: TextStyle(
-                      color: Colors.white24,
+                      color: Colors.white70,
                       fontSize: screenWidth * 0.04,
                     ),
                   ),
@@ -1367,10 +1370,10 @@ class _PlayersPageState extends State<PlayersPage> {
                           });
                         },
                         selectedColor: Colors.white, // selected text color
-                        fillColor: Colors.orange, // selected button color
+                        fillColor: Color(colorNum), // selected button color
                         color: Colors.white, // unselected text color
                         borderColor: Colors.grey,
-                        selectedBorderColor: Colors.orange,
+                        selectedBorderColor: Colors.white,
                         borderRadius: BorderRadius.circular(8),
                         children: const [
                           Padding(
@@ -1387,6 +1390,7 @@ class _PlayersPageState extends State<PlayersPage> {
                           ),
                         ],
                       ),
+                      SizedBox(height: screenHeight * 0.15),
                     ],
                   ),
                 ],
@@ -1411,6 +1415,14 @@ class _PlayersPageState extends State<PlayersPage> {
                       prevImageID: prevImageID,
                     );
                   },
+                  style: TextButton.styleFrom(
+                    backgroundColor: Color(0xFF06470C), // Match drawer buttons' background
+                    foregroundColor: Colors.white, // Text color
+                    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: screenHeight * 0.02), // Responsive padding
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20), // Rounded corners
+                    ),
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -1419,7 +1431,7 @@ class _PlayersPageState extends State<PlayersPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Generate New Image ',
+                            'Generate AI Image ',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: screenWidth * 0.05,
@@ -1694,6 +1706,7 @@ class _PlayersPageState extends State<PlayersPage> {
                                     Text("Logout", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
                                     SizedBox(width: vw * 3),
                                     Icon(Icons.logout, color: Colors.orange, size: vw * 5),
+                                    SizedBox(width: vw * 3),
                                   ],
                                 ),
                               ),

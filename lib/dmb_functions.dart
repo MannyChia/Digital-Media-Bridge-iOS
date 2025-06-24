@@ -369,6 +369,7 @@ publishSuccess(BuildContext context) {
     },
   );
 
+  
   // set up the AlertDialog
   AlertDialog alert = AlertDialog(
     shape: const RoundedRectangleBorder(
