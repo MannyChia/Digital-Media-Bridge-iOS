@@ -10,6 +10,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 ///
 import './main.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import './players_page.dart';
 import './screens_page.dart';
 import 'package:flutter/material.dart';
@@ -251,21 +252,26 @@ getUserData(String username, String password, String requestType) async {
 /// *** AFTER A PLAYER & SCREEN IS SELECTED ***
 /// *************************************************
 confirmPublish(BuildContext context, String playername, String screenname) {
+  final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
+  final int colorNum = int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
+  final double vw = MediaQuery.of(context).size.width / 100; // width of screen (by percentage)
+  final double vh = MediaQuery.of(context).size.height / 100; // height of screen (by percentage)
+
 
   // set up the buttons
   Widget cancelButton = OutlinedButton(
-    child: const Text(
+    child:  Text(
       "CANCEL",
-      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: vw * 4),
     ),
     onPressed:(){
       Navigator.of(context).pop();  //close confirmation pop-up
     },
   );
   Widget continueButton = OutlinedButton(
-    child: const Text(
+    child: Text(
       "PUBLISH",
-      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: vw * 4),
     ),
     onPressed:(){
 
@@ -286,14 +292,14 @@ confirmPublish(BuildContext context, String playername, String screenname) {
             color: Colors.white
         )
     ),
-    backgroundColor: const Color.fromRGBO(10, 85, 163, 1.0),
+    backgroundColor: Color(colorNum),
     title: const Text(
       "CONFIRM PUBLISH",
       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
     ),
     content: Text(
       "Do you want to play screen '$screenname' on player $playername?",
-      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.normal),
+      style: TextStyle(color: Colors.white, fontWeight: FontWeight.normal, fontSize: vw * 4),
     ),
     actions: [
       cancelButton,
@@ -346,12 +352,17 @@ publishScreen(String userName, String playerName, String screenName) async {
 /// TO A PLAYER, TELL THE USER ***
 /// *************************************************
 publishSuccess(BuildContext context) {
+  final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
+  final int colorNum = int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
+  final double vw = MediaQuery.of(context).size.width / 100; // width of screen (by percentage)
+  final double vh = MediaQuery.of(context).size.height / 100; // height of screen (by percentage)
+
 
   // set up the buttons
   Widget okButton = OutlinedButton(
     child: const Text(
       "OK",
-      style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
     ),
     onPressed:(){
       Navigator.of(context).pop();
@@ -361,16 +372,20 @@ publishSuccess(BuildContext context) {
   // set up the AlertDialog
   AlertDialog alert = AlertDialog(
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.all(Radius.circular(0.0)),
+        borderRadius: BorderRadius.all(Radius.circular(0.0)),
+        side: BorderSide(
+            width: 5,
+            color: Colors.green,
+        )
     ),
-    backgroundColor: Colors.lightGreen,
-    title: const Text(
+    backgroundColor: Color(colorNum),
+    title: Text(
       "PUBLISH SUCCESS",
-      style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: vw * 7),
     ),
-    content: const Text(
+    content: Text(
       "Note: It may take up to 30 seconds for the screen change to take effect",
-      style: TextStyle(color: Colors.black, fontWeight: FontWeight.normal),
+      style: TextStyle(color: Colors.white, fontWeight: FontWeight.normal, fontSize: vw * 4),
     ),
     actions: [
       okButton
@@ -397,6 +412,8 @@ void _deleteStorage() async {
 /// *** WHEN A USER SELECTS THE 'LOGOUT' ICON ***
 /// *************************************************
 confirmLogout(BuildContext context) {
+  final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
+  final int colorNum = int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
 
   // set up the buttons
   Widget cancelButton = OutlinedButton(
@@ -435,8 +452,8 @@ confirmLogout(BuildContext context) {
             color: Colors.white
         )
     ),
-    backgroundColor: const Color.fromRGBO(10, 85, 163, 1.0),
-    title: const Text(
+    backgroundColor: Color(colorNum),
+    title: Text(
       "CONFIRM LOGOUT",
       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
     ),
