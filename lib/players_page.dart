@@ -1468,6 +1468,7 @@ class _PlayersPageState extends State<PlayersPage> {
     Color buttonColor = Color(colorNum);
     Color backgroundColor = Color(colorNum);
 
+    // debugged, players page to go out of app when called to go back
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -1479,14 +1480,14 @@ class _PlayersPageState extends State<PlayersPage> {
         decoration: BoxDecoration(
           image: DecorationImage(
             image: NetworkImage(backgroundURL),
-            fit: BoxFit.cover, // cover whole screen
+            fit: BoxFit.cover,
           ),
         ),
         child: Scaffold(
           key: _scaffoldKey,
           backgroundColor: Colors.transparent,
-          endDrawer: SizedBox( // side menu on right side of the screen
-            width: vw * 60, // 60% of the screen (width)
+          endDrawer: SizedBox(
+            width: vw * 60,
             child: Drawer(
               child: Container(
                 decoration: BoxDecoration(color: backgroundColor), // color of menu side bar),
@@ -1494,233 +1495,98 @@ class _PlayersPageState extends State<PlayersPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding( // menu text
-                              padding: EdgeInsets.only(bottom: vh * 2),
-                              child: Center(
-                                child: Text(
-                                  "Menu",
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: vw * 7,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const Divider(color: Colors.transparent),
-                            Padding( // My Screens button
-                              padding: EdgeInsets.symmetric(horizontal: vw * 4, vertical: vh * 1), // padding around the button
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  _showScreensPage(false);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                  padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 2), // padding between button and text
-                                  backgroundColor: buttonColor,
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Icon(
-                                      Icons.tv_outlined,
-                                      color: Colors.orange,
-                                      size: vw * 5,
-                                    ),
-                                    SizedBox(width: vw * 3), // Space between icon and text
-                                    Text(
-                                      "Screens",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: vw * 5,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const Divider(color: Colors.transparent),
-                            Padding( // edit playlists button
-                              padding: EdgeInsets.symmetric(horizontal: vw * 4, vertical: vh * 1), // padding around the button
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pop(context); // Close the drawer first
-                                  _showPlaylistBottomSheet(context, loginUsername);
+                      Padding(
+                        //reminder to check tablet later
+                        padding: EdgeInsets.fromLTRB(vw * 4, vh * 4, 0, vh * 2),
+                        child: Text(
+                          "Menu",
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: vw * 7,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const Divider(color: Colors.white24, height: 1),
 
-                                  // Then refresh and rebuild
-                                  preloadPlaylistPreviews(loginUsername);
-                                  setState(() {}); // Rebuild UI with updated cachedPlaylistPreviews
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                  padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 2), // padding between button and text
-                                  backgroundColor: buttonColor,
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Icon(
-                                      Icons.collections,
-                                      color: Colors.orange,
-                                      size: vw * 5,
-                                    ),
-                                    SizedBox(width: vw * 3), // Space between icon and text
-                                    Text(
-                                      "Image Playlists",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: vw * 5,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                      Expanded(
+                        child: ListView(
+                          padding: EdgeInsets.zero,
+                          children: [
+                            ListTile(
+                              leading: Icon(Icons.tv_outlined, color: Colors.orange, size: vw * 5),
+                              title: Text("Screens", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
+                              onTap: () {
+                                Navigator.pop(context);
+                                _showScreensPage(false);
+                              },
+                              dense: true,
+                              shape: const ContinuousRectangleBorder(),
                             ),
-                            const Divider(color: Colors.transparent),
-                            Padding( // upload image button
-                              padding: EdgeInsets.symmetric(horizontal: vw * 4, vertical: vh * 1), // padding around the button
-                              child: DropdownButton2<String>(
-                                isExpanded: true,
-                                customButton: Container(
-                                  padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 2), // padding between the button and text
-                                  decoration: BoxDecoration(
-                                    color: buttonColor,
-                                    borderRadius: BorderRadius.circular(20), // Match ElevatedButton border radius
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Icon(
-                                        Icons.upload,
-                                        color: Colors.orange,
-                                        size: vw * 5,
-                                      ),
-                                      SizedBox(width: vw * 3),
-                                      Text(
-                                        "Upload Image",
-                                        style: TextStyle(
-                                          fontSize: vw * 5,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      Icon(
-                                        Icons.arrow_drop_down,
-                                        color: Colors.white,
-                                        size: vw * 5,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                underline: Container(), // Remove default underline
-                                items: uploadOptions.map((String value) {
-                                  IconData iconData;
-                                  if (value == 'Camera') {
-                                    iconData = Icons.camera_alt;
-                                  } else if (value == 'Gallery') {
-                                    iconData = Icons.photo_library;
-                                  } else if (value == 'Create AI Image') {
-                                    iconData = Icons.auto_awesome;
-                                  } else {
-                                    iconData = Icons.help_outline;
-                                  }
-                                  return DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 0.5),
-                                      decoration: BoxDecoration(
-                                        color: buttonColor,
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          SizedBox(width: 5),
-                                          Icon(
-                                            iconData,
-                                            color: Colors.orange,
-                                            size: vw * 4,
-                                          ),
-                                          SizedBox(width: vw * 1),
-                                          Text(
-                                            value,
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: vw * 4,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                                value: selectedOption,
-                                onChanged: (String? newValue) async {
-                                  if (newValue == 'Camera') {
-                                    _takePhoto();
-                                  } else if (newValue == 'Gallery') {
-                                    _chooseFromGallery();
-                                  } else if (newValue == 'Create AI Image') {
-                                    _showAIPromptDialog();
-                                  }
-                                },
-                                buttonStyleData: ButtonStyleData(
-                                  padding: EdgeInsets.symmetric(horizontal: vw * 2),
-                                  height: vh * 4,
-                                ),
-                                dropdownStyleData: DropdownStyleData(
-                                  maxHeight: vh * 25,
-                                  decoration: BoxDecoration(
-                                    color: buttonColor,
-                                  ),
-                                ),
-                                menuItemStyleData: MenuItemStyleData(
-                                  height: vh * 5,
-                                ),
-                              ),
+
+                            // const Divider(color: Colors.white24, height: 1),
+
+                            ListTile(
+                              leading: Icon(Icons.collections, color: Colors.orange, size: vw * 5),
+                              title: Text("Image Playlists", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
+                              onTap: () {
+                                Navigator.pop(context);
+                                _showPlaylistBottomSheet(context, loginUsername);
+                                preloadPlaylistPreviews(loginUsername);
+                                setState(() {});
+                              },
+                              dense: true,
+                              shape: const ContinuousRectangleBorder(),
                             ),
-                            const Divider(color: Colors.transparent),
+                            const Divider(color: Colors.white12, height: 1),
+
+                            ExpansionTile(
+                              leading: Icon(Icons.upload, color: Colors.orange, size: vw * 5),
+                              title: Text("Upload Image", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
+                              iconColor: Colors.white,
+                              textColor: Colors.white,
+                              tilePadding: EdgeInsets.symmetric(horizontal: vw * 4),
+                              // make sure align, got to check later
+                              childrenPadding: EdgeInsets.zero,
+                              children: uploadOptions.map((opt) {
+                                IconData icon;
+                                void Function() action;
+                                if (opt == 'Camera') {
+                                  icon = Icons.camera_alt;
+                                  action = _takePhoto;
+                                } else if (opt == 'Gallery') {
+                                  icon = Icons.photo_library;
+                                  action = _chooseFromGallery;
+                                } else {
+                                  icon = Icons.auto_awesome;
+                                  action = () => _showAIPromptDialog();
+                                }
+                                return ListTile(
+                                  leading: Icon(icon, color: Colors.orange, size: vw * 4),
+                                  title: Text(opt, style: TextStyle(color: Colors.white, fontSize: vw * 4)),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: vw * 4),
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    action();
+                                  },
+                                  dense: true,
+                                  shape: const ContinuousRectangleBorder(),
+                                );
+                              }).toList(),
+                            ),
                           ],
                         ),
                       ),
-                      Padding( // logout button
-                        padding: EdgeInsets.only(bottom: vh * 1),
-                        child: Column(
-                          children: [
-                            Material(
-                              color: buttonColor,
-                              borderRadius: BorderRadius.circular(vw * 1),
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(vw * 1),
-                                splashColor: Colors.white24,
-                                highlightColor: Colors.white10,
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  _userLogout();
-                                },
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 2),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(vw * 1),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.end, // right align
-                                    children: [
-                                      Text("Logout", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
-                                      SizedBox(width: vw * 3),
-                                      Icon(Icons.logout, color: Colors.orange, size: vw * 5),
-                                      SizedBox(width: vw * 3),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                      const Divider(color: Colors.white24, height: 1),
+                      ListTile(
+                        leading: Icon(Icons.logout, color: Colors.orange, size: vw * 5),
+                        title: Text("Logout", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _userLogout();
+                        },
+                        dense: true,
+                        shape: const ContinuousRectangleBorder(),
                       ),
                     ],
                   ),
