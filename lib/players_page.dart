@@ -111,7 +111,12 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
     } catch (e) {
       print("ERROR: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to load playlist images")),
+        SnackBar(
+          content: Text("Failed to load playlist images", style: TextStyle(fontSize: 20)),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
       );
     }
   }
@@ -536,8 +541,20 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
       // Refresh previews so the counts & images update
       cachedPlaylistPreviews = await fetchPlaylistPreviews(widget.userEmail);
       setState(() {}); // rebuild UI
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Playlist updated")),
+        SnackBar(
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("Playlist Updated", style: TextStyle(fontSize: 20)),
+              SizedBox(width: 8),
+              Icon(Icons.check_circle_outline, color: Colors.green),
+            ]
+          ),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
       );
 
       // close the dialog box
@@ -546,7 +563,12 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
     }
     else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to update playlist")),
+       SnackBar(
+        content: Text("Failed to update playlist", style: TextStyle(fontSize: 20)),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
       );
     }
   }
@@ -745,9 +767,21 @@ class _PlayersPageState extends State<PlayersPage> {
                           ],
                         ),
                       );
-                    } else {
+                    }
+                    else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(message)),
+                        SnackBar(
+                          content: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(message, style: TextStyle(fontSize: 20)),
+                                SizedBox(width: 8),
+                                Icon(Icons.check_circle_outline, color: Colors.green),
+                              ]
+                          ),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        )
                       );
                     }
                   },
@@ -815,32 +849,13 @@ class _PlayersPageState extends State<PlayersPage> {
     String lightning_XL = "b24e16ff-06e3-43eb-8d33-4416c2d75876";
 
     if (!dotenv.isInitialized) {
-      if (mounted) { // checks is a state object is still part of the widget tree
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Environment variables not loaded')),
-        );
-      }
-      return null;
+      print("ENVIRONMENTAL VARIABLES NOT LOADED");
     }
 
     final apiKey = dotenv.env['LEONARDO_API_KEY_2']; // gets the API key, stored in the private .env file
 
     if (apiKey == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('API key not found in .env file')),
-        );
-      }
-      return null;
-    }
-
-    if (prompt.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Please enter a prompt')),
-        );
-      }
-      return null;
+      print("API KEY NOT FOUND IN .env FILE");
     }
 
     final url = Uri.parse('https://cloud.leonardo.ai/api/rest/v1/generations');
@@ -889,12 +904,7 @@ class _PlayersPageState extends State<PlayersPage> {
         final generationId = data['sdGenerationJob']?['generationId'];
 
         if (generationId == null) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('No generation ID received')),
-            );
-          }
-          return null;
+          print("No generation ID received");
         }
 
         final pollUrl = Uri.parse('https://cloud.leonardo.ai/api/rest/v1/generations/$generationId');
@@ -921,7 +931,12 @@ class _PlayersPageState extends State<PlayersPage> {
             else if (status == 'FAILED') {
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Image generation failed')),
+                  SnackBar(
+                    content: Text("Image generation failed", style: TextStyle(fontSize: 20)),
+                    backgroundColor: Colors.redAccent,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
                 );
               }
               return null;
@@ -935,7 +950,12 @@ class _PlayersPageState extends State<PlayersPage> {
         if (!isCompleted || imageUrl == null) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Image generation timed out or no image received')),
+              SnackBar(
+                content: Text("Image generation timed out or no image received", style: TextStyle(fontSize: 20)),
+                backgroundColor: Colors.redAccent,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
             );
           }
           return null;
@@ -962,7 +982,12 @@ class _PlayersPageState extends State<PlayersPage> {
         }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMsg)),
+            SnackBar(
+              content: Text(errorMsg, style: TextStyle(fontSize: 20)),
+              backgroundColor: Colors.redAccent,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
           );
         }
         return null;
@@ -970,12 +995,6 @@ class _PlayersPageState extends State<PlayersPage> {
     }
     catch (e) {
       print('Request Error: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-      }
-      return null;
     }
   }
 
@@ -1005,7 +1024,12 @@ class _PlayersPageState extends State<PlayersPage> {
       final response = await http.get(Uri.parse(imageUrl));
       if (response.statusCode != 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to download image")),
+          SnackBar(
+            content: Text("Failed to download image", style: TextStyle(fontSize: 20)),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
         );
         print("ERROR ON onSubmit FUNCTION!");
         return;
@@ -1026,14 +1050,15 @@ class _PlayersPageState extends State<PlayersPage> {
       if (success) {
         await tempFile.delete();
       }
-
-      // grab server’s message
+    }
+    catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
+        SnackBar(
+          content: Text("Error: $e", style: TextStyle(fontSize: 20)),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
       );
     } finally {
       // Close the image dialog no matter what
@@ -1047,6 +1072,9 @@ class _PlayersPageState extends State<PlayersPage> {
     // save screen width and height
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
+
+    final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
+    final int colorNum = int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
 
     showDialog(
       context: context,
@@ -1077,9 +1105,15 @@ class _PlayersPageState extends State<PlayersPage> {
                     onPressed: () {
                       Navigator.of(context).pop(); // Close loading dialog
                     },
-                    child: const Text(
+                    style: TextButton.styleFrom(
+                      backgroundColor: Color(colorNum),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
                       "Cancel",
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.04),
                     ),
                   ),
                 ],
@@ -1117,7 +1151,18 @@ class _PlayersPageState extends State<PlayersPage> {
 
     if (imageUrl != null && imageId != null) {
       ScaffoldMessenger.of(dialogContext).showSnackBar(
-        const SnackBar(content: Text('Image generated successfully')),
+        SnackBar(
+          content: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text("Image generated successfully", style: TextStyle(fontSize: 20)),
+                SizedBox(width: 8),
+                Icon(Icons.check_circle_outline, color: Colors.green),
+              ]
+          ),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        )
       );
       try {
         // show image in slide up box
@@ -1127,67 +1172,36 @@ class _PlayersPageState extends State<PlayersPage> {
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
-            isScrollControlled: true, // allows user to scroll
+            isScrollControlled: true,
             builder: (BuildContext context) {
               return Padding(
-                  padding: const EdgeInsets.all(16.0), // padding on all sides
-                  child: Column(
-                      mainAxisSize: MainAxisSize.min, // take up minimum space
+                padding: const EdgeInsets.all(16.0), // padding on all sides
+                child: SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: screenHeight * 0.9,
+                      maxWidth: screenWidth * 0.9,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text("AI Generated Image", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                        const SizedBox(height: 12),
-                        // first child - the image that was generated
-                        GestureDetector(
-                          onTap: () {
-                            // Show a dialog with the enlarged image
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return Dialog(
-                                  backgroundColor: Colors.black.withOpacity(0.8), // Semi-transparent background
-                                  child: Stack(
-                                    children: [
-                                      // Display the enlarged image
-                                      SingleChildScrollView(
-                                        scrollDirection: Axis.vertical,
-                                        child: SingleChildScrollView(
-                                          scrollDirection: Axis.horizontal,
-                                          child: Image.network(
-                                            imageUrl,
-                                            fit: BoxFit.contain,
-                                            loadingBuilder: (context, child, loadingProgress) {
-                                              if (loadingProgress == null) {
-                                                return child;
-                                              }
-                                              return const Center(
-                                                child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.orange)),
-                                              );
-                                            },
-                                          )
-                                        ),
-                                      ),
-                                      // Close button
-                                      Positioned(
-                                        top: 10,
-                                        right: 10,
-                                        child: IconButton(
-                                          icon: const Icon(Icons.close, color: Colors.white),
-                                          onPressed: () {
-                                            Navigator.of(context).pop(); // Close the dialog
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
+                        Text(
+                          "AI Generated Image",
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.06,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(height: screenHeight * 0.02),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            width: screenWidth * 0.9,
+                            height: screenHeight * 0.6,
                             child: Image.network(
                               imageUrl,
-                              fit: BoxFit.cover,
+                              fit: BoxFit.contain, // Ensures the image fits within the specified dimensions
                               loadingBuilder: (context, child, loadingProgress) {
                                 if (loadingProgress == null) return child;
                                 return const Center(
@@ -1206,10 +1220,10 @@ class _PlayersPageState extends State<PlayersPage> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20),
-                        // second child - a row with buttons 'New Photo' and 'Edit Photo'
+
+                        SizedBox(height: screenHeight * 0.02),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             ElevatedButton(
                               onPressed: () {
@@ -1226,11 +1240,10 @@ class _PlayersPageState extends State<PlayersPage> {
                           ],
                         ),
                         const SizedBox(height: 10),
-                        // third child - 'Close' and 'Upload' buttons
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            TextButton( // close image pop up
+                            TextButton(
                               onPressed: () => Navigator.of(context).pop(),
                               child: const Text("Close", style: TextStyle(color: Colors.white)),
                             ),
@@ -1244,9 +1257,11 @@ class _PlayersPageState extends State<PlayersPage> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 25), // added space between buttons and bottom of screen
-                      ]
-                  )
+                        const SizedBox(height: 25),
+                      ],
+                    ),
+                    ),
+                  ),
               );
             }
         );
@@ -1256,7 +1271,12 @@ class _PlayersPageState extends State<PlayersPage> {
         print("Error showing image dialog: $e");
         if (dialogContext.mounted) {
           ScaffoldMessenger.of(dialogContext).showSnackBar(
-            SnackBar(content: Text('Error displaying image: $e')),
+            SnackBar(
+              content: Text("Error displaying image: $e", style: TextStyle(fontSize: 20)),
+              backgroundColor: Colors.redAccent,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
           );
         }
       }
@@ -1265,7 +1285,12 @@ class _PlayersPageState extends State<PlayersPage> {
       print("Showing failure snackbar");
       if (dialogContext.mounted) {
         ScaffoldMessenger.of(dialogContext).showSnackBar(
-          const SnackBar(content: Text('Failed to generate a valid image URL or ID')),
+          SnackBar(
+            content: Text("Failed to generate a valid image", style: TextStyle(fontSize: 20)),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
         );
       }
     }
@@ -1309,18 +1334,38 @@ class _PlayersPageState extends State<PlayersPage> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextField(
+                  TextFormField(
                     controller: _textFieldController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      hintText: "Example: Show me happy cashier",
-                      hintStyle: TextStyle(color: Colors.grey),
+                    style: TextStyle(color: Colors.white),
+                    cursorColor: Colors.white,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Color(colorNum),
+                      hintText: 'Example: Show me large dog',
+                      hintStyle: const TextStyle(color: Colors.white54),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[700]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[700]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Colors.blueAccent),
+                      ),
                     ),
-                    onSubmitted: (value) async {
+                    onFieldSubmitted: (value) async {
                       final prompt = value.trim();
                       if (prompt.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please enter a prompt')),
+                          SnackBar(
+                            content: Text("Please enter a prompt", style: TextStyle(fontSize: 20)),
+                            backgroundColor: Colors.redAccent,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
                         );
                         return;
                       }
@@ -1335,7 +1380,7 @@ class _PlayersPageState extends State<PlayersPage> {
                       );
                     },
                   ),
-                  SizedBox(height: screenHeight * 0.02),
+                  SizedBox(height: screenHeight * 0.03), // space between Text Box and 'Image Dimensions'
                   Text(
                     "Image Dimensions",
                     style: TextStyle(
@@ -1343,7 +1388,7 @@ class _PlayersPageState extends State<PlayersPage> {
                       fontSize: screenWidth * 0.04,
                     ),
                   ),
-                  SizedBox(height: screenHeight * 0.01),
+                  SizedBox(height: screenHeight * 0.01), // space between 'Image Dimensions' text and options
                   Wrap(
                     spacing: screenWidth * 0.01,
                     runSpacing: 8.0,
@@ -1390,7 +1435,7 @@ class _PlayersPageState extends State<PlayersPage> {
                           ),
                         ],
                       ),
-                      SizedBox(height: screenHeight * 0.15),
+                      SizedBox(height: screenHeight * 0.1), // space between Dimensions and 'Enter' Button
                     ],
                   ),
                 ],
@@ -1401,7 +1446,12 @@ class _PlayersPageState extends State<PlayersPage> {
                     final prompt = _textFieldController.text.trim();
                     if (prompt.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please enter a prompt')),
+                        SnackBar(
+                          content: Text("Please enter a prompt", style: TextStyle(fontSize: 20)),
+                          backgroundColor: Colors.redAccent,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
                       );
                       return;
                     }
@@ -1416,7 +1466,7 @@ class _PlayersPageState extends State<PlayersPage> {
                     );
                   },
                   style: TextButton.styleFrom(
-                    backgroundColor: Color(0xFF06470C), // Match drawer buttons' background
+                    backgroundColor: Color(0xFF06470C), // dark green
                     foregroundColor: Colors.white, // Text color
                     padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: screenHeight * 0.02), // Responsive padding
                     shape: RoundedRectangleBorder(
@@ -1767,7 +1817,18 @@ class _PlayersPageState extends State<PlayersPage> {
                           onTap: () {
                             selectedPlayerName = dmbMediaPlayers[index].name;
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text("${dmbMediaPlayers[index].name} Selected")),
+                              SnackBar(
+                                content: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text("${dmbMediaPlayers[index].name} Selected", style: TextStyle(fontSize: 20)),
+                                      SizedBox(width: 8),
+                                      Icon(Icons.check_circle_outline, color: Colors.green),
+                                    ]
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              )
                             );
                             _showScreensPage(true);
                           },

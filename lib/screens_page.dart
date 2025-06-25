@@ -91,13 +91,23 @@ class _ScreensPageState extends State<ScreensPage> {
                             ///show the user (in a small pop-up) informing
                             ///them that they don't have a player selected
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Select Media Player First")),
+                              SnackBar(
+                                content: Text("Select a Player First", style: TextStyle(fontSize: 20)),
+                                backgroundColor: Colors.redAccent,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
                             );
                           }
                         }
                         else { // tell the user to select a player first
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Select a Player First"), duration: Duration(seconds: 1)),
+                            SnackBar(
+                              content: Text("Select a Player First", style: TextStyle(fontSize: 20)),
+                              backgroundColor: Colors.redAccent,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
                           );
                         }
                       },

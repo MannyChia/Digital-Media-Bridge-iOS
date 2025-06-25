@@ -300,7 +300,7 @@ class LoginPage extends StatelessWidget {
                       cursorColor: Colors.white,
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: Colors.grey[800],
+                        fillColor: Colors.grey[800], // CHANGE TO COLOR NUM
                         prefixIcon: const Icon(Icons.lock, color: Colors.white30),
                         hintText: 'Password',
                         hintStyle: const TextStyle(color: Colors.white54),

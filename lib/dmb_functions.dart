@@ -283,36 +283,90 @@ confirmPublish(BuildContext context, String playername, String screenname) {
       });
     },
   );
-  // set up the AlertDialog
-  AlertDialog alert = AlertDialog(
-    shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(0.0)),
-        side: BorderSide(
-            width: 5,
-            color: Colors.white
-        )
-    ),
-    backgroundColor: Color(colorNum),
-    title: const Text(
-      "CONFIRM PUBLISH",
-      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-    ),
-    content: Text(
-      "Do you want to play screen '$screenname' on player $playername?",
-      style: TextStyle(color: Colors.white, fontWeight: FontWeight.normal, fontSize: vw * 4),
-    ),
-    actions: [
-      cancelButton,
-      continueButton,
-    ],
-  );
-  // show the dialog
+
+  // // Confirm Publish Button
+  // AlertDialog alert = AlertDialog(
+  //   shape: const RoundedRectangleBorder(
+  //       borderRadius: BorderRadius.all(Radius.circular(0.0)),
+  //       side: BorderSide(
+  //           width: 5,
+  //           color: Colors.white
+  //       )
+  //   ),
+  //   backgroundColor: Color(colorNum),
+  //   title: const Text(
+  //     "CONFIRM PUBLISH",
+  //     style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+  //   ),
+  //   content: Text(
+  //     "Do you want to play screen '$screenname' on player $playername?",
+  //     style: TextStyle(color: Colors.white, fontWeight: FontWeight.normal, fontSize: vw * 4),
+  //   ),
+  //   actions: [
+  //     cancelButton,
+  //     continueButton,
+  //   ],
+  // );
+  // // show the dialog
+  // showDialog(
+  //   context: context,
+  //   builder: (BuildContext context) {
+  //     return alert;
+  //   },
+  // );
+
+  // Confirm Publish Button
   showDialog(
     context: context,
+    barrierDismissible: false, // prevents tapping outside to dismiss
     builder: (BuildContext context) {
-      return alert;
-    },
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        child: Center(
+            child: Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "CONFIRM PUBLISH",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: vw * 7,
+                    ),
+                  ),
+                  SizedBox(height: vh * 2),
+                  Text(
+                    "Do you want to play screen '$screenname' on player $playername?",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.normal,
+                      fontSize: vw * 4,
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end, // left align
+                    children: [
+                      cancelButton,
+                      SizedBox(width: 10),
+                      continueButton,
+                    ],
+                  ),
+                ]
+              )
+            )
+          ),
+        );
+      }
   );
+
+
 
 }
 
@@ -357,7 +411,6 @@ publishSuccess(BuildContext context) {
   final double vw = MediaQuery.of(context).size.width / 100; // width of screen (by percentage)
   final double vh = MediaQuery.of(context).size.height / 100; // height of screen (by percentage)
 
-
   // set up the buttons
   Widget okButton = OutlinedButton(
     child: const Text(
@@ -369,37 +422,54 @@ publishSuccess(BuildContext context) {
     },
   );
 
-  
-  // set up the AlertDialog
-  AlertDialog alert = AlertDialog(
-    shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(0.0)),
-        side: BorderSide(
-            width: 5,
-            color: Colors.green,
-        )
-    ),
-    backgroundColor: Color(colorNum),
-    title: Text(
-      "PUBLISH SUCCESS",
-      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: vw * 7),
-    ),
-    content: Text(
-      "Note: It may take up to 30 seconds for the screen change to take effect",
-      style: TextStyle(color: Colors.white, fontWeight: FontWeight.normal, fontSize: vw * 4),
-    ),
-    actions: [
-      okButton
-    ],
-  );
-  // show the dialog
+  // Publish Success Button
   showDialog(
     context: context,
+    barrierDismissible: false, // prevents tapping outside to dismiss
     builder: (BuildContext context) {
-      return alert;
-    },
-  );
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        child: Center(
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: Colors.green,
+                width: 5,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "PUBLISH SUCCESS",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: vw * 7,
+                  ),
+                ),
+                SizedBox(height: vh * 2),
+                Text(
+                  "Note: It may take up to 30 seconds for the screen change to take effect",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.normal,
+                    fontSize: vw * 4,
+                  ),
+                ),
+                SizedBox(height: 20),
+                okButton,
+              ]
+            )
+          )
+        ),
 
+      );
+    }
+  );
 }
 
 //On user logout, remove all of the system storage
