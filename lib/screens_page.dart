@@ -61,25 +61,25 @@ class _ScreensPageState extends State<ScreensPage> {
       extendBodyBehindAppBar: true,  // allow body under AppBar
       appBar: _appBarBackBtn(context, screensPageTitle, screensPageSubTitle),
       body: Stack(
-        children: [
-          // background image
-          Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage(backgroundURL),
-                fit: BoxFit.cover,
+          children: [
+            // background image
+            Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: NetworkImage(backgroundURL),
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
-          ),
 
-          // list of screens
-          Padding(
-            padding: EdgeInsets.only(top: vh * 16), // prevents overlap with appBar
-              child: ListView.separated(
-                padding: EdgeInsets.only(top: vh * 2, bottom: vh * 2, left: vw * 3, right: vw * 3),
-                itemCount: dmbScreens.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return InkWell(
+            // list of screens
+            Padding(
+                padding: EdgeInsets.only(top: vh * 16), // prevents overlap with appBar
+                child: ListView.separated(
+                  padding: EdgeInsets.only(top: vh * 2, bottom: vh * 2, left: vw * 3, right: vw * 3),
+                  itemCount: dmbScreens.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return InkWell(
                       onTap: (){
                         // only allow them to publish a screen if they have already selected a player
                         if (screensPageTitle != "Available Screens") {
@@ -135,14 +135,14 @@ class _ScreensPageState extends State<ScreensPage> {
                           ),
                         ),
                       ),
-                  );
-                },
-                separatorBuilder: (context, index) => const Divider( // makes the divider between the items invisible
-                  color: Colors.transparent,
-                ),
-              )
-          )
-        ]
+                    );
+                  },
+                  separatorBuilder: (context, index) => const Divider( // makes the divider between the items invisible
+                    color: Colors.transparent,
+                  ),
+                )
+            )
+          ]
       ),
     );
   }
@@ -191,4 +191,3 @@ PreferredSizeWidget _appBarBackBtn(BuildContext context, String title, String su
     ),
   );
 }
-

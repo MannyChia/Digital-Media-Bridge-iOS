@@ -192,12 +192,11 @@ class _BypassloginPageState extends State<BypassloginPage> {
 
       await preloadPlaylistPreviews(loginUsername);
 
-      Navigator.push(
+      Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
-      ).then((context) {
-        _getBypassLogin();
-      });
+            (Route<dynamic> route) => false,
+      );
     } else {
       setState(() {
         bypassMsg = "Login Failed.\nPlease logout and then login again with the correct username & password";

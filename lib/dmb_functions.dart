@@ -411,6 +411,7 @@ publishSuccess(BuildContext context) {
   final double vw = MediaQuery.of(context).size.width / 100; // width of screen (by percentage)
   final double vh = MediaQuery.of(context).size.height / 100; // height of screen (by percentage)
 
+
   // set up the buttons
   Widget okButton = OutlinedButton(
     child: const Text(
@@ -470,6 +471,7 @@ publishSuccess(BuildContext context) {
       );
     }
   );
+
 }
 
 //On user logout, remove all of the system storage
