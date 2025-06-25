@@ -10,10 +10,10 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 ///
 import './main.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import './players_page.dart';
 import './screens_page.dart';
 import 'package:flutter/material.dart';
-
 import 'package:http_parser/http_parser.dart'; // for MediaType
 import '/Models/playlist_preview.dart';
 
@@ -24,7 +24,7 @@ bool hasLoadedPlaylistPreviews = false;
 Future<List<PlaylistPreview>> fetchPlaylistPreviews(String userEmail) async {
   // Fetch the JSON of screens -> playlists
   final metaResp = await http.get(
-      Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/GetPlaylist/$userEmail')
+      Uri.parse('https://digitalmediabridge.tv/screenbuilder-server/api/GetPlaylist/$userEmail')
   );
   if (metaResp.statusCode != 200) {
     throw Exception('Failed to load playlist metadata');
@@ -43,7 +43,7 @@ Future<List<PlaylistPreview>> fetchPlaylistPreviews(String userEmail) async {
       final encodedScreen = Uri.encodeComponent(screenName);
 
       final plUrl =
-          'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(userEmail)}/others/$encodedScreen/$fileName';
+          'https://digitalmediabridge.tv/screen-builder/assets/content/${Uri.encodeComponent(userEmail)}/others/$encodedScreen/$fileName';
 
       final plResp = await http.get(Uri.parse(plUrl));
       if (plResp.statusCode != 200) continue;
@@ -54,7 +54,7 @@ Future<List<PlaylistPreview>> fetchPlaylistPreviews(String userEmail) async {
           .toList();
 
       final String? previewUrl = lines.isNotEmpty
-          ? 'https://digitalmediabridge.tv/screen-builder-test/assets/content/${Uri.encodeComponent(userEmail)}/images/${Uri.encodeComponent(lines.first.split(",").first)}'
+          ? 'https://digitalmediabridge.tv/screen-builder/assets/content/${Uri.encodeComponent(userEmail)}/images/${Uri.encodeComponent(lines.first.split(",").first)}'
           : null;
 
       // add screenName into the model for mapping in players_page
@@ -91,41 +91,8 @@ Future<List<String>> fetchAllUserImages(String userEmail) async {
   }
 }
 
-//TODO this is the main code, use this api!
-/// THIS SUBMITS ALL PICTURES (FROM CAMERA OR GALLERY) TO THE ACCOUNT
-// Future<bool> uploadImage(File imageFile, String username) async {
-//   var uri = Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/upload');
-//
-//   var request = http.MultipartRequest('POST', uri)
-//     ..fields['filetype'] = 'images'
-//     ..fields['username'] = username
-//     ..files.add(
-//       await http.MultipartFile.fromPath(
-//         'file',
-//         imageFile.path,
-//         contentType: MediaType('image', 'jpeg'), // or use `image/png` as needed
-//       ),
-//     );
-//
-//   try {
-//     var response = await request.send();
-//
-//     if (response.statusCode == 200) {
-//       print("Upload successful");
-//       return true;
-//     } else {
-//       print("Upload failed with status: ${response.statusCode}");
-//       return false;
-//     }
-//   } catch (e) {
-//     print("Upload exception: $e");
-//     return false;
-//   }
-// }
-
-//TODO remove this api! this is not the main api
 Future<Map<String, dynamic>> uploadImage(File imageFile, String username) async {
-  var uri = Uri.parse('https://digitalmediabridge.tv/screenbuilderserver-test/api/upload');
+  var uri = Uri.parse('https://digitalmediabridge.tv/screenbuilder-server/api/upload');
 
   var request = http.MultipartRequest('POST', uri)
     ..fields['filetype'] = 'images'
@@ -165,7 +132,7 @@ Future<bool> updatePlaylist({
   required List<String> selectedFilenames,
 }) async {
   final url = Uri.parse(
-      'https://digitalmediabridge.tv/screenbuilderserver-test/api/file/updateplaylist'
+      'https://digitalmediabridge.tv/screenbuilder-server/api/file/updateplaylist'
   );
 
   final body = jsonEncode({
@@ -208,6 +175,7 @@ getUserData(String username, String password, String requestType) async {
       'Password': password
     }),
   );
+
 
   //if we're able to get to the URL (not necessarily a successful login)
   if(response.statusCode == 200){
@@ -284,21 +252,26 @@ getUserData(String username, String password, String requestType) async {
 /// *** AFTER A PLAYER & SCREEN IS SELECTED ***
 /// *************************************************
 confirmPublish(BuildContext context, String playername, String screenname) {
+  final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
+  final int colorNum = int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
+  final double vw = MediaQuery.of(context).size.width / 100; // width of screen (by percentage)
+  final double vh = MediaQuery.of(context).size.height / 100; // height of screen (by percentage)
+
 
   // set up the buttons
   Widget cancelButton = OutlinedButton(
-    child: const Text(
+    child:  Text(
       "CANCEL",
-      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: vw * 4),
     ),
     onPressed:(){
       Navigator.of(context).pop();  //close confirmation pop-up
     },
   );
   Widget continueButton = OutlinedButton(
-    child: const Text(
+    child: Text(
       "PUBLISH",
-      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: vw * 4),
     ),
     onPressed:(){
 
@@ -310,36 +283,90 @@ confirmPublish(BuildContext context, String playername, String screenname) {
       });
     },
   );
-  // set up the AlertDialog
-  AlertDialog alert = AlertDialog(
-    shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(0.0)),
-        side: BorderSide(
-            width: 5,
-            color: Colors.white
-        )
-    ),
-    backgroundColor: const Color.fromRGBO(10, 85, 163, 1.0),
-    title: const Text(
-      "CONFIRM PUBLISH",
-      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-    ),
-    content: Text(
-      "Do you want to play screen '$screenname' on player $playername?",
-      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.normal),
-    ),
-    actions: [
-      cancelButton,
-      continueButton,
-    ],
-  );
-  // show the dialog
+
+  // // Confirm Publish Button
+  // AlertDialog alert = AlertDialog(
+  //   shape: const RoundedRectangleBorder(
+  //       borderRadius: BorderRadius.all(Radius.circular(0.0)),
+  //       side: BorderSide(
+  //           width: 5,
+  //           color: Colors.white
+  //       )
+  //   ),
+  //   backgroundColor: Color(colorNum),
+  //   title: const Text(
+  //     "CONFIRM PUBLISH",
+  //     style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+  //   ),
+  //   content: Text(
+  //     "Do you want to play screen '$screenname' on player $playername?",
+  //     style: TextStyle(color: Colors.white, fontWeight: FontWeight.normal, fontSize: vw * 4),
+  //   ),
+  //   actions: [
+  //     cancelButton,
+  //     continueButton,
+  //   ],
+  // );
+  // // show the dialog
+  // showDialog(
+  //   context: context,
+  //   builder: (BuildContext context) {
+  //     return alert;
+  //   },
+  // );
+
+  // Confirm Publish Button
   showDialog(
     context: context,
+    barrierDismissible: false, // prevents tapping outside to dismiss
     builder: (BuildContext context) {
-      return alert;
-    },
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        child: Center(
+            child: Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "CONFIRM PUBLISH",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: vw * 7,
+                    ),
+                  ),
+                  SizedBox(height: vh * 2),
+                  Text(
+                    "Do you want to play screen '$screenname' on player $playername?",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.normal,
+                      fontSize: vw * 4,
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end, // left align
+                    children: [
+                      cancelButton,
+                      SizedBox(width: 10),
+                      continueButton,
+                    ],
+                  ),
+                ]
+              )
+            )
+          ),
+        );
+      }
   );
+
+
 
 }
 
@@ -379,42 +406,70 @@ publishScreen(String userName, String playerName, String screenName) async {
 /// TO A PLAYER, TELL THE USER ***
 /// *************************************************
 publishSuccess(BuildContext context) {
+  final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
+  final int colorNum = int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
+  final double vw = MediaQuery.of(context).size.width / 100; // width of screen (by percentage)
+  final double vh = MediaQuery.of(context).size.height / 100; // height of screen (by percentage)
+
 
   // set up the buttons
   Widget okButton = OutlinedButton(
     child: const Text(
       "OK",
-      style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
     ),
     onPressed:(){
       Navigator.of(context).pop();
     },
   );
 
-  // set up the AlertDialog
-  AlertDialog alert = AlertDialog(
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.all(Radius.circular(0.0)),
-    ),
-    backgroundColor: Colors.lightGreen,
-    title: const Text(
-      "PUBLISH SUCCESS",
-      style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-    ),
-    content: const Text(
-      "Note: It may take up to 30 seconds for the screen change to take effect",
-      style: TextStyle(color: Colors.black, fontWeight: FontWeight.normal),
-    ),
-    actions: [
-      okButton
-    ],
-  );
-  // show the dialog
+  // Publish Success Button
   showDialog(
     context: context,
+    barrierDismissible: false, // prevents tapping outside to dismiss
     builder: (BuildContext context) {
-      return alert;
-    },
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        child: Center(
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: Colors.green,
+                width: 5,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "PUBLISH SUCCESS",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: vw * 7,
+                  ),
+                ),
+                SizedBox(height: vh * 2),
+                Text(
+                  "Note: It may take up to 30 seconds for the screen change to take effect",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.normal,
+                    fontSize: vw * 4,
+                  ),
+                ),
+                SizedBox(height: 20),
+                okButton,
+              ]
+            )
+          )
+        ),
+
+      );
+    }
   );
 
 }
@@ -430,6 +485,8 @@ void _deleteStorage() async {
 /// *** WHEN A USER SELECTS THE 'LOGOUT' ICON ***
 /// *************************************************
 confirmLogout(BuildContext context) {
+  final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
+  final int colorNum = int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
 
   // set up the buttons
   Widget cancelButton = OutlinedButton(
@@ -468,8 +525,8 @@ confirmLogout(BuildContext context) {
             color: Colors.white
         )
     ),
-    backgroundColor: const Color.fromRGBO(10, 85, 163, 1.0),
-    title: const Text(
+    backgroundColor: Color(colorNum),
+    title: Text(
       "CONFIRM LOGOUT",
       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
     ),

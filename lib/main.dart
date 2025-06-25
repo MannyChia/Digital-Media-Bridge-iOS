@@ -8,18 +8,18 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import './players_page.dart';
 import './screens_page.dart';
 import './dmb_functions.dart';
-
 import 'package:flutter/widgets.dart'; // or material.dart depending on your structure
 
 //This is the global vars used to know which "page" the user
 //selected (i.e., Players or Screens)
 dynamic selectedIndex = 0; //PUBLIC variable
-dynamic pageTitle = "DMB Media Players"; //PUBLIC variable
-dynamic pageSubTitle = "Select Player"; //PUBLIC variable
+dynamic mainPageTitle = "DMB Media Players"; //PUBLIC variable
+dynamic mainPageSubTitle = "Select Player"; //PUBLIC variable
 dynamic storedUsername = "none";
 dynamic storedPassword = "none";
 
@@ -30,8 +30,17 @@ dynamic loginPassword = "none";
 ///**** STORE THE PROVIDED USERNAME & PASSWORD
 const systemStorage = FlutterSecureStorage();
 
-void main() {
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await dotenv.load(fileName: ".env");
+    print("Loaded key: ${dotenv.env['LEONARDO_API_KEY']}");
+
+  }
+  catch (e) {
+    print("Error loading .env file: $e");
+  }
 
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.dumpErrorToConsole(details);
@@ -44,6 +53,7 @@ void main() {
     print("Caught zoned error: $error");
   });
 }
+
 
 /// **********************************************************
 /// *********************************************************
@@ -60,7 +70,7 @@ class DmbApp extends StatelessWidget {
       title: 'Digital Media Bridge',
       initialRoute: '/',
       theme: ThemeData(
-        scaffoldBackgroundColor: Colors.blueGrey,
+        scaffoldBackgroundColor: Color(0xFF0B0B0B),
         inputDecorationTheme: const InputDecorationTheme(
           border:
           OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
@@ -180,24 +190,19 @@ class _BypassloginPageState extends State<BypassloginPage> {
       loginUsername = storedUsername;
       loginPassword = storedPassword;
 
-      //TODO please remove hard code
-      await preloadPlaylistPreviews("mannychia7@gmail.com");
+      await preloadPlaylistPreviews(loginUsername);
 
-      Navigator.push(
+      Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
-      ).then((context) {
-        _getBypassLogin();
-      });
+            (Route<dynamic> route) => false,
+      );
     } else {
       setState(() {
         bypassMsg = "Login Failed.\nPlease logout and then login again with the correct username & password";
       });
     }
   }
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -230,164 +235,168 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        ///*** Note: we use a special title text that has an color outline
-        title: Stack(
-          children: <Widget>[
-            // border (outline) text
-            Text(
-              'DIGITAL MEDIA BRIDGE',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-                foreground: Paint()
-                  ..style = PaintingStyle.stroke
-                  ..strokeWidth = 6
-                  ..color = Colors.blueGrey,
-              ),
-            ),
-            // main text (fill)
-            const Text(
-              'DIGITAL MEDIA BRIDGE',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.blueGrey,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: <Color>[
-                  Colors.blueGrey,
-                  Color.fromRGBO(10, 85, 163, 0.2)
-                ]),
-          ),
-        ),
-      ),
-      body: Form(
-        key: _formKey,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+      backgroundColor: Colors.black,
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Padding(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-                child: TextFormField(
-                  controller: emailController,
-                  style: const TextStyle(color: Colors.white),
-                  cursorColor: Colors.white,
-                  decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.person, color: Colors.white30),
-                      border: OutlineInputBorder(),
-                      labelText: "Username",
-                      labelStyle: TextStyle(color: Colors.white)),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your username';
-                    }
-                    return null;
-                  },
+              Text(
+                'Digital Media Bridge',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              Padding(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-                child: TextFormField(
-                  controller: passwordController,
-                  obscureText: true,
-                  style: const TextStyle(color: Colors.white),
-                  cursorColor: Colors.white,
-                  decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.password, color: Colors.white30),
-                      border: OutlineInputBorder(),
-                      labelText: "Password",
-                      labelStyle: TextStyle(color: Colors.white)),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    return null;
-                  },
-                ),
-              ),
-              Padding(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 16.0),
-                child: Center(
-                  child: ElevatedButton(
-                    ///*** LOGIN BUTTON
-                    style: ElevatedButton.styleFrom(
-                      elevation: 15,
-                      shadowColor: Colors.white10,
-                      padding: const EdgeInsets.all(20),
-                      //content padding inside button
-                      foregroundColor: Colors.white,
-                      side: BorderSide(color: Colors.white30, width: 1.0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
+              const SizedBox(height: 48),
+
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    // Username field
+                    TextFormField(
+                      controller: emailController,
+                      style: const TextStyle(color: Colors.white),
+                      cursorColor: Colors.white,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.grey[800],
+                        prefixIcon: const Icon(Icons.person, color: Colors.white30),
+                        hintText: 'Username',
+                        hintStyle: const TextStyle(color: Colors.white54),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey[700]!),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey[700]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Colors.blueAccent),
+                        ),
                       ),
-                      backgroundColor: Color.fromRGBO(10, 85, 163, 0.2),
-                      textStyle: const TextStyle(
-                          fontSize: 16.0, fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: () async {
-                      if (_formKey.currentState!.validate()) {
-                        final result = await getUserData(
-                          emailController.text,
-                          passwordController.text,
-                          "user-login",
-                        );
-
-                        if (result == "invalid_login") {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Invalid Login")),
-                          );
-                        } else if (result == "no_screens") {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("No Screens To Play")),
-                          );
-                        } else if (result == "no_players") {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("No Players To Update")),
-                          );
-                        } else if (result == false) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Cannot Connect To DMB Server")),
-                          );
-                        } else {
-                          loginUsername = emailController.text;
-                          loginPassword = passwordController.text;
-
-                          ///TODO please remove hard code
-                          await preloadPlaylistPreviews("mannychia7@gmail.com");
-
-                          try {
-                            _saveUsername(loginUsername, loginPassword);
-                          } catch (exc) {}
-
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const HomePage()),
-                          );
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your username';
                         }
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Username & Password are required')),
-                        );
-                      }
-                    },
-                    child: const Text('Log In'),
-                  ),
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Password field
+                    TextFormField(
+                      controller: passwordController,
+                      obscureText: true,
+                      style: const TextStyle(color: Colors.white),
+                      cursorColor: Colors.white,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.grey[800], // CHANGE TO COLOR NUM
+                        prefixIcon: const Icon(Icons.lock, color: Colors.white30),
+                        hintText: 'Password',
+                        hintStyle: const TextStyle(color: Colors.white54),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey[700]!),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey[700]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Colors.blueAccent),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your password';
+                        }
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // Log In button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          elevation: 8,
+                          shadowColor: Colors.white24,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: const Color.fromRGBO(10, 85, 163, 1.0),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        onPressed: () async {
+                          if (_formKey.currentState!.validate()) {
+                            final result = await getUserData(
+                              emailController.text,
+                              passwordController.text,
+                              "user-login",
+                            );
+
+                            if (result == "invalid_login") {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Invalid Login")),
+                              );
+                            } else if (result == "no_screens") {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("No Screens To Play")),
+                              );
+                            } else if (result == "no_players") {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("No Players To Update")),
+                              );
+                            } else if (result == false) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text("Cannot Connect To DMB Server")),
+                              );
+                            } else {
+                              loginUsername = emailController.text;
+                              loginPassword = passwordController.text;
+
+                              await preloadPlaylistPreviews(loginUsername);
+
+                              try {
+                                _saveUsername(loginUsername, loginPassword);
+                              } catch (_) {}
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const HomePage()),
+                              );
+                            }
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content:
+                                  Text('Username & Password are required')),
+                            );
+                          }
+                        },
+                        child: const Text('Log In'),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -396,6 +405,7 @@ class LoginPage extends StatelessWidget {
       ),
     );
   }
+
 }
 
 /// *************************************************
@@ -415,8 +425,8 @@ class _HomePageState extends State<HomePage> {
 
   void _updateTitle(title, subTitle, selIndex) {
     setState(() {
-      pageTitle = title;
-      pageSubTitle = subTitle;
+      mainPageTitle = title;
+      mainPageSubTitle = subTitle;
       selectedIndex = selIndex;
     });
   }
@@ -437,8 +447,8 @@ class _HomePageState extends State<HomePage> {
       MaterialPageRoute(
           builder: (context) =>
               ScreensPage(
-                  pageTitle: "Screens (${dmbScreens.length})",
-                  pageSubTitle: selectedPlayerName != null
+                  screensPageTitle: "Screens (${dmbScreens.length})",
+                  screensPageSubTitle: selectedPlayerName != null
                       ? _PlayerSelectedText()
                       : _PlayerNotSelectedText())),
     ).then((context) {
@@ -458,8 +468,8 @@ class _HomePageState extends State<HomePage> {
         child: Builder(
           builder: (_) {
             return PlayersPage(
-              pageTitle: "Media Players",
-              pageSubTitle: "Select Player",
+              mainPageTitle: "Media Players",
+              mainPageSubTitle: "Select Player",
             );
           },
         ),
