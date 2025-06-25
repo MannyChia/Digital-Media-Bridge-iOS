@@ -369,13 +369,14 @@ publishSuccess(BuildContext context) {
     },
   );
 
+
   // set up the AlertDialog
   AlertDialog alert = AlertDialog(
     shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(0.0)),
         side: BorderSide(
-            width: 5,
-            color: Colors.green,
+          width: 5,
+          color: Colors.green,
         )
     ),
     backgroundColor: Color(colorNum),
