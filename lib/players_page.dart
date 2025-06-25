@@ -1521,379 +1521,224 @@ class _PlayersPageState extends State<PlayersPage> {
         }
       },
       child: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: NetworkImage(backgroundURL),
-            fit: BoxFit.cover,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: NetworkImage(backgroundURL),
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: Colors.transparent,
-          endDrawer: SizedBox(
-            width: vw * 60,
-            child: Drawer(
-              child: Container(
-                decoration: BoxDecoration(color: backgroundColor), // color of menu side bar),
-                child: SafeArea(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Padding(
-                        //reminder to check tablet later
-                        padding: EdgeInsets.fromLTRB(vw * 4, vh * 4, 0, vh * 2),
-                        child: Text(
-                          "Menu",
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: vw * 7,
-                            fontWeight: FontWeight.bold,
+          child: Scaffold(
+            key: _scaffoldKey,
+            backgroundColor: Colors.transparent,
+            endDrawer: SizedBox(
+              width: vw * 60,
+              child: Drawer(
+                child: Container(
+                  decoration: BoxDecoration(color: backgroundColor), // color of menu side bar),
+                  child: SafeArea(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Padding(
+                          //reminder to check tablet later
+                          padding: EdgeInsets.fromLTRB(vw * 4, vh * 4, 0, vh * 2),
+                          child: Text(
+                            "Menu",
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: vw * 7,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      ),
-                      const Divider(color: Colors.white24, height: 1),
+                        // const Divider(color: Colors.white24, height: 1),
 
-                      Expanded(
-                        child: ListView(
-                          padding: EdgeInsets.zero,
-                          children: [
-                            ListTile(
-                              leading: Icon(Icons.tv_outlined, color: Colors.orange, size: vw * 5),
-                              title: Text("Screens", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
-                              onTap: () {
-                                Navigator.pop(context);
-                                _showScreensPage(false);
-                              },
-                              dense: true,
-                              shape: const ContinuousRectangleBorder(),
-                            ),
-
-                            // const Divider(color: Colors.white24, height: 1),
-
-                            ListTile(
-                              leading: Icon(Icons.collections, color: Colors.orange, size: vw * 5),
-                              title: Text("Image Playlists", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
-                              onTap: () {
-                                Navigator.pop(context);
-                                _showPlaylistBottomSheet(context, loginUsername);
-                                preloadPlaylistPreviews(loginUsername);
-                                setState(() {});
-                              },
-                              dense: true,
-                              shape: const ContinuousRectangleBorder(),
-                            ),
-                            const Divider(color: Colors.white12, height: 1),
-
-                            ExpansionTile(
-                              leading: Icon(Icons.upload, color: Colors.orange, size: vw * 5),
-                              title: Text("Upload Image", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
-                              iconColor: Colors.white,
-                              textColor: Colors.white,
-                              tilePadding: EdgeInsets.symmetric(horizontal: vw * 4),
-                              // make sure align, got to check later
-                              childrenPadding: EdgeInsets.zero,
-                              children: uploadOptions.map((opt) {
-                                IconData icon;
-                                void Function() action;
-                                if (opt == 'Camera') {
-                                  icon = Icons.camera_alt;
-                                  action = _takePhoto;
-                                } else if (opt == 'Gallery') {
-                                  icon = Icons.photo_library;
-                                  action = _chooseFromGallery;
-                                } else {
-                                  icon = Icons.auto_awesome;
-                                  action = () => _showAIPromptDialog();
-                                }
-                                return ListTile(
-                                  leading: Icon(icon, color: Colors.orange, size: vw * 4),
-                                  title: Text(opt, style: TextStyle(color: Colors.white, fontSize: vw * 4)),
-                                  contentPadding: EdgeInsets.symmetric(horizontal: vw * 4),
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    action();
-                                  },
-                                  dense: true,
-                                  shape: const ContinuousRectangleBorder(),
-                                );
-                              }).toList(),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Divider(color: Colors.white24, height: 1),
-                      ListTile(
-                        leading: Icon(Icons.logout, color: Colors.orange, size: vw * 5),
-                        title: Text("Logout", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
-                        onTap: () {
-                          Navigator.pop(context);
-                          _userLogout();
-                        },
-                        dense: true,
-                        shape: const ContinuousRectangleBorder(),
-                          ),
-                          const Divider(color: Colors.transparent),
-                        ],
-                      ),
-                    ),
-                    Padding( // logout button
-                      padding: EdgeInsets.only(bottom: vh * 1),
-                      child: Column(
-                        children: [
-                          Material(
-                            color: buttonColor,
-                            borderRadius: BorderRadius.circular(vw * 1),
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(vw * 1),
-                              splashColor: Colors.white24,
-                              highlightColor: Colors.white10,
-                              onTap: () {
-                                Navigator.pop(context);
-                                _userLogout();
-                              },
-                              child: Container(
-                                padding: EdgeInsets.symmetric(horizontal: vw * 2, vertical: vh * 2),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(vw * 1),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.end, // right align
-                                  children: [
-                                    Text("Logout", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
-                                    SizedBox(width: vw * 3),
-                                    Icon(Icons.logout, color: Colors.orange, size: vw * 5),
-                                    SizedBox(width: vw * 3),
-                                  ],
-                                ),
+                        Expanded(
+                          child: ListView(
+                            padding: EdgeInsets.zero,
+                            children: [
+                              ListTile(
+                                leading: Icon(Icons.tv_outlined, color: Colors.orange, size: vw * 5),
+                                title: Text("Screens", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  _showScreensPage(false);
+                                },
+                                dense: true,
+                                shape: const ContinuousRectangleBorder(),
                               ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          appBar: _appBarNoBackBtn(context),
-          body: Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage(
-                  backgroundURL.isNotEmpty
-                      ? backgroundURL
-                      : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?fit=crop&w=1536&h=864', // Fallback image
-                ),
-                fit: BoxFit.cover, // Adjusts image to cover the entire background
-                onError: (exception, stackTrace) {
-                  print('Failed to load background image: $exception');
-                },
-              ),
-            ),
-            child: RefreshIndicator(
-              onRefresh: _refreshData,
-              child: ListView.separated(
-                padding: EdgeInsets.only(top: vh * 2, left: vw * 6, right: vw * 6, bottom: vh * 1.5),
-                itemCount: dmbMediaPlayers.length,
-                physics: const AlwaysScrollableScrollPhysics(),
-                itemBuilder: (BuildContext context, int index) {
-                  return Align(
-                    alignment: Alignment.center,
-                    child: Container(
-                      color: Colors.transparent,
-                      child: Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.white.withOpacity(0.3), // White shadow with opacity
-                                spreadRadius: 6, // How far the shadow spreads
-                                blurRadius: 6, // How blurry the shadow is
+
+                              // const Divider(color: Colors.white24, height: 1),
+
+                              ListTile(
+                                leading: Icon(Icons.collections, color: Colors.orange, size: vw * 5),
+                                title: Text("Image Playlists", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  _showPlaylistBottomSheet(context, loginUsername);
+                                  preloadPlaylistPreviews(loginUsername);
+                                  setState(() {});
+                                },
+                                dense: true,
+                                shape: const ContinuousRectangleBorder(),
+                              ),
+                              // const Divider(color: Colors.white12, height: 1),
+
+                              ExpansionTile(
+                                leading: Icon(Icons.upload, color: Colors.orange, size: vw * 5),
+                                title: Text("Upload Image", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
+                                iconColor: Colors.white,
+                                textColor: Colors.white,
+                                tilePadding: EdgeInsets.symmetric(horizontal: vw * 4),
+                                // make sure align, got to check later
+                                childrenPadding: EdgeInsets.zero,
+                                children: uploadOptions.map((opt) {
+                                  IconData icon;
+                                  void Function() action;
+                                  if (opt == 'Camera') {
+                                    icon = Icons.camera_alt;
+                                    action = _takePhoto;
+                                  } else if (opt == 'Gallery') {
+                                    icon = Icons.photo_library;
+                                    action = _chooseFromGallery;
+                                  } else {
+                                    icon = Icons.auto_awesome;
+                                    action = () => _showAIPromptDialog();
+                                  }
+                                  return ListTile(
+                                    leading: Icon(icon, color: Colors.orange, size: vw * 4),
+                                    title: Text(opt, style: TextStyle(color: Colors.white, fontSize: vw * 4)),
+                                    contentPadding: EdgeInsets.symmetric(horizontal: vw * 4),
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      action();
+                                    },
+                                    dense: true,
+                                    shape: const ContinuousRectangleBorder(),
+                                  );
+                                }).toList(),
                               ),
                             ],
                           ),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(10),
-                            onTap: () {
-                              selectedPlayerName = dmbMediaPlayers[index].name;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text("${dmbMediaPlayers[index].name} Selected")),
-                              );
-                              _showScreensPage(true);
-                            },
-                            child: Ink(
-                              decoration: BoxDecoration(
-                                gradient: _checkPlayerStatus(index)
-                                    ? _gradientActiveMediaPlayer(context)
-                                    : _gradientInActiveMediaPlayer(context),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              width: vw * 90,
-                              height: vh * 10,
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          dmbMediaPlayers[index].name,
-                                          style: TextStyle(
-                                            fontSize: (vw * 5),
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        _checkPlayerStatus(index)
-                                            ? _activeScreenText(context, index, vw)
-                                            : _inActiveScreenText(context, index, vw),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
                         ),
-                      ),
+                        // const Divider(color: Colors.white24, height: 1),
+                        ListTile(
+                          leading: Icon(Icons.logout, color: Colors.orange, size: vw * 5),
+                          title: Text("Logout", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _userLogout();
+                          },
+                          dense: true,
+                          shape: const ContinuousRectangleBorder(),
+                        ),
+                      ],
                     ),
-                  );
-                },
-                separatorBuilder: (context, index) => const Divider(color: Colors.black),
-              ),
-            ),
-          ),
-        )
-
-    ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-        appBar: _appBarNoBackBtn(context),
-        body: Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: NetworkImage(
-                backgroundURL.isNotEmpty
-                    ? backgroundURL
-                    : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?fit=crop&w=1536&h=864', // Fallback image
+            appBar: _appBarNoBackBtn(context),
+            body: Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: NetworkImage(
+                    backgroundURL.isNotEmpty
+                        ? backgroundURL
+                        : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?fit=crop&w=1536&h=864', // Fallback image
+                  ),
+                  fit: BoxFit.cover, // Adjusts image to cover the entire background
+                  onError: (exception, stackTrace) {
+                    print('Failed to load background image: $exception');
+                  },
+                ),
               ),
-              fit: BoxFit.cover, // Adjusts image to cover the entire background
-              onError: (exception, stackTrace) {
-                print('Failed to load background image: $exception');
-              },
-            ),
-          ),
-          child: RefreshIndicator(
-            onRefresh: _refreshData,
-            child: ListView.separated(
-              padding: EdgeInsets.only(top: vh * 2, left: vw * 6, right: vw * 6, bottom: vh * 1.5),
-              itemCount: dmbMediaPlayers.length,
-              physics: const AlwaysScrollableScrollPhysics(),
-              itemBuilder: (BuildContext context, int index) {
-                return Align(
-                  alignment: Alignment.center,
-                  child: Container(
-                    color: Colors.transparent,
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+              child: RefreshIndicator(
+                onRefresh: _refreshData,
+                child: ListView.separated(
+                  padding: EdgeInsets.only(top: vh * 2, left: vw * 6, right: vw * 6, bottom: vh * 1.5),
+                  itemCount: dmbMediaPlayers.length,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  itemBuilder: (BuildContext context, int index) {
+                    return Align(
+                      alignment: Alignment.center,
                       child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.white.withOpacity(0.3), // White shadow with opacity
-                              spreadRadius: 6, // How far the shadow spreads
-                              blurRadius: 6, // How blurry the shadow is
-                            ),
-                          ],
-                        ),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(10),
-                          onTap: () {
-                            selectedPlayerName = dmbMediaPlayers[index].name;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text("${dmbMediaPlayers[index].name} Selected", style: TextStyle(fontSize: 20)),
-                                      SizedBox(width: 8),
-                                      Icon(Icons.check_circle_outline, color: Colors.green),
-                                    ]
-                                ),
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              )
-                            );
-                            _showScreensPage(true);
-                          },
-                          child: Ink(
+                        color: Colors.transparent,
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Container(
                             decoration: BoxDecoration(
-                              gradient: _checkPlayerStatus(index)
-                                  ? _gradientActiveMediaPlayer(context)
-                                  : _gradientInActiveMediaPlayer(context),
                               borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.3), // White shadow with opacity
+                                  spreadRadius: 6, // How far the shadow spreads
+                                  blurRadius: 6, // How blurry the shadow is
+                                ),
+                              ],
                             ),
-                            width: vw * 90,
-                            height: vh * 10,
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Row(
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(10),
+                              onTap: () {
+                                selectedPlayerName = dmbMediaPlayers[index].name;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("${dmbMediaPlayers[index].name} Selected")),
+                                );
+                                _showScreensPage(true);
+                              },
+                              child: Ink(
+                                decoration: BoxDecoration(
+                                  gradient: _checkPlayerStatus(index)
+                                      ? _gradientActiveMediaPlayer(context)
+                                      : _gradientInActiveMediaPlayer(context),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                width: vw * 90,
+                                height: vh * 10,
+                                child: Center(
+                                  child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Text(
-                                        dmbMediaPlayers[index].name,
-                                        style: TextStyle(
-                                          fontSize: (vw * 5),
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            dmbMediaPlayers[index].name,
+                                            style: TextStyle(
+                                              fontSize: (vw * 5),
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          _checkPlayerStatus(index)
+                                              ? _activeScreenText(context, index, vw)
+                                              : _inActiveScreenText(context, index, vw),
+                                        ],
                                       ),
                                     ],
                                   ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      _checkPlayerStatus(index)
-                                          ? _activeScreenText(context, index, vw)
-                                          : _inActiveScreenText(context, index, vw),
-                                    ],
-                                  ),
-                                ],
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                );
-              },
-              separatorBuilder: (context, index) => const Divider(color: Colors.black),
+                    );
+                  },
+                  separatorBuilder: (context, index) => const Divider(color: Colors.black),
+                ),
+              ),
             ),
-          ),
-        ),
-      )
+          )
+
+      ),
     );
   }
 }
