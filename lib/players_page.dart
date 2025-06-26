@@ -257,16 +257,16 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                 'Edit Image Playlists',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: vw * 7,
+                  fontSize: vw * 6,
                   fontWeight: FontWeight.w900,
                 ),
               ),
               SizedBox(width: 6),
-              Icon(Icons.playlist_add, color: Colors.white, size: vw * 7),
+              Icon(Icons.playlist_add, color: Colors.white, size: vw * 6),
             ],
           ),
         ),
-
+        SizedBox(height: vh * 2),
         Expanded(
           child: ListView(
             controller: scrollController,
@@ -281,7 +281,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                     entries[i].key,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: vw * 6, // size of each screen title (that has a playlist)
+                      fontSize: vw * 5, // size of each screen title (that has a playlist)
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -535,7 +535,6 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
       // Refresh previews so the counts & images update
       cachedPlaylistPreviews = await fetchPlaylistPreviews(widget.userEmail);
       setState(() {}); // rebuild UI
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -1773,7 +1772,6 @@ class _PlayersPageState extends State<PlayersPage> {
               ),
             ),
           )
-
       ),
     );
   }
