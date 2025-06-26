@@ -7,6 +7,7 @@
 ///
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -33,6 +34,10 @@ const systemStorage = FlutterSecureStorage();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    // DeviceOrientation.portraitDown,
+  ]);
   try {
     await dotenv.load(fileName: ".env");
     print("Loaded key: ${dotenv.env['LEONARDO_API_KEY']}");
@@ -385,12 +390,6 @@ class LoginPage extends StatelessWidget {
                                     builder: (context) => const HomePage()),
                               );
                             }
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content:
-                                  Text('Username & Password are required')),
-                            );
                           }
                         },
                         child: const Text('Log In'),
