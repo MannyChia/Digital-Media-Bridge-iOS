@@ -1,6 +1,4 @@
 ///
-///
-///
 /// *************************************************
 /// *** DMB APP TO PUBLISH USER'S SIGNAGE SCREENS
 /// *************************************************
@@ -13,32 +11,28 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import './players_page.dart';
 import './screens_page.dart';
 import './dmb_functions.dart';
-import 'package:flutter/widgets.dart'; // or material.dart depending on your structure
 
-//This is the global vars used to know which "page" the user
-//selected (i.e., Players or Screens)
-dynamic selectedIndex = 0; //PUBLIC variable
-dynamic mainPageTitle = "DMB Media Players"; //PUBLIC variable
-dynamic mainPageSubTitle = "Select Player"; //PUBLIC variable
+// This is the global vars used to know which "page" the user
+// selected (i.e., Players or Screens)
+dynamic selectedIndex = 0; // PUBLIC variable
+dynamic mainPageTitle = "DMB Media Players"; // PUBLIC variable
+dynamic mainPageSubTitle = "Select Player"; // PUBLIC variable
 dynamic storedUsername = "none";
 dynamic storedPassword = "none";
 
-//username & password set after successful login (not the same as 'stored')
+// username & password set after successful login (not the same as 'stored')
 dynamic loginUsername = "none";
 dynamic loginPassword = "none";
 
 ///**** STORE THE PROVIDED USERNAME & PASSWORD
 const systemStorage = FlutterSecureStorage();
 
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await dotenv.load(fileName: ".env");
     print("Loaded key: ${dotenv.env['LEONARDO_API_KEY']}");
-
-  }
-  catch (e) {
+  } catch (e) {
     print("Error loading .env file: $e");
   }
 
@@ -47,22 +41,18 @@ Future<void> main() async {
   };
 
   runZonedGuarded(() {
-    //most important stuff
     runApp(const DmbApp());
   }, (error, stackTrace) {
     print("Caught zoned error: $error");
   });
 }
 
-
 /// **********************************************************
 /// *********************************************************
-
 
 class DmbApp extends StatelessWidget {
   const DmbApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -70,21 +60,14 @@ class DmbApp extends StatelessWidget {
       title: 'Digital Media Bridge',
       initialRoute: '/',
       theme: ThemeData(
-        scaffoldBackgroundColor: Color(0xFF0B0B0B),
+        scaffoldBackgroundColor: const Color(0xFF000000), // Pure black
         inputDecorationTheme: const InputDecorationTheme(
-          border:
-          OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
-          focusedBorder:
-          OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
-          enabledBorder:
-          OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
-          errorBorder:
-          OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
-          focusedErrorBorder:
-          OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+          border: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+          errorBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+          focusedErrorBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
         ),
-        // This is the theme of the application.
-        //
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.amber),
         useMaterial3: true,
       ),
@@ -96,9 +79,6 @@ class DmbApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
-  // This widget is the home page of the DMB application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
   final String title;
 
   @override
@@ -109,65 +89,57 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
+    // Precache the background image after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      precacheImage(const AssetImage('assets/cilutions_background.jpg'), context);
+    });
   }
 
-  //Once the 'Login' page (Scaffold) is loaded, call this function to
-  //determine if we've previously stored the users'
-  //Username & Password
   Future<bool> _readFromStorage() async {
     try {
       storedUsername = await systemStorage.read(key: "KEY_USERNAME") ?? "none";
       storedPassword = await systemStorage.read(key: "KEY_PASSWORD") ?? "none";
-
-      if (storedUsername != "none" && storedPassword != "none") {
-        return true;
-      } else {
-        return false;
-      }
+      return storedUsername != "none" && storedPassword != "none";
     } catch (exc) {
       return false;
     }
   }
 
-  // *************************************************
-  // *** MAIN (DEFAULT) VIEW ***
-  // *************************************************
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: () {
-      //When this class is called and this Scaffold is displayed,
-      //we show the login page,
-      //but then also check to see if we have a stored
-      //username & password
-      _readFromStorage().then((bool value) {
-        if (value) {
-          ///*** TRUE IF WE SUCCESSFUL GOT THE STORED USERNAME & PASSWORD!
-          Navigator.push(
-            ///GO TO BYPASS LOGIN PAGE
-            context,
-            MaterialPageRoute(builder: (context) => BypassloginPage()),
-          ).then(
-
-            ///*** WHEN THE USER RETURNS TO THE LOGIN PAGE VIA 'BACK' BTN
-                  (context) {});
-        }
-      });
-      return LoginPage();
-
-      ///ASSUME THAT WE'RE GOING TO SHOW THE USER THE LOGIN PAGE
-    }());
+    return Scaffold(
+      backgroundColor: const Color(0xFF000000), // Black background
+      body: FutureBuilder<bool>(
+        future: _readFromStorage(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            );
+          }
+          if (snapshot.hasData && snapshot.data == true) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const BypassloginPage()),
+              ).then((_) {});
+            });
+          }
+          return LoginPage();
+        },
+      ),
+    );
   }
 }
 
 /// *************************************************
 /// *** BYPASS LOGIN PAGE ***
 /// *************************************************
-/// NOTE: THIS IS SHOWN (VERY QUICKLY) ONLY AFTER
-/// ITS BEEN DETERMINED THAT WE'VE STORED THE
-/// DMB USERNAME & PASSWORD AND SO WE DON'T
-/// NEED TO ASK THE USER AGAIN
-/// *************************************************
 class BypassloginPage extends StatefulWidget {
+  const BypassloginPage({super.key}); // Added const constructor
+
   @override
   _BypassloginPageState createState() => _BypassloginPageState();
 }
@@ -175,8 +147,6 @@ class BypassloginPage extends StatefulWidget {
 class _BypassloginPageState extends State<BypassloginPage> {
   var bypassMsg = "Loading...";
 
-  ///This 'override' function is called once when the class is loaded
-  ///(is used, in this case, to get the user's DMB info)
   @override
   void initState() {
     super.initState();
@@ -189,9 +159,7 @@ class _BypassloginPageState extends State<BypassloginPage> {
     if (result == true) {
       loginUsername = storedUsername;
       loginPassword = storedPassword;
-
       await preloadPlaylistPreviews(loginUsername);
-
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
@@ -207,12 +175,16 @@ class _BypassloginPageState extends State<BypassloginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF000000), // Black background
       body: Center(
-        child: Text(bypassMsg,
-            style: const TextStyle(
-                fontWeight: FontWeight.normal,
-                color: Colors.white,
-                fontSize: 14)),
+        child: Text(
+          bypassMsg,
+          style: const TextStyle(
+            fontWeight: FontWeight.normal,
+            color: Colors.white,
+            fontSize: 14,
+          ),
+        ),
       ),
     );
   }
@@ -222,12 +194,13 @@ class _BypassloginPageState extends State<BypassloginPage> {
 /// *** LOGIN PAGE ***
 /// *************************************************
 class LoginPage extends StatelessWidget {
+  LoginPage({super.key}); // Added constructor
   final _formKey = GlobalKey<FormState>();
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
-  //After a successful login, save the info to local storage
-  _saveUsername(String login, String password) async {
+  // After a successful login, save the info to local storage
+  Future<void> _saveUsername(String login, String password) async {
     await systemStorage.write(key: "KEY_USERNAME", value: login);
     await systemStorage.write(key: "KEY_PASSWORD", value: password);
   }
@@ -235,24 +208,23 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF000000), // Black background
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
+              const Text(
                 'Digital Media Bridge',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 48),
-
               Form(
                 key: _formKey,
                 child: Column(
@@ -276,9 +248,9 @@ class LoginPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(color: Colors.grey[700]!),
                         ),
-                        focusedBorder: OutlineInputBorder(
+                        focusedBorder:  OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.blueAccent),
+                          borderSide: BorderSide(color: Colors.blueAccent),
                         ),
                       ),
                       validator: (value) {
@@ -288,9 +260,7 @@ class LoginPage extends StatelessWidget {
                         return null;
                       },
                     ),
-
                     const SizedBox(height: 16),
-
                     // Password field
                     TextFormField(
                       controller: passwordController,
@@ -299,7 +269,7 @@ class LoginPage extends StatelessWidget {
                       cursorColor: Colors.white,
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: Colors.grey[800], // CHANGE TO COLOR NUM
+                        fillColor: Colors.grey[800],
                         prefixIcon: const Icon(Icons.lock, color: Colors.white30),
                         hintText: 'Password',
                         hintStyle: const TextStyle(color: Colors.white54),
@@ -313,7 +283,7 @@ class LoginPage extends StatelessWidget {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.blueAccent),
+                          borderSide: BorderSide(color: Colors.blueAccent),
                         ),
                       ),
                       validator: (value) {
@@ -323,9 +293,7 @@ class LoginPage extends StatelessWidget {
                         return null;
                       },
                     ),
-
                     const SizedBox(height: 32),
-
                     // Log In button
                     SizedBox(
                       width: double.infinity,
@@ -372,13 +340,8 @@ class LoginPage extends StatelessWidget {
                             } else {
                               loginUsername = emailController.text;
                               loginPassword = passwordController.text;
-
+                              await _saveUsername(loginUsername, loginPassword);
                               await preloadPlaylistPreviews(loginUsername);
-
-                              try {
-                                _saveUsername(loginUsername, loginPassword);
-                              } catch (_) {}
-
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -388,8 +351,7 @@ class LoginPage extends StatelessWidget {
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                  content:
-                                  Text('Username & Password are required')),
+                                  content: Text('Username & Password are required')),
                             );
                           }
                         },
@@ -405,15 +367,12 @@ class LoginPage extends StatelessWidget {
       ),
     );
   }
-
 }
 
 /// *************************************************
 /// *** AFTER SUCCESSFUL LOGIN ***
 /// *************************************************
-///
 class HomePage extends StatefulWidget {
-  //const HomePage({super.key, required this.email});
   const HomePage({super.key});
 
   @override
@@ -421,8 +380,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
-
   void _updateTitle(title, subTitle, selIndex) {
     setState(() {
       mainPageTitle = title;
@@ -431,11 +388,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  ///*** FUNCTION TO SHOW LIST OF SCREENS AFTER 'SCREENS' SIDE
-  ///NAVIGATION IS CLICKED
   void _showScreensPage() {
-    ///show the user (in a small pop-up) a message informing
-    ///them of the name of the Media Player that they previously selected
     if (selectedPlayerName != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("$selectedPlayerName Selected")),
@@ -445,42 +398,37 @@ class _HomePageState extends State<HomePage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) =>
-              ScreensPage(
-                  screensPageTitle: "Screens (${dmbScreens.length})",
-                  screensPageSubTitle: selectedPlayerName != null
-                      ? _PlayerSelectedText()
-                      : _PlayerNotSelectedText())),
+        builder: (context) => ScreensPage(
+          screensPageTitle: "Screens (${dmbScreens.length})",
+          screensPageSubTitle: selectedPlayerName != null
+              ? _PlayerSelectedText()
+              : _PlayerNotSelectedText(),
+        ),
+      ),
     ).then((context) {
       _updateTitle(
-          "Media Players (${dmbMediaPlayers.length})", "Select Player", 0);
+        "Media Players (${dmbMediaPlayers.length})",
+        "Select Player",
+        0,
+      );
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        color: Theme
-            .of(context)
-            .colorScheme
-            .primaryContainer,
-        child: Builder(
-          builder: (_) {
-            return PlayersPage(
-              mainPageTitle: "Media Players",
-              mainPageSubTitle: "Select Player",
-            );
-          },
-        ),
+      backgroundColor: const Color(0xFF000000), // Black background
+      body: PlayersPage(
+        mainPageTitle: "Media Players",
+        mainPageSubTitle: "Select Player",
       ),
     );
   }
 }
 
-//We use one of the following two options when showing the user a
-//list of screens.  Depends on if they have previously selected a
-//DMB Media Player
+// We use one of the following two options when showing the user a
+// list of screens. Depends on if they have previously selected a
+// DMB Media Player
 String _PlayerSelectedText() {
   return "Select Screen to Publish";
 }

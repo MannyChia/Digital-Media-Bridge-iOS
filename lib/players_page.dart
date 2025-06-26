@@ -467,7 +467,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: isSelected
-                                  ? Colors.greenAccent
+                                  ? Colors.green
                                   : Colors.black45,
                             ),
                             padding: const EdgeInsets.all(4),
@@ -494,7 +494,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
             onPressed: _hasPlaylistChanged() ? _onSavePressed : null,
             style: ElevatedButton.styleFrom(
               backgroundColor:
-              _hasPlaylistChanged() ? Colors.greenAccent : Colors.grey[700],
+              _hasPlaylistChanged() ? Colors.green : Colors.grey[700],
               foregroundColor:
               _hasPlaylistChanged() ? Colors.black : Colors.white54,
               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -547,7 +547,13 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
             ]
           ),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: BorderSide(
+              color: Colors.green, // Border color
+              width: 2, // Border thickness
+            ),
+          ),
         ),
       );
 
@@ -725,7 +731,7 @@ class _PlayersPageState extends State<PlayersPage> {
                 const SizedBox(width: 10),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.greenAccent,
+                    backgroundColor: Colors.green,
                     foregroundColor: Colors.black,
                   ),
                   onPressed: () async {
@@ -756,7 +762,7 @@ class _PlayersPageState extends State<PlayersPage> {
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.of(context).pop(),
-                              child: const Text("OK", style: TextStyle(color: Colors.greenAccent)),
+                              child: const Text("OK", style: TextStyle(color: Colors.green)),
                             ),
                           ],
                         ),
@@ -1043,6 +1049,28 @@ class _PlayersPageState extends State<PlayersPage> {
       // delete the temp file if upload succeeded
       if (success) {
         await tempFile.delete();
+
+        // tell the user that the upload was successful
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("Image Saved to your Account", style: TextStyle(fontSize: 20)),
+                  SizedBox(width: 8),
+                  Icon(Icons.check_circle_outline, color: Colors.green),
+                ]
+              ),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+                side: BorderSide(
+                  color: Colors.green, // Border color
+                  width: 2, // Border thickness
+                ),
+              ),
+            )
+        );
       }
     }
     catch (e) {
@@ -1155,7 +1183,13 @@ class _PlayersPageState extends State<PlayersPage> {
               ]
           ),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: BorderSide(
+              color: Colors.green, // Border color
+              width: 2, // Border thickness
+            ),
+          ),
         )
       );
       try {
@@ -1243,7 +1277,7 @@ class _PlayersPageState extends State<PlayersPage> {
                             ),
                             const SizedBox(width: 10),
                             ElevatedButton(
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.greenAccent),
+                              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                               onPressed: () async {
                                 onSubmit(imageUrl, loginUsername);
                               },
@@ -1269,7 +1303,9 @@ class _PlayersPageState extends State<PlayersPage> {
               content: Text("Error displaying image: $e", style: TextStyle(fontSize: 20)),
               backgroundColor: Colors.redAccent,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           );
         }
@@ -1460,7 +1496,7 @@ class _PlayersPageState extends State<PlayersPage> {
                     );
                   },
                   style: TextButton.styleFrom(
-                    backgroundColor: Color(0xFF06470C), // dark green
+                    backgroundColor: Colors.green,
                     foregroundColor: Colors.white, // Text color
                     padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: screenHeight * 0.02), // Responsive padding
                     shape: RoundedRectangleBorder(
@@ -1495,7 +1531,7 @@ class _PlayersPageState extends State<PlayersPage> {
     _textFieldController.clear(); // Clear the text controller
   }
 
-  final List<String> uploadOptions = ['Camera', 'Gallery', 'Create AI Image'];
+  final List<String> uploadOptions = ['Camera', 'Gallery', 'AI Image'];
 
   String? selectedOption;
 
@@ -1558,7 +1594,7 @@ class _PlayersPageState extends State<PlayersPage> {
                             padding: EdgeInsets.zero,
                             children: [
                               ListTile(
-                                leading: Icon(Icons.tv_outlined, color: Colors.orange, size: vw * 5),
+                                leading: Icon(Icons.tv_outlined, color: Colors.orange, size: vw * 7),
                                 title: Text("Screens", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
                                 onTap: () {
                                   Navigator.pop(context);
@@ -1571,7 +1607,7 @@ class _PlayersPageState extends State<PlayersPage> {
                               // const Divider(color: Colors.white24, height: 1),
 
                               ListTile(
-                                leading: Icon(Icons.collections, color: Colors.orange, size: vw * 5),
+                                leading: Icon(Icons.collections, color: Colors.orange, size: vw * 7),
                                 title: Text("Image Playlists", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
                                 onTap: () {
                                   Navigator.pop(context);
@@ -1585,7 +1621,7 @@ class _PlayersPageState extends State<PlayersPage> {
                               // const Divider(color: Colors.white12, height: 1),
 
                               ExpansionTile(
-                                leading: Icon(Icons.upload, color: Colors.orange, size: vw * 5),
+                                leading: Icon(Icons.upload, color: Colors.orange, size: vw * 7),
                                 title: Text("Upload Image", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
                                 iconColor: Colors.white,
                                 textColor: Colors.white,
@@ -1607,8 +1643,8 @@ class _PlayersPageState extends State<PlayersPage> {
                                   }
                                   return ListTile(
                                     leading: Icon(icon, color: Colors.orange, size: vw * 4),
-                                    title: Text(opt, style: TextStyle(color: Colors.white, fontSize: vw * 4)),
-                                    contentPadding: EdgeInsets.symmetric(horizontal: vw * 4),
+                                    title: Text(opt, style: TextStyle(color: Colors.white70, fontSize: vw * 4)),
+                                    contentPadding: EdgeInsets.symmetric(horizontal: vw * 7),
                                     onTap: () {
                                       Navigator.pop(context);
                                       action();
@@ -1732,7 +1768,7 @@ class _PlayersPageState extends State<PlayersPage> {
                       ),
                     );
                   },
-                  separatorBuilder: (context, index) => const Divider(color: Colors.black),
+                  separatorBuilder: (context, index) => const Divider(color: Colors.transparent), // dividers between players
                 ),
               ),
             ),
@@ -1805,7 +1841,7 @@ LinearGradient _gradientActiveMediaPlayer(BuildContext context) {
     end: AlignmentDirectional.bottomCenter,
     colors: [
       Colors.black,
-      Color(0xFF06470C), // dark green
+      Colors.green,
     ],
   );
 }
@@ -1818,7 +1854,7 @@ LinearGradient _gradientInActiveMediaPlayer(BuildContext context) {
     end: AlignmentDirectional.bottomCenter,
     colors: [
       Colors.black,
-      Color(0xFF8B0000), // dark red
+      Colors.red,
     ],
   );
 }
@@ -1827,17 +1863,17 @@ LinearGradient _gradientInActiveMediaPlayer(BuildContext context) {
 /// text (label) to the user for players that are active vs. inactive
 Text _activeScreenText(BuildContext context, pIndex, vw) {
   return Text("${dmbMediaPlayers[pIndex]
-      .status} - Current Screen: ${dmbMediaPlayers[pIndex]
+      .status} - Screen: ${dmbMediaPlayers[pIndex]
       .currentScreen}",
       style: TextStyle(
-          fontSize: vw * 4.5,
+          fontSize: vw * 4,
           fontStyle: FontStyle.italic,
           color: Colors.white70));
 }
 
 Text _inActiveScreenText(BuildContext context, pIndex, vw) {
   return Text("${dmbMediaPlayers[pIndex]
-      .status} - Last Screen: ${dmbMediaPlayers[pIndex]
+      .status} - Screen: ${dmbMediaPlayers[pIndex]
       .currentScreen}",
       style: TextStyle(
           fontSize: vw * 4,

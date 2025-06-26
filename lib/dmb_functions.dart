@@ -284,41 +284,10 @@ confirmPublish(BuildContext context, String playername, String screenname) {
     },
   );
 
-  // // Confirm Publish Button
-  // AlertDialog alert = AlertDialog(
-  //   shape: const RoundedRectangleBorder(
-  //       borderRadius: BorderRadius.all(Radius.circular(0.0)),
-  //       side: BorderSide(
-  //           width: 5,
-  //           color: Colors.white
-  //       )
-  //   ),
-  //   backgroundColor: Color(colorNum),
-  //   title: const Text(
-  //     "CONFIRM PUBLISH",
-  //     style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-  //   ),
-  //   content: Text(
-  //     "Do you want to play screen '$screenname' on player $playername?",
-  //     style: TextStyle(color: Colors.white, fontWeight: FontWeight.normal, fontSize: vw * 4),
-  //   ),
-  //   actions: [
-  //     cancelButton,
-  //     continueButton,
-  //   ],
-  // );
-  // // show the dialog
-  // showDialog(
-  //   context: context,
-  //   builder: (BuildContext context) {
-  //     return alert;
-  //   },
-  // );
-
   // Confirm Publish Button
   showDialog(
     context: context,
-    barrierDismissible: false, // prevents tapping outside to dismiss
+    barrierDismissible: false, // allows tapping outside to dismiss
     builder: (BuildContext context) {
       return Dialog(
         backgroundColor: Colors.transparent,
@@ -362,8 +331,8 @@ confirmPublish(BuildContext context, String playername, String screenname) {
               )
             )
           ),
-        );
-      }
+      );
+    }
   );
 
 
@@ -488,6 +457,9 @@ confirmLogout(BuildContext context) {
   final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
   final int colorNum = int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
 
+  final double vw = MediaQuery.of(context).size.width / 100; // width of screen (by percentage)
+  final double vh = MediaQuery.of(context).size.height / 100; // height of screen (by percentage)
+
   // set up the buttons
   Widget cancelButton = OutlinedButton(
     child: const Text(
@@ -516,34 +488,62 @@ confirmLogout(BuildContext context) {
       Navigator.of(context).pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
     },
   );
-  // set up the AlertDialog
-  AlertDialog alert = AlertDialog(
-    shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(0.0)),
-        side: BorderSide(
-            width: 5,
-            color: Colors.white
-        )
+
+  // set up the Dialog
+    AlertDialog alert = AlertDialog(
+    backgroundColor: Colors.transparent, // Transparent to show only Container
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(10),
     ),
-    backgroundColor: Color(colorNum),
-    title: Text(
-      "CONFIRM LOGOUT",
-      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+    contentPadding: EdgeInsets.zero, // Remove default content padding
+    clipBehavior: Clip.antiAlias,
+    content: Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            "CONFIRM LOGOUT",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: vw * 7,
+            ),
+          ),
+          SizedBox(height: vh * 2),
+          Text(
+            "Do you want to log out of the DMB App?",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.normal,
+              fontSize: vw * 4,
+            ),
+          ),
+          SizedBox(height: vh * 2),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              cancelButton,
+              const SizedBox(width: 10),
+              continueButton,
+            ],
+          ),
+        ],
+      ),
     ),
-    content: const Text(
-      "Do you want to log out of the DMB App?",
-      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.normal),
-    ),
-    actions: [
-      cancelButton,
-      continueButton,
-    ],
   );
-  // show the dialog
+
+// Show the dialog
   showDialog(
     context: context,
     builder: (BuildContext context) {
       return alert;
     },
+    barrierDismissible: true, // Dismiss when tapping outside
+    barrierColor: Colors.black54,
   );
 }
