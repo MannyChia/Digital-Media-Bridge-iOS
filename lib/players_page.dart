@@ -147,7 +147,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
         expand: false,
-        initialChildSize: 0.6,
+        initialChildSize: 0.65, // side of Menu side bar
         maxChildSize: 0.9,
         minChildSize: 0.3,
         builder: (context, scrollController) {
@@ -256,17 +256,18 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
               Text(
                 'Edit Image Playlists',
                 style: TextStyle(
-                  color: Colors.white,
-                  fontSize: vw * 6,
-                  fontWeight: FontWeight.w900,
+                  color: Colors.white70,
+                  fontSize: vw * 7,
+                  // fontWeight: FontWeight.w900,
                 ),
               ),
               SizedBox(width: 6),
-              Icon(Icons.playlist_add, color: Colors.white, size: vw * 6),
+              Icon(Icons.playlist_add, color: Colors.white70, size: vw * 7),
             ],
           ),
         ),
-        SizedBox(height: vh * 2),
+        const SizedBox(height: 10),
+
         Expanded(
           child: ListView(
             controller: scrollController,
@@ -277,13 +278,22 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                 // ... is a spread tool (jsyk)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-                  child: Text(
-                    entries[i].key,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: vw * 5, // size of each screen title (that has a playlist)
-                      fontWeight: FontWeight.w900,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Screen: ",
+                        style: TextStyle(color: Colors.white70, fontSize: vw * 5.5),
+                      ),
+                      Text(
+                        entries[i].key,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: vw * 5.5, // size of each screen title (that has a playlist)
+                          fontWeight: FontWeight.w900,
+                        ),
+                      )
+                    ]
                   ),
                 ),
 
@@ -336,16 +346,21 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          Text(
-                            '$displayName (${preview.itemCount})',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Text(
+                                '$displayName (${preview.itemCount})',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: vw * 4,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ]
+                          )
                         ],
                       ),
                     );
@@ -1194,6 +1209,7 @@ class _PlayersPageState extends State<PlayersPage> {
       try {
         // show image in slide up box
         await showModalBottomSheet(
+            // ADD SCROLL UP LINE (HANDLEBAR)
             context: dialogContext,
             backgroundColor: Colors.grey[900],
             shape: const RoundedRectangleBorder(
@@ -1202,95 +1218,100 @@ class _PlayersPageState extends State<PlayersPage> {
             isScrollControlled: true,
             builder: (BuildContext context) {
               return Padding(
-                padding: const EdgeInsets.all(16.0), // padding on all sides
+                padding: const EdgeInsets.all(16), // padding on all sides
                 child: SingleChildScrollView(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: screenHeight * 0.9,
-                      maxWidth: screenWidth * 0.9,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "AI Generated Image",
-                          style: TextStyle(
-                            fontSize: screenWidth * 0.06,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min, // shrink wrap content
+                    children: [
+                      Text(
+                        "AI Generated Image",
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.07,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.02),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          width: screenWidth * 0.9,
+                          height: screenHeight * 0.6,
+                          child: Image.network(
+                            imageUrl,
+                            fit: BoxFit.contain, // Ensures the image fits within the specified dimensions
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return const Center(
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              print("Error loading image: $error");
+                              return const Text(
+                                "Failed to load image",
+                                style: TextStyle(color: Colors.white),
+                              );
+                            },
                           ),
                         ),
-                        SizedBox(height: screenHeight * 0.02),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            width: screenWidth * 0.9,
-                            height: screenHeight * 0.6,
-                            child: Image.network(
-                              imageUrl,
-                              fit: BoxFit.contain, // Ensures the image fits within the specified dimensions
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return const Center(
-                                  child: CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
-                                  ),
-                                );
-                              },
-                              errorBuilder: (context, error, stackTrace) {
-                                print("Error loading image: $error");
-                                return const Text(
-                                  "Failed to load image",
-                                  style: TextStyle(color: Colors.white),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
+                      ),
 
-                        SizedBox(height: screenHeight * 0.02),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                onNewPhoto();
-                              },
-                              child: const Row(
-                                children: [
-                                  Icon(Icons.edit, color: Colors.orange),
-                                  SizedBox(width: 8),
-                                  Text("Try Again"),
-                                ],
+                      SizedBox(height: screenHeight * 0.02),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          ElevatedButton(
+                            onPressed: () {
+                              onNewPhoto();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black.withOpacity(0.7),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: const Text("Close", style: TextStyle(color: Colors.white)),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.edit, color: Colors.orange),
+                                SizedBox(width: 8),
+                                Text("Try Again", style: TextStyle(color: Colors.white)),
+                              ],
                             ),
-                            const SizedBox(width: 10),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                              onPressed: () async {
-                                onSubmit(imageUrl, loginUsername);
-                              },
-                              child: const Text("Save & Upload"),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text("Close", style: TextStyle(color: Colors.white)),
+                          ),
+                          const SizedBox(width: 10),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 25),
-                      ],
-                    ),
-                    ),
-                  ),
-              );
-            }
+                            onPressed: () async {
+                              onSubmit(imageUrl, loginUsername);
+                            },
+                            child: Text("Save & Upload", style: TextStyle(color: Colors.white)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 25),
+                    ],
+                  )
+                ),
+            );
+          }
         );
         print("Image dialog shown successfully");
       }
@@ -1370,7 +1391,7 @@ class _PlayersPageState extends State<PlayersPage> {
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Color(colorNum),
-                      hintText: 'Example: Show me large dog',
+                      hintText: 'Enter text ... ',
                       hintStyle: const TextStyle(color: Colors.white54),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -1589,10 +1610,11 @@ class _PlayersPageState extends State<PlayersPage> {
                         // const Divider(color: Colors.white24, height: 1),
 
                         Expanded(
-                          child: ListView(
-                            padding: EdgeInsets.zero,
+                          child: ListView( // Screens Option
+                            padding: EdgeInsets.symmetric(vertical: vw * 2),
                             children: [
                               ListTile(
+                                contentPadding: EdgeInsets.symmetric(horizontal: vw * 4),
                                 leading: Icon(Icons.tv_outlined, color: Colors.orange, size: vw * 7),
                                 title: Text("Screens", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
                                 onTap: () {
@@ -1602,10 +1624,10 @@ class _PlayersPageState extends State<PlayersPage> {
                                 dense: true,
                                 shape: const ContinuousRectangleBorder(),
                               ),
+                              SizedBox(height: vw * 3),
 
-                              // const Divider(color: Colors.white24, height: 1),
-
-                              ListTile(
+                              ListTile( // Image Playlists Option
+                                contentPadding: EdgeInsets.symmetric(horizontal: vw * 4),
                                 leading: Icon(Icons.collections, color: Colors.orange, size: vw * 7),
                                 title: Text("Image Playlists", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
                                 onTap: () {
@@ -1617,41 +1639,45 @@ class _PlayersPageState extends State<PlayersPage> {
                                 dense: true,
                                 shape: const ContinuousRectangleBorder(),
                               ),
-                              // const Divider(color: Colors.white12, height: 1),
+                              SizedBox(height: vw * 3),
 
-                              ExpansionTile(
-                                leading: Icon(Icons.upload, color: Colors.orange, size: vw * 7),
-                                title: Text("Upload Image", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
-                                iconColor: Colors.white,
-                                textColor: Colors.white,
-                                tilePadding: EdgeInsets.symmetric(horizontal: vw * 4),
-                                // make sure align, got to check later
-                                childrenPadding: EdgeInsets.zero,
-                                children: uploadOptions.map((opt) {
-                                  IconData icon;
-                                  void Function() action;
-                                  if (opt == 'Camera') {
-                                    icon = Icons.camera_alt;
-                                    action = _takePhoto;
-                                  } else if (opt == 'Gallery') {
-                                    icon = Icons.photo_library;
-                                    action = _chooseFromGallery;
-                                  } else {
-                                    icon = Icons.auto_awesome;
-                                    action = () => _showAIPromptDialog();
-                                  }
-                                  return ListTile(
-                                    leading: Icon(icon, color: Colors.orange, size: vw * 4),
-                                    title: Text(opt, style: TextStyle(color: Colors.white70, fontSize: vw * 4)),
-                                    contentPadding: EdgeInsets.symmetric(horizontal: vw * 7),
-                                    onTap: () {
-                                      Navigator.pop(context);
-                                      action();
-                                    },
-                                    dense: true,
-                                    shape: const ContinuousRectangleBorder(),
-                                  );
-                                }).toList(),
+                              Theme( // Upload Image Option
+                                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                                child: ExpansionTile(
+                                  leading: Icon(Icons.upload, color: Colors.orange, size: vw * 7),
+                                  title: Text("Upload Image", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
+                                  iconColor: Colors.white,
+                                  textColor: Colors.white,
+                                  tilePadding: EdgeInsets.symmetric(horizontal: vw * 4),
+                                  childrenPadding: EdgeInsets.zero,
+                                  children: uploadOptions.map((opt) {
+                                    IconData icon;
+                                    void Function() action;
+                                    if (opt == 'Camera') {
+                                      icon = Icons.camera_alt;
+                                      action = _takePhoto;
+                                    } else if (opt == 'Gallery') {
+                                      icon = Icons.photo_library;
+                                      action = _chooseFromGallery;
+                                    } else {
+                                      icon = Icons.auto_awesome;
+                                      action = () => _showAIPromptDialog();
+                                    }
+                                    return ListTile(
+                                      leading: Icon(icon, color: Colors.orange, size: vw * 4),
+                                      title: Text(opt, style: TextStyle(color: Colors.white70, fontSize: vw * 5)),
+                                      contentPadding: EdgeInsets.symmetric(horizontal: vw * 7),
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                        action();
+                                      },
+                                      dense: true,
+                                      shape: RoundedRectangleBorder(
+                                        side: BorderSide.none,
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
                               ),
                             ],
                           ),

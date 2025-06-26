@@ -1,4 +1,3 @@
-///
 /// *************************************************
 /// *** DMB APP TO PUBLISH USER'S SIGNAGE SCREENS
 /// *************************************************
@@ -8,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import './players_page.dart';
 import './screens_page.dart';
@@ -60,23 +60,42 @@ class DmbApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Digital Media Bridge',
-      initialRoute: '/',
-      theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFF000000), // Pure black
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
-          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
-          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
-          errorBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
-          focusedErrorBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
-        ),
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.amber),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Digital Media Bridge'),
+    return ScreenUtilInit(
+      designSize: const Size(360, 690), // Standard design size for responsiveness
+      minTextAdapt: false, // Prevent text scaling with system settings
+      splitScreenMode: true,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0), // Fix text size
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Digital Media Bridge',
+            initialRoute: '/',
+            theme: ThemeData(
+              scaffoldBackgroundColor: const Color(0xFF000000), // Pure black
+              inputDecorationTheme: const InputDecorationTheme(
+                border: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                errorBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                focusedErrorBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+              ),
+              snackBarTheme: SnackBarThemeData(
+                backgroundColor: Colors.black,
+                contentTextStyle: TextStyle(color: Colors.white, fontSize: 16.sp), // Use sp for fixed size
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  side: BorderSide(color: Colors.white70, width: 2),
+                ),
+              ),
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.amber),
+              useMaterial3: true,
+            ),
+            home: const MyHomePage(title: 'Digital Media Bridge'),
+          ),
+        );
+      },
     );
   }
 }
@@ -143,7 +162,7 @@ class _MyHomePageState extends State<MyHomePage> {
 /// *** BYPASS LOGIN PAGE ***
 /// *************************************************
 class BypassloginPage extends StatefulWidget {
-  const BypassloginPage({super.key}); // Added const constructor
+  const BypassloginPage({super.key});
 
   @override
   _BypassloginPageState createState() => _BypassloginPageState();
@@ -184,10 +203,11 @@ class _BypassloginPageState extends State<BypassloginPage> {
       body: Center(
         child: Text(
           bypassMsg,
-          style: const TextStyle(
+          textAlign: TextAlign.center,
+          style: TextStyle(
             fontWeight: FontWeight.normal,
             color: Colors.white,
-            fontSize: 14,
+            fontSize: 14.sp, // Use sp for fixed size
           ),
         ),
       ),
@@ -199,7 +219,7 @@ class _BypassloginPageState extends State<BypassloginPage> {
 /// *** LOGIN PAGE ***
 /// *************************************************
 class LoginPage extends StatelessWidget {
-  LoginPage({super.key}); // Added constructor
+  LoginPage({super.key});
   final _formKey = GlobalKey<FormState>();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -216,20 +236,20 @@ class LoginPage extends StatelessWidget {
       backgroundColor: const Color(0xFF000000), // Black background
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h), // Use w, h for responsiveness
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 'Digital Media Bridge',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 32,
+                  fontSize: 32.sp, // Use sp for fixed size
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 48),
+              SizedBox(height: 48.h),
               Form(
                 key: _formKey,
                 child: Column(
@@ -237,14 +257,14 @@ class LoginPage extends StatelessWidget {
                     // Username field
                     TextFormField(
                       controller: emailController,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.white, fontSize: 16.sp), // Use sp
                       cursorColor: Colors.white,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.grey[800],
                         prefixIcon: const Icon(Icons.person, color: Colors.white30),
                         hintText: 'Username',
-                        hintStyle: const TextStyle(color: Colors.white54),
+                        hintStyle: TextStyle(color: Colors.white54, fontSize: 16.sp),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(color: Colors.grey[700]!),
@@ -253,7 +273,7 @@ class LoginPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(color: Colors.grey[700]!),
                         ),
-                        focusedBorder:  OutlineInputBorder(
+                        focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(color: Colors.blueAccent),
                         ),
@@ -265,19 +285,19 @@ class LoginPage extends StatelessWidget {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16.h),
                     // Password field
                     TextFormField(
                       controller: passwordController,
                       obscureText: true,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.white, fontSize: 16.sp), // Use sp
                       cursorColor: Colors.white,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.grey[800],
                         prefixIcon: const Icon(Icons.lock, color: Colors.white30),
                         hintText: 'Password',
-                        hintStyle: const TextStyle(color: Colors.white54),
+                        hintStyle: TextStyle(color: Colors.white54, fontSize: 16.sp),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(color: Colors.grey[700]!),
@@ -298,7 +318,7 @@ class LoginPage extends StatelessWidget {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: 32.h),
                     // Log In button
                     SizedBox(
                       width: double.infinity,
@@ -306,14 +326,14 @@ class LoginPage extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           elevation: 8,
                           shadowColor: Colors.white24,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          padding: EdgeInsets.symmetric(vertical: 16.h),
                           backgroundColor: const Color.fromRGBO(10, 85, 163, 1.0),
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          textStyle: const TextStyle(
-                            fontSize: 16,
+                          textStyle: TextStyle(
+                            fontSize: 16.sp, // Use sp for fixed size
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -327,20 +347,19 @@ class LoginPage extends StatelessWidget {
 
                             if (result == "invalid_login") {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Invalid Login")),
+                                SnackBar(content: Text("Invalid Login", style: TextStyle(fontSize: 16.sp))),
                               );
                             } else if (result == "no_screens") {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("No Screens To Play")),
+                                SnackBar(content: Text("No Screens To Play", style: TextStyle(fontSize: 16.sp))),
                               );
                             } else if (result == "no_players") {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("No Players To Update")),
+                                SnackBar(content: Text("No Players To Update", style: TextStyle(fontSize: 16.sp))),
                               );
                             } else if (result == false) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text("Cannot Connect To DMB Server")),
+                                SnackBar(content: Text("Cannot Connect To DMB Server", style: TextStyle(fontSize: 16.sp))),
                               );
                             } else {
                               loginUsername = emailController.text;
@@ -349,18 +368,24 @@ class LoginPage extends StatelessWidget {
                               await preloadPlaylistPreviews(loginUsername);
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(
-                                    builder: (context) => const HomePage()),
+                                MaterialPageRoute(builder: (context) => const HomePage()),
                               );
                             }
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('Username & Password are required')),
+                              SnackBar(
+                                content: Text(
+                                  'Username & Password are required',
+                                  style: TextStyle(fontSize: 16.sp),
+                                ),
+                              ),
                             );
                           }
                         },
-                        child: const Text('Log In'),
+                        child: Text(
+                          'Log In',
+                          style: TextStyle(fontSize: 16.sp), // Ensure button text is fixed
+                        ),
                       ),
                     ),
                   ],
@@ -396,7 +421,12 @@ class _HomePageState extends State<HomePage> {
   void _showScreensPage() {
     if (selectedPlayerName != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("$selectedPlayerName Selected")),
+        SnackBar(
+          content: Text(
+            "$selectedPlayerName Selected",
+            style: TextStyle(fontSize: 16.sp),
+          ),
+        ),
       );
     }
 
