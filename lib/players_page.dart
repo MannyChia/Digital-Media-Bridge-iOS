@@ -17,17 +17,21 @@ dynamic activeDMBPlayers = 0;
 
 class MediaPlayer {
   String name, status, currentScreen;
+
   MediaPlayer(
       {required this.name, required this.status, required this.currentScreen});
 }
 
 List<MediaPlayer> dmbMediaPlayers = [];
 dynamic selectedPlayerName;
+
 bool playersNoBackButton = true;
 
 class PlaylistSheet extends StatefulWidget {
   final String userEmail;
+
   const PlaylistSheet({super.key, required this.userEmail});
+
   @override
   State<PlaylistSheet> createState() => _PlaylistSheetState();
 }
@@ -114,7 +118,9 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
         cachedPlaylistPreviews = updated;
       });
     } catch (e) {
-      print("Failed to refresh playlist previews: $e");
+      if (kDebugMode) {
+        print("Failed to refresh playlist previews: $e");
+      }
     }
   }
 
@@ -193,6 +199,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
         ],
       );
     }
+
     final Map<String, List<PlaylistPreview>> groups = {};
     for (final p in cachedPlaylistPreviews) {
       groups.putIfAbsent(p.screenName, () => []).add(p);
@@ -253,7 +260,6 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: vw * 5.5,
-                            // size of each screen title (that has a playlist)
                             fontWeight: FontWeight.w900,
                           ),
                         )
@@ -392,7 +398,6 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                 itemBuilder: (context, index) {
                   final imageUrl = _playlistImages[index];
                   final isSelected = selectedImages.contains(imageUrl);
-
                   return GestureDetector(
                     onTap: () {
                       HapticFeedback.lightImpact();
@@ -458,7 +463,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
           ],
         ),
         Positioned(
-          bottom: 12,
+          bottom: 60,
           left: 16,
           right: 16,
           child: ElevatedButton(
@@ -531,8 +536,10 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
 
 class PlayersPage extends StatefulWidget {
   const PlayersPage({super.key, this.mainPageTitle, this.mainPageSubTitle});
+
   final String? mainPageTitle;
   final String? mainPageSubTitle;
+
   @override
   _PlayersPageState createState() => _PlayersPageState();
 }
@@ -542,9 +549,8 @@ class _PlayersPageState extends State<PlayersPage> {
   late String mainPageSubTitle;
   File? _image;
   final ImagePicker _picker = ImagePicker();
-  TextEditingController _textFieldController = TextEditingController();
-  String? _generatedImageUrl;
-  bool _isGenerating = false;
+  final TextEditingController _textFieldController = TextEditingController();
+  final bool _isGenerating = false;
   String backgroundURL = dotenv.env['BACKGROUND_IMAGE_URL']!;
 
   @override
@@ -590,8 +596,7 @@ class _PlayersPageState extends State<PlayersPage> {
   }
 
   void _userLogout() {
-    confirmLogout(
-        context); //*** CONFIRM USER LOGOUT (function is in: dmb_functions.dart)
+    confirmLogout(context);
   }
 
   Future<void> _refreshData() async {
@@ -607,11 +612,14 @@ class _PlayersPageState extends State<PlayersPage> {
         }
       });
     } catch (err) {
-      print("Error refreshing data");
+      if (kDebugMode) {
+        print("Error refreshing data");
+      }
     }
   }
 
   Future<void> _showUploadSheet(File imageFile) async {
+    double screenHeight = MediaQuery.of(context).size.height;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.grey[900],
@@ -668,7 +676,9 @@ class _PlayersPageState extends State<PlayersPage> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
-                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onPressed: () async {
                     Navigator.of(context).pop();
@@ -719,11 +729,12 @@ class _PlayersPageState extends State<PlayersPage> {
                       ));
                     }
                   },
-                  child: const Text("Upload"),
+                  child: const Text("Upload",
+                      style: TextStyle(color: Colors.white)),
                 ),
-                SizedBox(height: 20)
               ],
             ),
+            SizedBox(height: screenHeight * 0.03)
           ],
         ),
       ),
@@ -775,15 +786,14 @@ class _PlayersPageState extends State<PlayersPage> {
   Future<Map<String, dynamic>?> _getAIPhoto(
       String prompt, int width, int height,
       {String? prevImageID}) async {
-    String stable_diffusion = "aa77f04e-3eec-4034-9c07-d0f619684628";
-    String lucid_realism = "05ce0082-2d80-4a2d-8653-4d1c85e2418e";
+    String stableDiffusion = "aa77f04e-3eec-4034-9c07-d0f619684628";
+    String lucidRealism = "05ce0082-2d80-4a2d-8653-4d1c85e2418e";
     if (!dotenv.isInitialized) {
       if (kDebugMode) {
         print("ENVIRONMENTAL VARIABLES NOT LOADED");
       }
     }
-    final apiKey = dotenv.env[
-        'LEONARDO_API_KEY_2'];
+    final apiKey = dotenv.env['LEONARDO_API_KEY_2'];
     if (apiKey == null) {
       if (kDebugMode) {
         print("API KEY NOT FOUND IN .env FILE");
@@ -802,19 +812,18 @@ class _PlayersPageState extends State<PlayersPage> {
       }
       body = jsonEncode({
         'prompt': prompt,
-        'modelId': lucid_realism,
+        'modelId': lucidRealism,
         'num_images': 1,
         'width': width,
         'height': height,
       });
-    }
-    else {
+    } else {
       if (kDebugMode) {
         print("generating body in _getAIPhoto using prompt and prevImageID");
       }
       body = jsonEncode({
         'prompt': prompt,
-        'modelId': stable_diffusion,
+        'modelId': stableDiffusion,
         'init_image_id': prevImageID,
         'init_strength': 0.4,
         'num_images': 1,
@@ -823,14 +832,16 @@ class _PlayersPageState extends State<PlayersPage> {
         'guidance_scale': 5,
       });
     }
+
     try {
-      final response =
-          await http.post(url, headers: headers, body: body);
+      final response = await http.post(url, headers: headers, body: body);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final generationId = data['sdGenerationJob']?['generationId'];
         if (generationId == null) {
-          print("No generation ID received");
+          if (kDebugMode) {
+            print("No generation ID received");
+          }
         }
         final pollUrl = Uri.parse(
             'https://cloud.leonardo.ai/api/rest/v1/generations/$generationId');
@@ -845,10 +856,9 @@ class _PlayersPageState extends State<PlayersPage> {
             final status = pollData['generations_by_pk']?['status'];
             if (status == 'COMPLETE') {
               isCompleted = true;
-              final generatedImage = pollData['generations_by_pk']
-                  ?['generated_images']?[0];
-              imageUrl =
-                  generatedImage['url']?.toString();
+              final generatedImage =
+                  pollData['generations_by_pk']?['generated_images']?[0];
+              imageUrl = generatedImage['url']?.toString();
               imageId = generatedImage['id']?.toString();
               break;
             } else if (status == 'FAILED') {
@@ -869,7 +879,7 @@ class _PlayersPageState extends State<PlayersPage> {
           } else {
             if (kDebugMode) {
               print(
-                'Poll Error: ${pollResponse.statusCode} - ${pollResponse.body}');
+                  'Poll Error: ${pollResponse.statusCode} - ${pollResponse.body}');
             }
           }
         }
@@ -891,10 +901,7 @@ class _PlayersPageState extends State<PlayersPage> {
         if (kDebugMode) {
           print('Generated Image URL: $imageUrl');
         }
-        return {
-          'image_id': imageId,
-          'image_url': imageUrl
-        };
+        return {'image_id': imageId, 'image_url': imageUrl};
       } else {
         if (kDebugMode) {
           print('API Error: ${response.statusCode} - ${response.body}');
@@ -927,14 +934,16 @@ class _PlayersPageState extends State<PlayersPage> {
         return null;
       }
     } catch (e) {
-      print('Request Error: $e');
+      if (kDebugMode) {
+        print('Request Error: $e');
+      }
     }
+    return null;
   }
 
   void onNewPhoto() {
     Navigator.of(context).pop();
     setState(() {
-      _generatedImageUrl = null;
       _textFieldController.clear();
     });
     _showAIPromptDialog();
@@ -943,12 +952,9 @@ class _PlayersPageState extends State<PlayersPage> {
   void onEdit(String prevImageID) {
     Navigator.of(context).pop();
     setState(() {
-      _generatedImageUrl = null;
       _textFieldController.clear();
     });
-    _showAIPromptDialog(
-        prevImageID:
-            prevImageID);
+    _showAIPromptDialog(prevImageID: prevImageID);
   }
 
   Future<void> onSubmit(String imageUrl, String username) async {
@@ -1012,10 +1018,8 @@ class _PlayersPageState extends State<PlayersPage> {
 
   void showLoadingCircle(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
-
     final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
-    final int colorNum =
-        int.parse(lightGreyTheme!, radix: 16);
+    final int colorNum = int.parse(lightGreyTheme!, radix: 16);
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1075,26 +1079,25 @@ class _PlayersPageState extends State<PlayersPage> {
     if (kDebugMode) {
       print("Starting _generateAndShowImage with prompt: $inputPrompt");
     }
-    Map<String?, dynamic>? ai_image; // map that stores the ImageUrl and ImageID
+    Map<String?, dynamic>? aiImage;
     if (prevImageID == null) {
       if (kDebugMode) {
         print("Calling _getAIPhoto just based on prompt");
       }
-      ai_image = await _getAIPhoto(inputPrompt, width, height);
+      aiImage = await _getAIPhoto(inputPrompt, width, height);
     } else {
       if (kDebugMode) {
         print("Calling _getAIPhoto based on prompt and prevImageID");
       }
-      ai_image = await _getAIPhoto(inputPrompt, width, height,
+      aiImage = await _getAIPhoto(inputPrompt, width, height,
           prevImageID: prevImageID);
     }
-    String? imageUrl = ai_image?['image_url'];
-    String? imageId = ai_image?['image_id'];
+    String? imageUrl = aiImage?['image_url'];
+    String? imageId = aiImage?['image_id'];
     if (kDebugMode) {
       print("Image generation result: URL=$imageUrl, ID=$imageId");
     }
     Navigator.of(dialogContext).pop();
-
     if (imageUrl != null && imageId != null) {
       ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(
         content: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -1106,13 +1109,12 @@ class _PlayersPageState extends State<PlayersPage> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
           side: BorderSide(
-            color: Colors.green, // Border color
-            width: 2, // Border thickness
+            color: Colors.green,
+            width: 2,
           ),
         ),
       ));
       try {
-        // show image in slide up box
         await showModalBottomSheet(
             // ADD SCROLL UP LINE (HANDLEBAR)
             context: dialogContext,
@@ -1123,10 +1125,10 @@ class _PlayersPageState extends State<PlayersPage> {
             isScrollControlled: true,
             builder: (BuildContext context) {
               return Padding(
-                padding: const EdgeInsets.all(16), // padding on all sides
+                padding: const EdgeInsets.all(16),
                 child: SingleChildScrollView(
                     child: Column(
-                  mainAxisSize: MainAxisSize.min, // shrink wrap content
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       "AI Generated Image",
@@ -1139,13 +1141,12 @@ class _PlayersPageState extends State<PlayersPage> {
                     SizedBox(height: screenHeight * 0.02),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: Container(
+                      child: SizedBox(
                         width: screenWidth * 0.9,
                         height: screenHeight * 0.6,
                         child: Image.network(
                           imageUrl,
                           fit: BoxFit.contain,
-                          // Ensures the image fits within the specified dimensions
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
                             return const Center(
@@ -1156,7 +1157,9 @@ class _PlayersPageState extends State<PlayersPage> {
                             );
                           },
                           errorBuilder: (context, error, stackTrace) {
-                            print("Error loading image: $error");
+                            if (kDebugMode) {
+                              print("Error loading image: $error");
+                            }
                             return const Text(
                               "Failed to load image",
                               style: TextStyle(color: Colors.white),
@@ -1174,7 +1177,7 @@ class _PlayersPageState extends State<PlayersPage> {
                             onNewPhoto();
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black.withOpacity(0.7),
+                            backgroundColor: Colors.black,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -1215,14 +1218,18 @@ class _PlayersPageState extends State<PlayersPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 25),
+                    const SizedBox(height: 35),
                   ],
                 )),
               );
             });
-        print("Image dialog shown successfully");
+        if (kDebugMode) {
+          print("Image dialog shown successfully");
+        }
       } catch (e) {
-        print("Error showing image dialog: $e");
+        if (kDebugMode) {
+          print("Error showing image dialog: $e");
+        }
         if (dialogContext.mounted) {
           ScaffoldMessenger.of(dialogContext).showSnackBar(
             SnackBar(
@@ -1238,7 +1245,9 @@ class _PlayersPageState extends State<PlayersPage> {
         }
       }
     } else {
-      print("Showing failure snackbar");
+      if (kDebugMode) {
+        print("Showing failure snack bar");
+      }
       if (dialogContext.mounted) {
         ScaffoldMessenger.of(dialogContext).showSnackBar(
           SnackBar(
@@ -1254,26 +1263,18 @@ class _PlayersPageState extends State<PlayersPage> {
     }
   }
 
-  /// shows the prompt text box and takes in user input
   Future<void> _showAIPromptDialog({String? prevImageID}) async {
-    double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
-
     final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
-    final int colorNum =
-        int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
-
-    // Set default dimensions (16x9)
+    final int colorNum = int.parse(lightGreyTheme!, radix: 16);
     int desiredImageWidth = 1536;
     int desiredImageHeight = 864;
-
-    // Initialize with 16x9 selected by default
     List<bool> isSelected = [true, false, false];
-
-    final dialogContext = context; // Store state context
+    final dialogContext = context;
     await showDialog(
       context: dialogContext,
       builder: (BuildContext context) {
+        final screenWidth = MediaQuery.of(context).size.width;
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             return AlertDialog(
@@ -1290,122 +1291,130 @@ class _PlayersPageState extends State<PlayersPage> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: _textFieldController,
-                    style: TextStyle(color: Colors.white),
-                    cursorColor: Colors.white,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Color(colorNum),
-                      hintText: 'Enter text ... ',
-                      hintStyle: const TextStyle(color: Colors.white54),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey[700]!),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey[700]!),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: Colors.blueAccent),
-                      ),
-                    ),
-                    onFieldSubmitted: (value) async {
-                      final prompt = value.trim();
-                      if (prompt.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Please enter a prompt",
-                                style: TextStyle(fontSize: 20)),
-                            backgroundColor: Colors.redAccent,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                          ),
-                        );
-                        return;
-                      }
-                      Navigator.of(context).pop(); // Close prompt dialog
-                      showLoadingCircle(dialogContext);
-                      await _generateAndShowImage(
-                        prompt,
-                        dialogContext,
-                        desiredImageWidth,
-                        desiredImageHeight,
-                        prevImageID: prevImageID,
-                      );
-                    },
-                  ),
-                  SizedBox(height: screenHeight * 0.03),
-                  // space between Text Box and 'Image Dimensions'
-                  Text(
-                    "Image Dimensions",
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: screenWidth * 0.04,
-                    ),
-                  ),
-                  SizedBox(height: screenHeight * 0.01),
-                  // space between 'Image Dimensions' text and options
-                  Wrap(
-                    spacing: screenWidth * 0.01,
-                    runSpacing: 8.0,
-                    children: [
-                      ToggleButtons(
-                        isSelected: isSelected,
-                        onPressed: (index) {
-                          setState(() {
-                            // Ensure only one button is selected
-                            for (int i = 0; i < isSelected.length; i++) {
-                              isSelected[i] = i == index;
-                            }
-                            // Update dimensions
-                            if (index == 0) {
-                              desiredImageWidth = 1536;
-                              desiredImageHeight = 864;
-                            } else if (index == 1) {
-                              desiredImageWidth = 1024;
-                              desiredImageHeight = 1024;
-                            } else if (index == 2) {
-                              desiredImageWidth = 864;
-                              desiredImageHeight = 1536;
-                            }
-                          });
-                        },
-                        selectedColor: Colors.white,
-                        // selected text color
+              contentPadding: EdgeInsets.all(16),
+              content: FractionallySizedBox(
+                widthFactor: 0.9,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _textFieldController,
+                      style: TextStyle(color: Colors.white),
+                      cursorColor: Colors.white,
+                      decoration: InputDecoration(
+                        filled: true,
                         fillColor: Color(colorNum),
-                        // selected button color
-                        color: Colors.white,
-                        // unselected text color
-                        borderColor: Colors.grey,
-                        selectedBorderColor: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        children: const [
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text("16 x 9"),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text("10 x 10"),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text("9 x 16"),
+                        hintText: 'Enter text ... ',
+                        hintStyle: const TextStyle(color: Colors.white54),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey[700]!),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey[700]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide:
+                              const BorderSide(color: Colors.blueAccent),
+                        ),
+                      ),
+                      onFieldSubmitted: (value) async {
+                        final prompt = value.trim();
+                        if (prompt.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Please enter a prompt",
+                                  style: TextStyle(fontSize: 20)),
+                              backgroundColor: Colors.redAccent,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                          return;
+                        }
+                        Navigator.of(context).pop();
+                        showLoadingCircle(dialogContext);
+                        await _generateAndShowImage(
+                          prompt,
+                          dialogContext,
+                          desiredImageWidth,
+                          desiredImageHeight,
+                          prevImageID: prevImageID,
+                        );
+                      },
+                    ),
+                    SizedBox(height: screenHeight * 0.03),
+                    Text(
+                      "Image Dimensions",
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: screenWidth * 0.04,
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.01),
+                    MediaQuery(
+                      data: MediaQuery.of(context).copyWith(
+                        textScaler: TextScaler.linear(1.0),
+                      ),
+                      child: Wrap(
+                        spacing: screenWidth * 0.01,
+                        runSpacing: 8.0,
+                        children: [
+                          ToggleButtons(
+                            isSelected: isSelected,
+                            onPressed: (index) {
+                              setState(() {
+                                for (int i = 0; i < isSelected.length; i++) {
+                                  isSelected[i] = i == index;
+                                }
+                                if (index == 0) {
+                                  desiredImageWidth = 1536;
+                                  desiredImageHeight = 864;
+                                } else if (index == 1) {
+                                  desiredImageWidth = 1024;
+                                  desiredImageHeight = 1024;
+                                } else if (index == 2) {
+                                  desiredImageWidth = 864;
+                                  desiredImageHeight = 1536;
+                                }
+                              });
+                            },
+                            selectedColor: Colors.white,
+                            fillColor: Color(colorNum),
+                            color: Colors.white,
+                            borderColor: Colors.grey,
+                            selectedBorderColor: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            constraints: const BoxConstraints(
+                              minWidth: 60,
+                              minHeight: 36,
+                              maxWidth: 60,
+                              maxHeight: 36,
+                            ),
+                            children: const [
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 0),
+                                child: Text("16 x 9"),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 0),
+                                child: Text("10 x 10"),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 0),
+                                child: Text("9 x 16"),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      SizedBox(height: screenHeight * 0.1),
-                      // space between Dimensions and 'Enter' Button
-                    ],
-                  ),
-                ],
+                    ),
+                    SizedBox(height: screenHeight * 0.05),
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
@@ -1424,7 +1433,7 @@ class _PlayersPageState extends State<PlayersPage> {
                       );
                       return;
                     }
-                    Navigator.of(context).pop(); // Close prompt dialog
+                    Navigator.of(context).pop();
                     showLoadingCircle(dialogContext);
                     await _generateAndShowImage(
                       prompt,
@@ -1436,13 +1445,12 @@ class _PlayersPageState extends State<PlayersPage> {
                   },
                   style: TextButton.styleFrom(
                     backgroundColor: Colors.green,
-                    foregroundColor: Colors.white, // Text color
+                    foregroundColor: Colors.white,
                     padding: EdgeInsets.symmetric(
                         horizontal: screenWidth * 0.04,
-                        vertical: screenHeight * 0.02), // Responsive padding
+                        vertical: screenHeight * 0.02),
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(20), // Rounded corners
+                      borderRadius: BorderRadius.circular(20),
                     ),
                   ),
                   child: Row(
@@ -1470,30 +1478,19 @@ class _PlayersPageState extends State<PlayersPage> {
         );
       },
     );
-    _textFieldController.clear(); // Clear the text controller
+    _textFieldController.clear();
   }
 
   final List<String> uploadOptions = ['Camera', 'Gallery', 'AI Image'];
-
   String? selectedOption;
 
-  /// menu on the right of the screen
   @override
   Widget build(BuildContext context) {
-    // save screen width and height
-    final double vw = MediaQuery.of(context).size.width /
-        100; // width of screen (by percentage)
-    final double vh = MediaQuery.of(context).size.height /
-        100; // height of screen (by percentage)
-
+    final double vw = MediaQuery.of(context).size.width / 100;
+    final double vh = MediaQuery.of(context).size.height / 100;
     final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
-    final int colorNum =
-        int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
-
-    Color buttonColor = Color(colorNum);
+    final int colorNum = int.parse(lightGreyTheme!, radix: 16);
     Color backgroundColor = Color(colorNum);
-
-    // debugged, players page to go out of app when called to go back
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -1516,13 +1513,11 @@ class _PlayersPageState extends State<PlayersPage> {
               child: Drawer(
                 child: Container(
                   decoration: BoxDecoration(color: backgroundColor),
-                  // color of menu side bar),
                   child: SafeArea(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Padding(
-                          //reminder to check tablet later
                           padding:
                               EdgeInsets.fromLTRB(vw * 4, vh * 4, 0, vh * 2),
                           child: Text(
@@ -1534,11 +1529,8 @@ class _PlayersPageState extends State<PlayersPage> {
                             ),
                           ),
                         ),
-                        // const Divider(color: Colors.white24, height: 1),
-
                         Expanded(
                           child: ListView(
-                            // Screens Option
                             padding: EdgeInsets.symmetric(vertical: vw * 2),
                             children: [
                               ListTile(
@@ -1548,7 +1540,8 @@ class _PlayersPageState extends State<PlayersPage> {
                                     color: Colors.orange, size: vw * 7),
                                 title: Text("Screens",
                                     style: TextStyle(
-                                        color: Colors.white, fontSize: vw * 5)),
+                                        color: Colors.white,
+                                        fontSize: vw * 4.5)),
                                 onTap: () {
                                   Navigator.pop(context);
                                   _showScreensPage(false);
@@ -1558,14 +1551,14 @@ class _PlayersPageState extends State<PlayersPage> {
                               ),
                               SizedBox(height: vw * 3),
                               ListTile(
-                                // Image Playlists Option
                                 contentPadding:
                                     EdgeInsets.symmetric(horizontal: vw * 4),
                                 leading: Icon(Icons.collections,
                                     color: Colors.orange, size: vw * 7),
                                 title: Text("Image Playlists",
                                     style: TextStyle(
-                                        color: Colors.white, fontSize: vw * 5)),
+                                        color: Colors.white,
+                                        fontSize: vw * 4.5)),
                                 onTap: () {
                                   Navigator.pop(context);
                                   _showPlaylistBottomSheet(
@@ -1578,7 +1571,6 @@ class _PlayersPageState extends State<PlayersPage> {
                               ),
                               SizedBox(height: vw * 3),
                               Theme(
-                                // Upload Image Option
                                 data: Theme.of(context)
                                     .copyWith(dividerColor: Colors.transparent),
                                 child: ExpansionTile(
@@ -1587,7 +1579,7 @@ class _PlayersPageState extends State<PlayersPage> {
                                   title: Text("Upload Image",
                                       style: TextStyle(
                                           color: Colors.white,
-                                          fontSize: vw * 5)),
+                                          fontSize: vw * 4.5)),
                                   iconColor: Colors.white,
                                   textColor: Colors.white,
                                   tilePadding:
@@ -1630,7 +1622,6 @@ class _PlayersPageState extends State<PlayersPage> {
                             ],
                           ),
                         ),
-                        // const Divider(color: Colors.white24, height: 1),
                         ListTile(
                           leading: Icon(Icons.logout,
                               color: Colors.orange, size: vw * 5),
@@ -1644,6 +1635,7 @@ class _PlayersPageState extends State<PlayersPage> {
                           dense: true,
                           shape: const ContinuousRectangleBorder(),
                         ),
+                        SizedBox(height: vh * 2),
                       ],
                     ),
                   ),
@@ -1657,12 +1649,13 @@ class _PlayersPageState extends State<PlayersPage> {
                   image: NetworkImage(
                     backgroundURL.isNotEmpty
                         ? backgroundURL
-                        : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?fit=crop&w=1536&h=864', // Fallback image
+                        : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?fit=crop&w=1536&h=864',
                   ),
                   fit: BoxFit.cover,
-                  // Adjusts image to cover the entire background
                   onError: (exception, stackTrace) {
-                    print('Failed to load background image: $exception');
+                    if (kDebugMode) {
+                      print('Failed to load background image: $exception');
+                    }
                   },
                 ),
               ),
@@ -1690,11 +1683,9 @@ class _PlayersPageState extends State<PlayersPage> {
                               borderRadius: BorderRadius.circular(10),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.white.withOpacity(0.3),
-                                  // White shadow with opacity
+                                  color: Colors.white.withValues(alpha: 0.3),
                                   spreadRadius: 6,
-                                  // How far the shadow spreads
-                                  blurRadius: 6, // How blurry the shadow is
+                                  blurRadius: 6,
                                 ),
                               ],
                             ),
@@ -1703,11 +1694,6 @@ class _PlayersPageState extends State<PlayersPage> {
                               onTap: () {
                                 selectedPlayerName =
                                     dmbMediaPlayers[index].name;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                      content: Text(
-                                          "${dmbMediaPlayers[index].name} Selected")),
-                                );
                                 _showScreensPage(true);
                               },
                               child: Ink(
@@ -1758,8 +1744,8 @@ class _PlayersPageState extends State<PlayersPage> {
                       ),
                     );
                   },
-                  separatorBuilder: (context, index) => const Divider(
-                      color: Colors.transparent), // dividers between players
+                  separatorBuilder: (context, index) =>
+                      const Divider(color: Colors.transparent),
                 ),
               ),
             ),
@@ -1768,18 +1754,13 @@ class _PlayersPageState extends State<PlayersPage> {
   }
 }
 
-///**** This is the 'App bar' to the players tab when you don't want
-/// to show a 'back' btn
 PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
-  // Calculate viewport units
   final double vw = MediaQuery.of(context).size.width / 100;
   final double vh = MediaQuery.of(context).size.height / 100;
-
   return PreferredSize(
-    preferredSize: Size.fromHeight(vh * 11), // 11% of screen height
+    preferredSize: Size.fromHeight(vh * 11),
     child: AppBar(
-      backgroundColor: Colors.black.withOpacity(0.8),
-      // app bar background
+      backgroundColor: Colors.black..withValues(alpha: 0.8),
       automaticallyImplyLeading: false,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1790,7 +1771,7 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.white,
-              fontSize: vw * 6, // Increase font size to 6% of smaller dimension
+              fontSize: vw * 6,
             ),
           ),
           Text(
@@ -1798,26 +1779,23 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
             style: TextStyle(
               fontStyle: FontStyle.italic,
               color: Colors.white,
-              fontSize:
-                  vw * 5.5, // Increase font size to 5% of smaller dimension
+              fontSize: vw * 5.5,
             ),
           ),
         ],
       ),
       titleSpacing: vw * 4,
-      // Add padding to the left of the title (4% of screen width)
       toolbarHeight: vh * 12,
-      // Match toolbarHeight to preferredSize height
       actions: [
         Builder(
           builder: (context) => IconButton(
             icon: Icon(
               Icons.menu,
               color: Colors.white,
-              size: vw * 8, // Increase icon size to 8% of smaller dimension
+              size: vw * 8,
             ),
             onPressed: () => Scaffold.of(context).openEndDrawer(),
-            padding: EdgeInsets.all(vw * 2), // Add padding around icon
+            padding: EdgeInsets.all(vw * 2),
           ),
         ),
       ],
@@ -1825,8 +1803,6 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
   );
 }
 
-///**** As the list is being displayed use this object to show a
-/// player whose status is 'active'
 LinearGradient _gradientActiveMediaPlayer(BuildContext context) {
   return const LinearGradient(
     begin: AlignmentDirectional.topCenter,
@@ -1838,8 +1814,6 @@ LinearGradient _gradientActiveMediaPlayer(BuildContext context) {
   );
 }
 
-///**** As the list is being displayed use this object to show a
-/// player whose status is 'inactive'
 LinearGradient _gradientInActiveMediaPlayer(BuildContext context) {
   return const LinearGradient(
     begin: AlignmentDirectional.topCenter,
@@ -1851,8 +1825,6 @@ LinearGradient _gradientInActiveMediaPlayer(BuildContext context) {
   );
 }
 
-///*** As the list is being displayed, show a (slightly) different
-/// text (label) to the user for players that are active vs. inactive
 Text _activeScreenText(BuildContext context, pIndex, vw) {
   return Text(
       "${dmbMediaPlayers[pIndex].status} - Screen: ${dmbMediaPlayers[pIndex].currentScreen}",
