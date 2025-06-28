@@ -66,7 +66,7 @@ class DmbApp extends StatelessWidget {
       splitScreenMode: true,
       builder: (context, child) {
         return MediaQuery(
-          data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0), // Fix text size
+          data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0, devicePixelRatio: 1.0), // Fix text size
           child: MaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'Digital Media Bridge',

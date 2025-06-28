@@ -279,21 +279,21 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Screen: ",
-                        style: TextStyle(color: Colors.white70, fontSize: vw * 5.5),
-                      ),
-                      Text(
-                        entries[i].key,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: vw * 5.5, // size of each screen title (that has a playlist)
-                          fontWeight: FontWeight.w900,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Screen: ",
+                          style: TextStyle(color: Colors.white70, fontSize: vw * 5.5),
                         ),
-                      )
-                    ]
+                        Text(
+                          entries[i].key,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: vw * 5.5, // size of each screen title (that has a playlist)
+                            fontWeight: FontWeight.w900,
+                          ),
+                        )
+                      ]
                   ),
                 ),
 
@@ -347,19 +347,19 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                           ),
                           const SizedBox(height: 6),
                           Column(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Text(
-                                '$displayName (${preview.itemCount})',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: vw * 4,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '$displayName (${preview.itemCount})',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: vw * 4,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ]
+                              ]
                           )
                         ],
                       ),
@@ -502,7 +502,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
           ],
         ),
         Positioned(
-          bottom: 12,
+          bottom: 60,
           left: 16,
           right: 16,
           child: ElevatedButton(
@@ -553,12 +553,12 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("Playlist Updated", style: TextStyle(fontSize: 20)),
-              SizedBox(width: 8),
-              Icon(Icons.check_circle_outline, color: Colors.green),
-            ]
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text("Playlist Updated", style: TextStyle(fontSize: 20)),
+                SizedBox(width: 8),
+                Icon(Icons.check_circle_outline, color: Colors.green),
+              ]
           ),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -577,11 +577,11 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
     }
     else {
       ScaffoldMessenger.of(context).showSnackBar(
-       SnackBar(
-        content: Text("Failed to update playlist", style: TextStyle(fontSize: 20)),
-        backgroundColor: Colors.redAccent,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        SnackBar(
+          content: Text("Failed to update playlist", style: TextStyle(fontSize: 20)),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
     }
@@ -746,7 +746,9 @@ class _PlayersPageState extends State<PlayersPage> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
-                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onPressed: () async {
                     Navigator.of(context).pop();
@@ -784,26 +786,26 @@ class _PlayersPageState extends State<PlayersPage> {
                     }
                     else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(message, style: TextStyle(fontSize: 20)),
-                                SizedBox(width: 8),
-                                Icon(Icons.check_circle_outline, color: Colors.green),
-                              ]
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        )
+                          SnackBar(
+                            content: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(message, style: TextStyle(fontSize: 20)),
+                                  SizedBox(width: 8),
+                                  Icon(Icons.check_circle_outline, color: Colors.green),
+                                ]
+                            ),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          )
                       );
                     }
                   },
-                  child: const Text("Upload"),
+                  child: const Text("Upload", style: TextStyle(color: Colors.white)),
                 ),
-                SizedBox(height: 20) // extra space between buttons and bottom of screen
               ],
             ),
+            SizedBox(height: screenHeight * 0.03) // extra space between buttons and bottom of screen
           ],
         ),
       ),
@@ -1068,12 +1070,12 @@ class _PlayersPageState extends State<PlayersPage> {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text("Image Saved to your Account", style: TextStyle(fontSize: 20)),
-                  SizedBox(width: 8),
-                  Icon(Icons.check_circle_outline, color: Colors.green),
-                ]
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text("Image Saved to your Account", style: TextStyle(fontSize: 20)),
+                    SizedBox(width: 8),
+                    Icon(Icons.check_circle_outline, color: Colors.green),
+                  ]
               ),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -1187,29 +1189,29 @@ class _PlayersPageState extends State<PlayersPage> {
 
     if (imageUrl != null && imageId != null) {
       ScaffoldMessenger.of(dialogContext).showSnackBar(
-        SnackBar(
-          content: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text("Image generated successfully", style: TextStyle(fontSize: 20)),
-                SizedBox(width: 8),
-                Icon(Icons.check_circle_outline, color: Colors.green),
-              ]
-          ),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-            side: BorderSide(
-              color: Colors.green, // Border color
-              width: 2, // Border thickness
+          SnackBar(
+            content: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("Image generated successfully", style: TextStyle(fontSize: 20)),
+                  SizedBox(width: 8),
+                  Icon(Icons.check_circle_outline, color: Colors.green),
+                ]
             ),
-          ),
-        )
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: BorderSide(
+                color: Colors.green, // Border color
+                width: 2, // Border thickness
+              ),
+            ),
+          )
       );
       try {
         // show image in slide up box
         await showModalBottomSheet(
-            // ADD SCROLL UP LINE (HANDLEBAR)
+          // ADD SCROLL UP LINE (HANDLEBAR)
             context: dialogContext,
             backgroundColor: Colors.grey[900],
             shape: const RoundedRectangleBorder(
@@ -1220,98 +1222,98 @@ class _PlayersPageState extends State<PlayersPage> {
               return Padding(
                 padding: const EdgeInsets.all(16), // padding on all sides
                 child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min, // shrink wrap content
-                    children: [
-                      Text(
-                        "AI Generated Image",
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.07,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      SizedBox(height: screenHeight * 0.02),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          width: screenWidth * 0.9,
-                          height: screenHeight * 0.6,
-                          child: Image.network(
-                            imageUrl,
-                            fit: BoxFit.contain, // Ensures the image fits within the specified dimensions
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return const Center(
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
-                                ),
-                              );
-                            },
-                            errorBuilder: (context, error, stackTrace) {
-                              print("Error loading image: $error");
-                              return const Text(
-                                "Failed to load image",
-                                style: TextStyle(color: Colors.white),
-                              );
-                            },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min, // shrink wrap content
+                      children: [
+                        Text(
+                          "AI Generated Image",
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.07,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
-                      ),
+                        SizedBox(height: screenHeight * 0.02),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            width: screenWidth * 0.9,
+                            height: screenHeight * 0.6,
+                            child: Image.network(
+                              imageUrl,
+                              fit: BoxFit.contain, // Ensures the image fits within the specified dimensions
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return const Center(
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                print("Error loading image: $error");
+                                return const Text(
+                                  "Failed to load image",
+                                  style: TextStyle(color: Colors.white),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
 
-                      SizedBox(height: screenHeight * 0.02),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          ElevatedButton(
-                            onPressed: () {
-                              onNewPhoto();
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black.withOpacity(0.7),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                        SizedBox(height: screenHeight * 0.02),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                onNewPhoto();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black.withOpacity(0.7),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(Icons.edit, color: Colors.orange),
+                                  SizedBox(width: 8),
+                                  Text("Try Again", style: TextStyle(color: Colors.white)),
+                                ],
                               ),
                             ),
-                            child: const Row(
-                              children: [
-                                Icon(Icons.edit, color: Colors.orange),
-                                SizedBox(width: 8),
-                                Text("Try Again", style: TextStyle(color: Colors.white)),
-                              ],
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text("Close", style: TextStyle(color: Colors.white)),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: const Text("Close", style: TextStyle(color: Colors.white)),
-                          ),
-                          const SizedBox(width: 10),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                            const SizedBox(width: 10),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
+                              onPressed: () async {
+                                onSubmit(imageUrl, loginUsername);
+                              },
+                              child: Text("Save & Upload", style: TextStyle(color: Colors.white)),
                             ),
-                            onPressed: () async {
-                              onSubmit(imageUrl, loginUsername);
-                            },
-                            child: Text("Save & Upload", style: TextStyle(color: Colors.white)),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 25),
-                    ],
-                  )
+                          ],
+                        ),
+                        const SizedBox(height: 35),
+                      ],
+                    )
                 ),
-            );
-          }
+              );
+            }
         );
         print("Image dialog shown successfully");
       }
@@ -1365,6 +1367,9 @@ class _PlayersPageState extends State<PlayersPage> {
     await showDialog(
       context: dialogContext,
       builder: (BuildContext context) {
+        // Get screen width
+        final screenWidth = MediaQuery.of(context).size.width;
+
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             return AlertDialog(
@@ -1381,114 +1386,127 @@ class _PlayersPageState extends State<PlayersPage> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: _textFieldController,
-                    style: TextStyle(color: Colors.white),
-                    cursorColor: Colors.white,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Color(colorNum),
-                      hintText: 'Enter text ... ',
-                      hintStyle: const TextStyle(color: Colors.white54),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey[700]!),
+              contentPadding: EdgeInsets.all(16), // Adjust padding as needed
+              content: FractionallySizedBox(
+                widthFactor: 0.9, // Dialog takes 90% of screen width
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _textFieldController,
+                      style: TextStyle(color: Colors.white),
+                      cursorColor: Colors.white,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Color(colorNum),
+                        hintText: 'Enter text ... ',
+                        hintStyle: const TextStyle(color: Colors.white54),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey[700]!),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey[700]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Colors.blueAccent),
+                        ),
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey[700]!),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: Colors.blueAccent),
-                      ),
-                    ),
-                    onFieldSubmitted: (value) async {
-                      final prompt = value.trim();
-                      if (prompt.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Please enter a prompt", style: TextStyle(fontSize: 20)),
-                            backgroundColor: Colors.redAccent,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
+                      onFieldSubmitted: (value) async {
+                        final prompt = value.trim();
+                        if (prompt.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Please enter a prompt", style: TextStyle(fontSize: 20)),
+                              backgroundColor: Colors.redAccent,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                          return;
+                        }
+                        Navigator.of(context).pop(); // Close prompt dialog
+                        showLoadingCircle(dialogContext);
+                        await _generateAndShowImage(
+                          prompt,
+                          dialogContext,
+                          desiredImageWidth,
+                          desiredImageHeight,
+                          prevImageID: prevImageID,
                         );
-                        return;
-                      }
-                      Navigator.of(context).pop(); // Close prompt dialog
-                      showLoadingCircle(dialogContext);
-                      await _generateAndShowImage(
-                        prompt,
-                        dialogContext,
-                        desiredImageWidth,
-                        desiredImageHeight,
-                        prevImageID: prevImageID,
-                      );
-                    },
-                  ),
-                  SizedBox(height: screenHeight * 0.03), // space between Text Box and 'Image Dimensions'
-                  Text(
-                    "Image Dimensions",
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: screenWidth * 0.04,
+                      },
                     ),
-                  ),
-                  SizedBox(height: screenHeight * 0.01), // space between 'Image Dimensions' text and options
-                  Wrap(
-                    spacing: screenWidth * 0.01,
-                    runSpacing: 8.0,
-                    children: [
-                      ToggleButtons(
-                        isSelected: isSelected,
-                        onPressed: (index) {
-                          setState(() {
-                            // Ensure only one button is selected
-                            for (int i = 0; i < isSelected.length; i++) {
-                              isSelected[i] = i == index;
-                            }
-                            // Update dimensions
-                            if (index == 0) {
-                              desiredImageWidth = 1536;
-                              desiredImageHeight = 864;
-                            } else if (index == 1) {
-                              desiredImageWidth = 1024;
-                              desiredImageHeight = 1024;
-                            } else if (index == 2) {
-                              desiredImageWidth = 864;
-                              desiredImageHeight = 1536;
-                            }
-                          });
-                        },
-                        selectedColor: Colors.white, // selected text color
-                        fillColor: Color(colorNum), // selected button color
-                        color: Colors.white, // unselected text color
-                        borderColor: Colors.grey,
-                        selectedBorderColor: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        children: const [
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text("16 x 9"),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text("10 x 10"),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text("9 x 16"),
+                    SizedBox(height: screenHeight * 0.03), // space between Text Box and 'Image Dimensions'
+                    Text(
+                      "Image Dimensions",
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: screenWidth * 0.04,
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.01), // space between 'Image Dimensions' text and options
+                    MediaQuery(
+                      data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                      child: Wrap(
+                        spacing: screenWidth * 0.01,
+                        runSpacing: 8.0,
+                        children: [
+                          ToggleButtons(
+                            isSelected: isSelected,
+                            onPressed: (index) {
+                              setState(() {
+                                // Ensure only one button is selected
+                                for (int i = 0; i < isSelected.length; i++) {
+                                  isSelected[i] = i == index;
+                                }
+                                // Update dimensions
+                                if (index == 0) {
+                                  desiredImageWidth = 1536;
+                                  desiredImageHeight = 864;
+                                } else if (index == 1) {
+                                  desiredImageWidth = 1024;
+                                  desiredImageHeight = 1024;
+                                } else if (index == 2) {
+                                  desiredImageWidth = 864;
+                                  desiredImageHeight = 1536;
+                                }
+                              });
+                            },
+                            selectedColor: Colors.white, // selected text color
+                            fillColor: Color(colorNum), // selected button color
+                            color: Colors.white, // unselected text color
+                            borderColor: Colors.grey,
+                            selectedBorderColor: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            constraints: const BoxConstraints(
+                              minWidth: 60,
+                              minHeight: 36,
+                              maxWidth: 60,
+                              maxHeight: 36,
+                            ),
+                            children: const [
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 0),
+                                child: Text("16 x 9"),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 0),
+                                child: Text("10 x 10"),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 0),
+                                child: Text("9 x 16"),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      SizedBox(height: screenHeight * 0.1), // space between Dimensions and 'Enter' Button
-                    ],
-                  ),
-                ],
+                    ),
+                    SizedBox(height: screenHeight * 0.05), // space between Dimensions and 'Generate AI Image' Button
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
@@ -1616,7 +1634,7 @@ class _PlayersPageState extends State<PlayersPage> {
                               ListTile(
                                 contentPadding: EdgeInsets.symmetric(horizontal: vw * 4),
                                 leading: Icon(Icons.tv_outlined, color: Colors.orange, size: vw * 7),
-                                title: Text("Screens", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
+                                title: Text("Screens", style: TextStyle(color: Colors.white, fontSize: vw * 4.5)),
                                 onTap: () {
                                   Navigator.pop(context);
                                   _showScreensPage(false);
@@ -1629,7 +1647,7 @@ class _PlayersPageState extends State<PlayersPage> {
                               ListTile( // Image Playlists Option
                                 contentPadding: EdgeInsets.symmetric(horizontal: vw * 4),
                                 leading: Icon(Icons.collections, color: Colors.orange, size: vw * 7),
-                                title: Text("Image Playlists", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
+                                title: Text("Image Playlists", style: TextStyle(color: Colors.white, fontSize: vw * 4.5)),
                                 onTap: () {
                                   Navigator.pop(context);
                                   _showPlaylistBottomSheet(context, loginUsername);
@@ -1645,7 +1663,7 @@ class _PlayersPageState extends State<PlayersPage> {
                                 data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
                                 child: ExpansionTile(
                                   leading: Icon(Icons.upload, color: Colors.orange, size: vw * 7),
-                                  title: Text("Upload Image", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
+                                  title: Text("Upload Image", style: TextStyle(color: Colors.white, fontSize: vw * 4.5)),
                                   iconColor: Colors.white,
                                   textColor: Colors.white,
                                   tilePadding: EdgeInsets.symmetric(horizontal: vw * 4),
@@ -1682,7 +1700,6 @@ class _PlayersPageState extends State<PlayersPage> {
                             ],
                           ),
                         ),
-                        // const Divider(color: Colors.white24, height: 1),
                         ListTile(
                           leading: Icon(Icons.logout, color: Colors.orange, size: vw * 5),
                           title: Text("Logout", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
@@ -1693,6 +1710,7 @@ class _PlayersPageState extends State<PlayersPage> {
                           dense: true,
                           shape: const ContinuousRectangleBorder(),
                         ),
+                        SizedBox(height: vh * 2), // paddding between 'logout' and bottom of screen
                       ],
                     ),
                   ),
@@ -1744,9 +1762,6 @@ class _PlayersPageState extends State<PlayersPage> {
                               borderRadius: BorderRadius.circular(10),
                               onTap: () {
                                 selectedPlayerName = dmbMediaPlayers[index].name;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text("${dmbMediaPlayers[index].name} Selected")),
-                                );
                                 _showScreensPage(true);
                               },
                               child: Ink(

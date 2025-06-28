@@ -383,9 +383,9 @@ publishSuccess(BuildContext context) {
 
   // set up the buttons
   Widget okButton = OutlinedButton(
-    child: const Text(
+    child: Text(
       "OK",
-      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: vw * 4),
     ),
     onPressed:(){
       Navigator.of(context).pop();
