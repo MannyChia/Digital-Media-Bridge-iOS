@@ -786,8 +786,8 @@ class _PlayersPageState extends State<PlayersPage> {
   Future<Map<String, dynamic>?> _getAIPhoto(
       String prompt, int width, int height,
       {String? prevImageID}) async {
-    String stableDiffusion = "aa77f04e-3eec-4034-9c07-d0f619684628";
-    String lucidRealism = "05ce0082-2d80-4a2d-8653-4d1c85e2418e";
+    final stableDiffusion = dotenv.env['STABLE_DIFFUSION_KEY']!;
+    final lucidRealism   = dotenv.env['LUCID_REALISM_KEY']!;
     if (!dotenv.isInitialized) {
       if (kDebugMode) {
         print("ENVIRONMENTAL VARIABLES NOT LOADED");
