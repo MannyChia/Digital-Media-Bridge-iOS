@@ -46,84 +46,92 @@ class _ScreensPageState extends State<ScreensPage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: _appBarBackBtn(context, screensPageTitle, screensPageSubTitle),
-      body: Stack(children: [
-        Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: NetworkImage(backgroundURL),
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-        Padding(
-            padding: EdgeInsets.only(top: vh * 16),
-            child: ListView.separated(
-              padding: EdgeInsets.only(
-                  top: vh * 2, bottom: vh * 2, left: vw * 3, right: vw * 3),
-              itemCount: dmbScreens.length,
-              itemBuilder: (BuildContext context, int index) {
-                return InkWell(
-                  onTap: () {
-                    if (screensPageTitle != "Available Screens") {
-                      if (selectedPlayerName != null) {
-                        confirmPublish(context, selectedPlayerName,
-                            dmbScreens[index].name);
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Select a Player First",
-                                style: TextStyle(fontSize: 20)),
-                            backgroundColor: Colors.redAccent,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                          ),
-                        );
-                      }
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Select a Player First",
-                              style: TextStyle(fontSize: 20)),
-                          backgroundColor: Colors.redAccent,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                        ),
-                      );
-                    }
-                  },
-                  customBorder: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Ink(
-                      decoration: BoxDecoration(
-                        color: Color(colorNum).withValues(alpha: 0.8),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      height: 75,
-                      width: double.infinity,
-                      child: Center(
-                        child: Text(
-                          dmbScreens[index].name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontSize: 20,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-              separatorBuilder: (context, index) => const Divider(
-                color: Colors.transparent,
+      body: Stack(
+          children: [
+            // background image
+            Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: NetworkImage(backgroundURL),
+                  fit: BoxFit.cover,
+                ),
               ),
-            ))
-      ]),
+            ),
+
+            // list of screens
+            Padding(
+                padding: EdgeInsets.only(top: vh * 16), // prevents overlap with appBar
+                child: ListView.separated(
+                  padding: EdgeInsets.only(top: vh * 2, bottom: vh * 2, left: vw * 3, right: vw * 3),
+                  itemCount: dmbScreens.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return InkWell(
+                      onTap: (){
+                        // only allow them to publish a screen if they have already selected a player
+                        if (screensPageTitle != "Available Screens") {
+                          if(selectedPlayerName != null) {
+                            confirmPublish(
+                                context, selectedPlayerName, dmbScreens[index].name);
+                          }
+                          else{  //NO MEDIA PLAYER SELECTED
+                            ///show the user (in a small pop-up) informing
+                            ///them that they don't have a player selected
+                            ScaffoldMessenger.of(context).clearSnackBars(); // Clear existing snackbars
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Select a Player First", style: TextStyle(fontSize: 20)),
+                                backgroundColor: Colors.redAccent,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                            );
+                          }
+                        }
+                        else { // tell the user to select a player first
+                          ScaffoldMessenger.of(context).clearSnackBars(); // Clear existing snackbars
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Select a Player First", style: TextStyle(fontSize: 20)),
+                              backgroundColor: Colors.redAccent,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                        }
+                      },
+                      customBorder: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Ink(
+                          decoration: BoxDecoration(
+                            color: Color(colorNum).withOpacity(0.8), // Background for screens buttons
+                            borderRadius: BorderRadius.circular(20), // Rounded corners
+                          ),
+                          height: 75,
+                          width: double.infinity,
+                          child: Center(
+                            child: Text(
+                              dmbScreens[index].name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontSize: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  separatorBuilder: (context, index) => const Divider( // makes the divider between the items invisible
+                    color: Colors.transparent,
+                  ),
+                )
+            )
+          ]
+      ),
     );
   }
 }

@@ -29,7 +29,6 @@ bool playersNoBackButton = true;
 
 class PlaylistSheet extends StatefulWidget {
   final String userEmail;
-
   const PlaylistSheet({super.key, required this.userEmail});
 
   @override
@@ -535,7 +534,8 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
 }
 
 class PlayersPage extends StatefulWidget {
-  const PlayersPage({super.key, this.mainPageTitle, this.mainPageSubTitle});
+  final String userEmail;
+  const PlayersPage({super.key, this.mainPageTitle, this.mainPageSubTitle, required this.userEmail});
 
   final String? mainPageTitle;
   final String? mainPageSubTitle;
@@ -552,6 +552,9 @@ class _PlayersPageState extends State<PlayersPage> {
   final TextEditingController _textFieldController = TextEditingController();
   final bool _isGenerating = false;
   String backgroundURL = dotenv.env['BACKGROUND_IMAGE_URL']!;
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
+
 
   @override
   void initState() {
@@ -957,24 +960,26 @@ class _PlayersPageState extends State<PlayersPage> {
     _showAIPromptDialog(prevImageID: prevImageID);
   }
 
-  Future<void> onSubmit(String imageUrl, String username) async {
+  Future<String> onSubmit(String imageUrl, String username, BuildContext dialogContext, GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey) async {
     try {
-      final response = await http.get(Uri.parse(imageUrl));
+      // Add timeout to HTTP request
+      final response = await http.get(Uri.parse(imageUrl)).timeout(Duration(seconds: 30), onTimeout: () {
+        throw TimeoutException("Image download timed out");
+      });
+
       if (response.statusCode != 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessengerKey.currentState?.showSnackBar(
           SnackBar(
-            content: Text("Failed to download image",
-                style: TextStyle(fontSize: 20)),
+            content: Text("Failed to download image: HTTP ${response.statusCode}", style: TextStyle(fontSize: 20)),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
         if (kDebugMode) {
-          print("ERROR ON onSubmit FUNCTION!");
+        print("ERROR ON onSubmit FUNCTION: HTTP ${response.statusCode}");
         }
-        return;
+        return "error";
       }
       final bytes = response.bodyBytes;
       final tempDir = await getTemporaryDirectory();
@@ -982,41 +987,78 @@ class _PlayersPageState extends State<PlayersPage> {
       final tempFile = File("${tempDir.path}/$filename");
       await tempFile.writeAsBytes(bytes);
       final result = await uploadImage(tempFile, username);
+      if (result is! Map<String, dynamic> || !result.containsKey('success') || !result.containsKey('message')) {
+        throw Exception("Invalid response from uploadImage");
+      }
       final bool success = result['success'] as bool;
+      final String message = result['message'] as String;
+
+      // Always delete the temp file
+      await tempFile.delete();
+
       if (success) {
-        await tempFile.delete();
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Row(mainAxisSize: MainAxisSize.min, children: [
-            Text("Image Saved to your Account", style: TextStyle(fontSize: 20)),
-            SizedBox(width: 8),
-            Icon(Icons.check_circle_outline, color: Colors.green),
-          ]),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-            side: BorderSide(
-              color: Colors.green,
-              width: 2,
+        scaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(
+            content: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text("Image Saved to your Account", style: TextStyle(fontSize: 20)),
+                SizedBox(width: 8),
+                Icon(Icons.check_circle_outline, color: Colors.green),
+              ],
+            ),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: BorderSide(color: Colors.green, width: 2),
             ),
           ),
-        ));
+        );
+        return "success";
+      } else {
+        // Show error dialog directly
+        await showDialog(
+          context: dialogContext,
+          barrierColor: const Color.fromARGB(128, 0, 0, 0),
+          builder: (_) => AlertDialog(
+            backgroundColor: const Color(0xFF1E1E1E),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text(
+              message.contains('20') ? "Upload Limit Reached" : "Upload Failed",
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            content: Text(
+              message.contains('20')
+                  ? "You cannot upload more than 20 images. Please delete one first."
+                  : message,
+              style: const TextStyle(color: Colors.white70),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text("OK", style: TextStyle(color: Colors.green)),
+              ),
+            ],
+          ),
+        );
+        return "too many images";
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      scaffoldMessengerKey.currentState?.showSnackBar(
         SnackBar(
           content: Text("Error: $e", style: TextStyle(fontSize: 20)),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
+      return "error";
     } finally {
-      Navigator.of(context).pop();
+      Navigator.of(dialogContext).pop();
     }
   }
 
-  void showLoadingCircle(BuildContext context) {
+  void showLoadingCircle(BuildContext context, {bool isGenerating = false}) {
     double screenWidth = MediaQuery.of(context).size.width;
     final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
     final int colorNum = int.parse(lightGreyTheme!, radix: 16);
@@ -1039,29 +1081,29 @@ class _PlayersPageState extends State<PlayersPage> {
                   const CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
                   ),
-                  SizedBox(height: screenWidth * 0.1),
-                  Text(
-                    "Generating Image...",
-                    style: TextStyle(
-                        color: Colors.white, fontSize: screenWidth * 0.05),
-                  ),
-                  const SizedBox(height: 10),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    style: TextButton.styleFrom(
-                      backgroundColor: Color(colorNum),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  if (isGenerating) ...[
+                    SizedBox(height: screenWidth * 0.1),
+                    Text(
+                      "Generating Image...",
+                      style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.05),
+                    ),
+                    const SizedBox(height: 10),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      style: TextButton.styleFrom(
+                        backgroundColor: Color(colorNum),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        "Cancel",
+                        style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.04),
                       ),
                     ),
-                    child: Text(
-                      "Cancel",
-                      style: TextStyle(
-                          color: Colors.white, fontSize: screenWidth * 0.04),
-                    ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -1071,65 +1113,81 @@ class _PlayersPageState extends State<PlayersPage> {
     );
   }
 
-  Future<void> _generateAndShowImage(
-      String inputPrompt, BuildContext dialogContext, int width, int height,
-      {String? prevImageID}) async {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height;
-    if (kDebugMode) {
-      print("Starting _generateAndShowImage with prompt: $inputPrompt");
-    }
-    Map<String?, dynamic>? aiImage;
+  Future<void> _generateAndShowImage(String inputPrompt, BuildContext dialogContext, int numLeft, int width, int height, {String? prevImageID}) async {
+    double screenWidth = MediaQuery.of(dialogContext).size.width;
+    double screenHeight = MediaQuery.of(dialogContext).size.height;
+
+    print("Starting _generateAndShowImage with prompt: $inputPrompt");
+
+    Map<String, dynamic>? aiImage; // Map to store the imageUrl and imageId
+
     if (prevImageID == null) {
-      if (kDebugMode) {
-        print("Calling _getAIPhoto just based on prompt");
-      }
+      print("Calling _getAIPhoto just based on prompt");
       aiImage = await _getAIPhoto(inputPrompt, width, height);
     } else {
-      if (kDebugMode) {
-        print("Calling _getAIPhoto based on prompt and prevImageID");
-      }
-      aiImage = await _getAIPhoto(inputPrompt, width, height,
-          prevImageID: prevImageID);
+      print("Calling _getAIPhoto based on prompt and prevImageID");
+      aiImage = await _getAIPhoto(inputPrompt, width, height, prevImageID: prevImageID);
     }
+
     String? imageUrl = aiImage?['image_url'];
     String? imageId = aiImage?['image_id'];
-    if (kDebugMode) {
-      print("Image generation result: URL=$imageUrl, ID=$imageId");
-    }
-    Navigator.of(dialogContext).pop();
+
+    print("Image generation result: URL=$imageUrl, ID=$imageId");
+    Navigator.of(dialogContext).pop(); // Dismiss the loading dialog
+
     if (imageUrl != null && imageId != null) {
-      ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(
-        content: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text("Image generated successfully", style: TextStyle(fontSize: 20)),
-          SizedBox(width: 8),
-          Icon(Icons.check_circle_outline, color: Colors.green),
-        ]),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: BorderSide(
-            color: Colors.green,
-            width: 2,
+      // decrement the number of images the user can generate
+      int newNumLeft = numLeft -1;
+
+      final setNumLeft = Uri.parse('https://www.digitalmediabridge.tv/screen-builder/assets/api/ai_images_track.php?type=set&email=${Uri.encodeComponent(widget.userEmail)}&count=$newNumLeft');
+      final response = await http.get(setNumLeft);
+      final data = jsonDecode(response.body);
+      print('Set Images Left Response: ${data.runtimeType}, Content: $data');
+
+      _scaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("Image generated successfully", style: TextStyle(fontSize: 20)),
+              SizedBox(width: 8),
+              Icon(Icons.check_circle_outline, color: Colors.green),
+            ],
+          ),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: BorderSide(color: Colors.green, width: 2),
           ),
         ),
-      ));
+      );
+
       try {
+        // Show image in slide-up bottom sheet
         await showModalBottomSheet(
-            // ADD SCROLL UP LINE (HANDLEBAR)
-            context: dialogContext,
-            backgroundColor: Colors.grey[900],
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            isScrollControlled: true,
-            builder: (BuildContext context) {
-              return Padding(
-                padding: const EdgeInsets.all(16),
-                child: SingleChildScrollView(
-                    child: Column(
+          context: dialogContext,
+          backgroundColor: Colors.grey[900],
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          isScrollControlled: true,
+          builder: (BuildContext context) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: SingleChildScrollView(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Handlebar for the bottom sheet
+                    Container(
+                      width: 40,
+                      height: 5,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[700],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
                     Text(
                       "AI Generated Image",
                       style: TextStyle(
@@ -1141,7 +1199,7 @@ class _PlayersPageState extends State<PlayersPage> {
                     SizedBox(height: screenHeight * 0.02),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: SizedBox(
+                      child: Container(
                         width: screenWidth * 0.9,
                         height: screenHeight * 0.6,
                         child: Image.network(
@@ -1151,15 +1209,12 @@ class _PlayersPageState extends State<PlayersPage> {
                             if (loadingProgress == null) return child;
                             return const Center(
                               child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.orange),
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
                               ),
                             );
                           },
                           errorBuilder: (context, error, stackTrace) {
-                            if (kDebugMode) {
-                              print("Error loading image: $error");
-                            }
+                            print("Error loading image: $error");
                             return const Text(
                               "Failed to load image",
                               style: TextStyle(color: Colors.white),
@@ -1177,7 +1232,7 @@ class _PlayersPageState extends State<PlayersPage> {
                             onNewPhoto();
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
+                            backgroundColor: Colors.black.withOpacity(0.7),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -1186,8 +1241,7 @@ class _PlayersPageState extends State<PlayersPage> {
                             children: [
                               Icon(Icons.edit, color: Colors.orange),
                               SizedBox(width: 8),
-                              Text("Try Again",
-                                  style: TextStyle(color: Colors.white)),
+                              Text("Try Again", style: TextStyle(color: Colors.white)),
                             ],
                           ),
                         ),
@@ -1199,8 +1253,7 @@ class _PlayersPageState extends State<PlayersPage> {
                       children: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(),
-                          child: const Text("Close",
-                              style: TextStyle(color: Colors.white)),
+                          child: const Text("Close", style: TextStyle(color: Colors.white)),
                         ),
                         const SizedBox(width: 10),
                         ElevatedButton(
@@ -1211,62 +1264,63 @@ class _PlayersPageState extends State<PlayersPage> {
                             ),
                           ),
                           onPressed: () async {
-                            onSubmit(imageUrl, loginUsername);
+                            Navigator.of(context).pop(); // Close the image preview dialog
+                            showLoadingCircle(dialogContext); // Show loading dialog
+                            await onSubmit(imageUrl, loginUsername, dialogContext, _scaffoldMessengerKey); // Call updated onSubmit
                           },
-                          child: Text("Save & Upload",
-                              style: TextStyle(color: Colors.white)),
+                          child: const Text("Save & Upload", style: TextStyle(color: Colors.white)),
                         ),
                       ],
                     ),
                     const SizedBox(height: 35),
                   ],
-                )),
-              );
-            });
-        if (kDebugMode) {
-          print("Image dialog shown successfully");
-        }
-      } catch (e) {
-        if (kDebugMode) {
-          print("Error showing image dialog: $e");
-        }
-        if (dialogContext.mounted) {
-          ScaffoldMessenger.of(dialogContext).showSnackBar(
-            SnackBar(
-              content: Text("Error displaying image: $e",
-                  style: TextStyle(fontSize: 20)),
-              backgroundColor: Colors.redAccent,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                ),
               ),
-            ),
-          );
-        }
+            );
+          },
+        );
+        print("Image dialog shown successfully");
       }
-    } else {
-      if (kDebugMode) {
-        print("Showing failure snack bar");
-      }
-      if (dialogContext.mounted) {
-        ScaffoldMessenger.of(dialogContext).showSnackBar(
+      catch (e) {
+        print("Error showing image dialog: $e");
+        _scaffoldMessengerKey.currentState?.showSnackBar(
           SnackBar(
-            content: Text("Failed to generate a valid image",
-                style: TextStyle(fontSize: 20)),
+            content: Text("Error displaying image: $e", style: TextStyle(fontSize: 20)),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
       }
+    }
+    else {
+      _scaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text("Failed to generate a valid image", style: TextStyle(fontSize: 20)),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
     }
   }
 
   Future<void> _showAIPromptDialog({String? prevImageID}) async {
     double screenHeight = MediaQuery.of(context).size.height;
     final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
-    final int colorNum = int.parse(lightGreyTheme!, radix: 16);
+    final int colorNum = int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
+
+    // get the number of AI Images this user has left
+    // Construct the URL
+    final numLeftURL = Uri.parse(
+      'https://www.digitalmediabridge.tv/screen-builder/assets/api/ai_images_track.php?type=get&email=${Uri.encodeComponent(widget.userEmail)}',
+    );
+
+    final response = await http.get(numLeftURL); // in the form ['12']
+    int numLeft = int.parse((response.body).substring(2,response.body.length -2)); // gets the num left by subsetting the string
+    print("Num Left: $numLeft");
+
+    // Set default dimensions (16x9)
     int desiredImageWidth = 1536;
     int desiredImageHeight = 864;
     List<bool> isSelected = [true, false, false];
@@ -1297,6 +1351,8 @@ class _PlayersPageState extends State<PlayersPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    Text("$numLeft Image Generations Remaining", style: TextStyle(color: Colors.white70, fontSize: screenWidth * 0.04)),
+                    SizedBox(height: screenHeight * 0.02),
                     TextFormField(
                       controller: _textFieldController,
                       style: TextStyle(color: Colors.white),
@@ -1323,6 +1379,7 @@ class _PlayersPageState extends State<PlayersPage> {
                       onFieldSubmitted: (value) async {
                         final prompt = value.trim();
                         if (prompt.isEmpty) {
+                          ScaffoldMessenger.of(context).clearSnackBars();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text("Please enter a prompt",
@@ -1335,11 +1392,23 @@ class _PlayersPageState extends State<PlayersPage> {
                           );
                           return;
                         }
-                        Navigator.of(context).pop();
-                        showLoadingCircle(dialogContext);
+                        if (prompt.length > 1500) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Prompt can be no more than 1500 characters", style: TextStyle(fontSize: 20)),
+                              backgroundColor: Colors.redAccent,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                          return;
+                        }
+                        Navigator.of(context).pop(); // Close prompt dialog
+                        showLoadingCircle(dialogContext, isGenerating: true);
                         await _generateAndShowImage(
                           prompt,
                           dialogContext,
+                          numLeft,
                           desiredImageWidth,
                           desiredImageHeight,
                           prevImageID: prevImageID,
@@ -1421,6 +1490,7 @@ class _PlayersPageState extends State<PlayersPage> {
                   onPressed: () async {
                     final prompt = _textFieldController.text.trim();
                     if (prompt.isEmpty) {
+                      ScaffoldMessenger.of(context).clearSnackBars();
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text("Please enter a prompt",
@@ -1433,11 +1503,34 @@ class _PlayersPageState extends State<PlayersPage> {
                       );
                       return;
                     }
-                    Navigator.of(context).pop();
-                    showLoadingCircle(dialogContext);
+                    if (prompt.length > 1500) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("Prompt can be no longer than 1500 characters", style: TextStyle(fontSize: 20)),
+                          backgroundColor: Colors.redAccent,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      );
+                      return;
+                    }
+                    if (numLeft <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("AI Image Generation Limit Reached", style: TextStyle(fontSize: 20)),
+                          backgroundColor: Colors.redAccent,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      );
+                      return;
+                    }
+                    Navigator.of(context).pop(); // Close prompt dialog
+                    showLoadingCircle(dialogContext, isGenerating: true);
                     await _generateAndShowImage(
                       prompt,
                       dialogContext,
+                      numLeft,
                       desiredImageWidth,
                       desiredImageHeight,
                       prevImageID: prevImageID,
