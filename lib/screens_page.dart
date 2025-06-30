@@ -90,6 +90,7 @@ class _ScreensPageState extends State<ScreensPage> {
                           else{  //NO MEDIA PLAYER SELECTED
                             ///show the user (in a small pop-up) informing
                             ///them that they don't have a player selected
+                            ScaffoldMessenger.of(context).clearSnackBars(); // Clear existing snackbars
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text("Select a Player First", style: TextStyle(fontSize: 20)),
@@ -101,6 +102,7 @@ class _ScreensPageState extends State<ScreensPage> {
                           }
                         }
                         else { // tell the user to select a player first
+                          ScaffoldMessenger.of(context).clearSnackBars(); // Clear existing snackbars
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text("Select a Player First", style: TextStyle(fontSize: 20)),

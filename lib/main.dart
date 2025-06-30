@@ -456,6 +456,7 @@ class _HomePageState extends State<HomePage> {
       body: PlayersPage(
         mainPageTitle: "Media Players",
         mainPageSubTitle: "Select Player",
+        userEmail: loginUsername,
       ),
     );
   }
