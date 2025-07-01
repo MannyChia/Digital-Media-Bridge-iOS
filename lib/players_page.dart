@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -1117,7 +1118,9 @@ class _PlayersPageState extends State<PlayersPage> {
     double screenWidth = MediaQuery.of(dialogContext).size.width;
     double screenHeight = MediaQuery.of(dialogContext).size.height;
 
-    print("Starting _generateAndShowImage with prompt: $inputPrompt");
+    if (kDebugMode) {
+      print("Starting _generateAndShowImage with prompt: $inputPrompt");
+    }
 
     Map<String, dynamic>? aiImage; // Map to store the imageUrl and imageId
 
@@ -1316,9 +1319,23 @@ class _PlayersPageState extends State<PlayersPage> {
       'https://www.digitalmediabridge.tv/screen-builder/assets/api/ai_images_track.php?type=get&email=${Uri.encodeComponent(widget.userEmail)}',
     );
 
-    final response = await http.get(numLeftURL); // in the form ['12']
-    int numLeft = int.parse((response.body).substring(2,response.body.length -2)); // gets the num left by subsetting the string
-    print("Num Left: $numLeft");
+    final response = await http.get(numLeftURL);
+    int numLeft;
+    try {
+      final List<dynamic> list = jsonDecode(response.body);
+
+      if (list.isEmpty || list.first == null || list.first.toString().isEmpty) {
+        numLeft = 20;
+      } else {
+        numLeft = int.tryParse(list.first.toString()) ?? 20;
+      }
+    } catch (e) {
+      debugPrint( '$e');
+      numLeft = 20;
+    }
+    if (kDebugMode) {
+      print("Num Left: $numLeft");
+    }
 
     // Set default dimensions (16x9)
     int desiredImageWidth = 1536;
@@ -1692,14 +1709,9 @@ class _PlayersPageState extends State<PlayersPage> {
                                       action = () => _showAIPromptDialog();
                                     }
                                     return ListTile(
-                                      leading: Icon(icon,
-                                          color: Colors.orange, size: vw * 4),
-                                      title: Text(opt,
-                                          style: TextStyle(
-                                              color: Colors.white70,
-                                              fontSize: vw * 5)),
-                                      contentPadding: EdgeInsets.symmetric(
-                                          horizontal: vw * 7),
+                                      leading: Icon(icon, color: Colors.orange, size: vw * 4),
+                                      title: Text(opt, style: TextStyle(color: Colors.white70, fontSize: vw * 5)),
+                                      contentPadding: EdgeInsets.symmetric(horizontal: vw * 7),
                                       onTap: () {
                                         Navigator.pop(context);
                                         action();
@@ -1716,11 +1728,8 @@ class _PlayersPageState extends State<PlayersPage> {
                           ),
                         ),
                         ListTile(
-                          leading: Icon(Icons.logout,
-                              color: Colors.orange, size: vw * 5),
-                          title: Text("Logout",
-                              style: TextStyle(
-                                  color: Colors.white, fontSize: vw * 5)),
+                          leading: Icon(Icons.logout, color: Colors.orange, size: vw * 5),
+                          title: Text("Logout", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
                           onTap: () {
                             Navigator.pop(context);
                             _userLogout();
@@ -1728,7 +1737,7 @@ class _PlayersPageState extends State<PlayersPage> {
                           dense: true,
                           shape: const ContinuousRectangleBorder(),
                         ),
-                        SizedBox(height: vh * 2),
+                        SizedBox(height: vh * 2), // paddding between 'logout' and bottom of screen
                       ],
                     ),
                   ),
@@ -1742,9 +1751,9 @@ class _PlayersPageState extends State<PlayersPage> {
                   image: NetworkImage(
                     backgroundURL.isNotEmpty
                         ? backgroundURL
-                        : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?fit=crop&w=1536&h=864',
+                        : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?fit=crop&w=1536&h=864', // Fallback image
                   ),
-                  fit: BoxFit.cover,
+                  fit: BoxFit.cover, // Adjusts image to cover the entire background
                   onError: (exception, stackTrace) {
                     if (kDebugMode) {
                       print('Failed to load background image: $exception');
@@ -1755,11 +1764,7 @@ class _PlayersPageState extends State<PlayersPage> {
               child: RefreshIndicator(
                 onRefresh: _refreshData,
                 child: ListView.separated(
-                  padding: EdgeInsets.only(
-                      top: vh * 2,
-                      left: vw * 6,
-                      right: vw * 6,
-                      bottom: vh * 1.5),
+                  padding: EdgeInsets.only(top: vh * 2, left: vw * 6, right: vw * 6, bottom: vh * 1.5),
                   itemCount: dmbMediaPlayers.length,
                   physics: const AlwaysScrollableScrollPhysics(),
                   itemBuilder: (BuildContext context, int index) {
@@ -1776,17 +1781,16 @@ class _PlayersPageState extends State<PlayersPage> {
                               borderRadius: BorderRadius.circular(10),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.white.withValues(alpha: 0.3),
-                                  spreadRadius: 6,
-                                  blurRadius: 6,
+                                  color: Colors.white.withOpacity(0.3), // White shadow with opacity
+                                  spreadRadius: 6, // How far the shadow spreads
+                                  blurRadius: 6, // How blurry the shadow is
                                 ),
                               ],
                             ),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(10),
                               onTap: () {
-                                selectedPlayerName =
-                                    dmbMediaPlayers[index].name;
+                                selectedPlayerName = dmbMediaPlayers[index].name;
                                 _showScreensPage(true);
                               },
                               child: Ink(
@@ -1803,8 +1807,7 @@ class _PlayersPageState extends State<PlayersPage> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
                                           Text(
                                             dmbMediaPlayers[index].name,
@@ -1817,14 +1820,11 @@ class _PlayersPageState extends State<PlayersPage> {
                                         ],
                                       ),
                                       Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
                                           _checkPlayerStatus(index)
-                                              ? _activeScreenText(
-                                                  context, index, vw)
-                                              : _inActiveScreenText(
-                                                  context, index, vw),
+                                              ? _activeScreenText(context, index, vw)
+                                              : _inActiveScreenText(context, index, vw),
                                         ],
                                       ),
                                     ],
@@ -1837,23 +1837,27 @@ class _PlayersPageState extends State<PlayersPage> {
                       ),
                     );
                   },
-                  separatorBuilder: (context, index) =>
-                      const Divider(color: Colors.transparent),
+                  separatorBuilder: (context, index) => const Divider(color: Colors.transparent), // dividers between players
                 ),
               ),
             ),
-          )),
+          )
+      ),
     );
   }
 }
 
+///**** This is the 'App bar' to the players tab when you don't want
+/// to show a 'back' btn
 PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
+  // Calculate viewport units
   final double vw = MediaQuery.of(context).size.width / 100;
   final double vh = MediaQuery.of(context).size.height / 100;
+
   return PreferredSize(
-    preferredSize: Size.fromHeight(vh * 11),
+    preferredSize: Size.fromHeight(vh * 11), // 11% of screen height
     child: AppBar(
-      backgroundColor: Colors.black..withValues(alpha: 0.8),
+      backgroundColor: Colors.black.withOpacity(0.8), // app bar background
       automaticallyImplyLeading: false,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1864,7 +1868,7 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.white,
-              fontSize: vw * 6,
+              fontSize: vw * 6, // Increase font size to 6% of smaller dimension
             ),
           ),
           Text(
@@ -1872,23 +1876,23 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
             style: TextStyle(
               fontStyle: FontStyle.italic,
               color: Colors.white,
-              fontSize: vw * 5.5,
+              fontSize: vw * 5.5, // Increase font size to 5% of smaller dimension
             ),
           ),
         ],
       ),
-      titleSpacing: vw * 4,
-      toolbarHeight: vh * 12,
+      titleSpacing: vw * 4, // Add padding to the left of the title (4% of screen width)
+      toolbarHeight: vh * 12, // Match toolbarHeight to preferredSize height
       actions: [
         Builder(
           builder: (context) => IconButton(
             icon: Icon(
               Icons.menu,
               color: Colors.white,
-              size: vw * 8,
+              size: vw * 8, // Increase icon size to 8% of smaller dimension
             ),
             onPressed: () => Scaffold.of(context).openEndDrawer(),
-            padding: EdgeInsets.all(vw * 2),
+            padding: EdgeInsets.all(vw * 2), // Add padding around icon
           ),
         ),
       ],
@@ -1896,6 +1900,9 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
   );
 }
 
+
+///**** As the list is being displayed use this object to show a
+/// player whose status is 'active'
 LinearGradient _gradientActiveMediaPlayer(BuildContext context) {
   return const LinearGradient(
     begin: AlignmentDirectional.topCenter,
@@ -1907,6 +1914,8 @@ LinearGradient _gradientActiveMediaPlayer(BuildContext context) {
   );
 }
 
+///**** As the list is being displayed use this object to show a
+/// player whose status is 'inactive'
 LinearGradient _gradientInActiveMediaPlayer(BuildContext context) {
   return const LinearGradient(
     begin: AlignmentDirectional.topCenter,
@@ -1918,9 +1927,12 @@ LinearGradient _gradientInActiveMediaPlayer(BuildContext context) {
   );
 }
 
+///*** As the list is being displayed, show a (slightly) different
+/// text (label) to the user for players that are active vs. inactive
 Text _activeScreenText(BuildContext context, pIndex, vw) {
-  return Text(
-      "${dmbMediaPlayers[pIndex].status} - Screen: ${dmbMediaPlayers[pIndex].currentScreen}",
+  return Text("${dmbMediaPlayers[pIndex]
+      .status} - Screen: ${dmbMediaPlayers[pIndex]
+      .currentScreen}",
       style: TextStyle(
           fontSize: vw * 4,
           fontStyle: FontStyle.italic,
@@ -1928,10 +1940,12 @@ Text _activeScreenText(BuildContext context, pIndex, vw) {
 }
 
 Text _inActiveScreenText(BuildContext context, pIndex, vw) {
-  return Text(
-      "${dmbMediaPlayers[pIndex].status} - Screen: ${dmbMediaPlayers[pIndex].currentScreen}",
+  return Text("${dmbMediaPlayers[pIndex]
+      .status} - Screen: ${dmbMediaPlayers[pIndex]
+      .currentScreen}",
       style: TextStyle(
           fontSize: vw * 4,
           fontStyle: FontStyle.italic,
-          color: Colors.white70));
+          color: Colors.white70)
+  );
 }
