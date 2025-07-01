@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -24,9 +25,13 @@ Future<void> main() async {
   ]);
   try {
     await dotenv.load(fileName: ".env");
-    print("Loaded key: ${dotenv.env['LEONARDO_API_KEY']}");
+    if (kDebugMode) {
+      print("Loaded key: ${dotenv.env['LEONARDO_API_KEY']}");
+    }
   } catch (e) {
-    print("Error loading .env file: $e");
+    if (kDebugMode) {
+      print("Error loading .env file: $e");
+    }
   }
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.dumpErrorToConsole(details);
@@ -34,7 +39,9 @@ Future<void> main() async {
   runZonedGuarded(() {
     runApp(const DmbApp());
   }, (error, stackTrace) {
-    print("Caught zoned error: $error");
+    if (kDebugMode) {
+      print("Caught zoned error: $error");
+    }
   });
 }
 
