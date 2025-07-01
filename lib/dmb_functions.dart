@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import './main.dart';
+import 'package:mime/mime.dart';
 import './players_page.dart';
 import './screens_page.dart';
 import 'package:flutter/material.dart';
@@ -68,10 +69,19 @@ Future<List<String>> fetchAllUserImages(String userEmail) async {
   }
 }
 
-Future<Map<String, dynamic>> uploadImage(
-    File imageFile, String username) async {
-  var uri = Uri.parse(
-      'https://digitalmediabridge.tv/screenbuilder-server/api/upload');
+Future<Map<String, dynamic>> uploadImage(File imageFile, String username) async {
+  var uri = Uri.parse('https://digitalmediabridge.tv/screenbuilder-server/api/upload');
+
+  // get imageFile type
+  String? mimeType = lookupMimeType(imageFile.path);
+
+  // split mimeType into type and subtype
+  String? type = mimeType?.split('/')[0];
+  String? subtype = mimeType?.split('/')[1];
+
+  print("TYPE: $type");
+  print("SUBTYPE: $subtype");
+
   var request = http.MultipartRequest('POST', uri)
     ..fields['filetype'] = 'images'
     ..fields['username'] = username
@@ -79,7 +89,7 @@ Future<Map<String, dynamic>> uploadImage(
       await http.MultipartFile.fromPath(
         'file',
         imageFile.path,
-        contentType: MediaType('image', 'jpeg'),
+        contentType: MediaType(type!, subtype!),
       ),
     );
   try {
