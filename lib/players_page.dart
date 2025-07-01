@@ -1,52 +1,36 @@
-///
-///
-///
-/// *************************************************
-/// *** LIST OF AVAILABLE DMB PLAYERS
-/// *************************************************
-///
-// for camera and gallery
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-
 import './main.dart';
 import './screens_page.dart';
 import './dmb_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'Models/playlist_preview.dart';
-
-import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 dynamic activeDMBPlayers = 0;
 
-//Create custom class to hold the media player data
 class MediaPlayer {
-  //modal class for MediaPlayer object
   String name, status, currentScreen;
 
   MediaPlayer(
       {required this.name, required this.status, required this.currentScreen});
 }
 
-//Add necessary public vars
 List<MediaPlayer> dmbMediaPlayers = [];
 dynamic selectedPlayerName;
 
-//This var is used to determine whether we should show a 'refresh'
-//or a 'back' button when showing the user a list of DMB Media Players
 bool playersNoBackButton = true;
 
 class PlaylistSheet extends StatefulWidget {
   final String userEmail;
+
   const PlaylistSheet({super.key, required this.userEmail});
 
   @override
@@ -59,95 +43,93 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
   String _currentPlaylist = '';
   List<String> _playlistImages = [];
   Set<String> selectedImages = {};
-
   Set<String> originalPlaylistImages = {};
-
-
 
   void _openPlaylist(String screenName, String playlistName) async {
     try {
       _currentScreenName = screenName;
-      _currentPlaylist   = playlistName;
-
-      // 1) fetch all image URLs (unchanged)
-      final apiUrl =
-          'https://digitalmediabridge.tv/screen-builder/assets/api/'
+      _currentPlaylist = playlistName;
+      final apiUrl = 'https://digitalmediabridge.tv/screen-builder/assets/api/'
           'get_images.php?email=${Uri.encodeComponent(widget.userEmail)}';
       final response = await http.get(Uri.parse(apiUrl));
-      if (response.statusCode != 200) throw Exception('Failed to fetch image filenames');
+      if (response.statusCode != 200) {
+        throw Exception('Failed to fetch image filenames');
+      }
       final filenames = json.decode(response.body) as List<dynamic>;
       final allImageUrls = filenames
-          .map((f) => 'https://digitalmediabridge.tv/screen-builder/assets/content/'
-          '${Uri.encodeComponent(widget.userEmail)}/images/$f')
+          .map((f) =>
+              'https://digitalmediabridge.tv/screen-builder/assets/content/'
+              '${Uri.encodeComponent(widget.userEmail)}/images/$f')
           .toList();
-
-      // 2) load the .pl file under its screen folder
       final encodedScreen = Uri.encodeComponent(screenName);
-      final encodedPl     = Uri.encodeComponent(playlistName);
+      final encodedPl = Uri.encodeComponent(playlistName);
       final playlistFileUrl =
           'https://digitalmediabridge.tv/screen-builder/assets/content/'
           '${Uri.encodeComponent(widget.userEmail)}/others/'
           '$encodedScreen/$encodedPl';
-
       final playlistResponse = await http.get(Uri.parse(playlistFileUrl));
-      if (playlistResponse.statusCode != 200) throw Exception('Failed to load playlist');
-
+      if (playlistResponse.statusCode != 200) {
+        throw Exception('Failed to load playlist');
+      }
       final lines = const LineSplitter()
           .convert(playlistResponse.body)
           .where((l) => l.trim().isNotEmpty)
           .toList();
-      final selectedFilenames = lines.map((l) => l.split(',').first.trim()).toSet();
+      final selectedFilenames =
+          lines.map((l) => l.split(',').first.trim()).toSet();
       final preSelected = <String>{
         for (final url in allImageUrls)
           if (selectedFilenames.contains(url.split('/').last)) url
       };
-
-      originalPlaylistImages = preSelected.map((url) => url.split('/').last).toSet();
+      originalPlaylistImages =
+          preSelected.map((url) => url.split('/').last).toSet();
       setState(() {
         _playlistImages = allImageUrls;
-        selectedImages  = preSelected;
-        _pageIndex      = 1;
+        selectedImages = preSelected;
+        _pageIndex = 1;
       });
     } catch (e) {
-      print("ERROR: $e");
+      if (kDebugMode) {
+        print("ERROR: $e");
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Failed to load playlist images", style: TextStyle(fontSize: 20)),
+          content: Text("Failed to load playlist images",
+              style: TextStyle(fontSize: 20)),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
     }
   }
 
-// have to check if playlist is changed, if it didn't change in any circumstance then disable "save playlist" button
   bool _hasPlaylistChanged() {
-    final selectedFilenames = selectedImages.map((url) => url.split('/').last).toSet();
-    return selectedFilenames.isNotEmpty && !setEquals(selectedFilenames, originalPlaylistImages);
+    final selectedFilenames =
+        selectedImages.map((url) => url.split('/').last).toSet();
+    return selectedFilenames.isNotEmpty &&
+        !setEquals(selectedFilenames, originalPlaylistImages);
   }
 
-
-// this updates the preview image and playlist number using cache data
   Future<void> _refreshPlaylistPreviews() async {
     try {
       final updated = await fetchPlaylistPreviews(widget.userEmail);
       setState(() {
-        // remember data stored in cache UPDATES the current playlist previes when reloaded
         cachedPlaylistPreviews = updated;
       });
     } catch (e) {
-      print("Failed to refresh playlist previews: $e");
+      if (kDebugMode) {
+        print("Failed to refresh playlist previews: $e");
+      }
     }
   }
-
-
 
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
         expand: false,
-        initialChildSize: 0.6,
+        initialChildSize: 0.65,
         maxChildSize: 0.9,
         minChildSize: 0.3,
         builder: (context, scrollController) {
@@ -156,7 +138,6 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
               color: Color(0xFF121212),
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            // animation navigation between playlist and image view, it could change later
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: _pageIndex == 0
@@ -164,17 +145,11 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                   : _buildImageView(scrollController),
             ),
           );
-
-        }
-
-    );
+        });
   }
 
   Widget _buildPlaylistView(ScrollController scrollController) {
     final double vw = MediaQuery.of(context).size.width / 100;
-    final double vh = MediaQuery.of(context).size.height / 100;
-
-    // error check when there is no playlists
     if (cachedPlaylistPreviews.isEmpty) {
       return Column(
         key: const ValueKey(0),
@@ -182,7 +157,8 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
           const SizedBox(height: 12),
           Center(
             child: Container(
-              width: 40, height: 5,
+              width: 40,
+              height: 5,
               decoration: BoxDecoration(
                 color: Colors.grey[600],
                 borderRadius: BorderRadius.circular(10),
@@ -208,7 +184,6 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
             ),
           ),
           Divider(color: Colors.white70, thickness: 1, height: 1),
-
           const SizedBox(height: 8),
           Expanded(
             child: Center(
@@ -226,20 +201,19 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
       );
     }
 
-    // Nested group by screenName
     final Map<String, List<PlaylistPreview>> groups = {};
     for (final p in cachedPlaylistPreviews) {
       groups.putIfAbsent(p.screenName, () => []).add(p);
     }
     final entries = groups.entries.toList();
-
     return Column(
       key: const ValueKey(0),
       children: [
         const SizedBox(height: 12),
         Center(
           child: Container(
-            width: 40, height: 5,
+            width: 40,
+            height: 5,
             decoration: BoxDecoration(
               color: Colors.grey[600],
               borderRadius: BorderRadius.circular(10),
@@ -247,8 +221,6 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
           ),
         ),
         const SizedBox(height: 12),
-
-        //got to make header not scrollable later!!*
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
@@ -256,17 +228,16 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
               Text(
                 'Edit Image Playlists',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Colors.white70,
                   fontSize: vw * 7,
-                  fontWeight: FontWeight.w900,
                 ),
               ),
               SizedBox(width: 6),
-              Icon(Icons.playlist_add, color: Colors.white, size: vw * 7),
+              Icon(Icons.playlist_add, color: Colors.white70, size: vw * 7),
             ],
           ),
         ),
-
+        const SizedBox(height: 10),
         Expanded(
           child: ListView(
             controller: scrollController,
@@ -274,22 +245,28 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
             children: [
               for (var i = 0; i < entries.length; i++) ...[
                 if (i > 0) const SizedBox(height: 16),
-                // ... is a spread tool (jsyk)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-                  child: Text(
-                    entries[i].key,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: vw * 6, // size of each screen title (that has a playlist)
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 8.0, horizontal: 4.0),
+                  child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Screen: ",
+                          style: TextStyle(
+                              color: Colors.white70, fontSize: vw * 5.5),
+                        ),
+                        Text(
+                          entries[i].key,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: vw * 5.5,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        )
+                      ]),
                 ),
-
                 const SizedBox(height: 8),
-
-                // Grid layout
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -302,13 +279,12 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                   itemCount: entries[i].value.length,
                   itemBuilder: (context, idx) {
                     final preview = entries[i].value[idx];
-                    // If playlist ends with ".pl" then drop those 3 chars
                     final displayName = preview.name.endsWith('.pl')
                         ? preview.name.substring(0, preview.name.length - 3)
                         : preview.name;
-
                     return InkWell(
-                      onTap: () => _openPlaylist(preview.screenName, preview.name),
+                      onTap: () =>
+                          _openPlaylist(preview.screenName, preview.name),
                       borderRadius: BorderRadius.circular(12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,31 +297,38 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                                 color: Colors.grey[700],
                                 child: preview.previewImageUrl != null
                                     ? Image.network(
-                                  preview.previewImageUrl!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
-                                  const Center(child: Icon(Icons.broken_image, color: Colors.white70)),
-                                )
+                                        preview.previewImageUrl!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) =>
+                                            const Center(
+                                                child: Icon(Icons.broken_image,
+                                                    color: Colors.white70)),
+                                      )
                                     : Container(
-                                  color: Colors.grey[800],
-                                  child: const Center(
-                                    child: Icon(Icons.image_not_supported, color: Colors.white70, size: 40),
-                                  ),
-                                ),
+                                        color: Colors.grey[800],
+                                        child: const Center(
+                                          child: Icon(Icons.image_not_supported,
+                                              color: Colors.white70, size: 40),
+                                        ),
+                                      ),
                               ),
                             ),
                           ),
                           const SizedBox(height: 6),
-                          Text(
-                            '$displayName (${preview.itemCount})',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '$displayName (${preview.itemCount})',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: vw * 4,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ])
                         ],
                       ),
                     );
@@ -359,13 +342,10 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
     );
   }
 
-
   Widget _buildImageView(ScrollController scrollController) {
-    // Got to remove the “.pl” from the header title if present
     final displayTitle = _currentPlaylist.endsWith('.pl')
         ? _currentPlaylist.substring(0, _currentPlaylist.length - 3)
         : _currentPlaylist;
-
     return Stack(
       children: [
         Column(
@@ -419,7 +399,6 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                 itemBuilder: (context, index) {
                   final imageUrl = _playlistImages[index];
                   final isSelected = selectedImages.contains(imageUrl);
-
                   return GestureDetector(
                     onTap: () {
                       HapticFeedback.lightImpact();
@@ -443,7 +422,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                                 imageUrl,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) =>
-                                const Center(
+                                    const Center(
                                   child: Icon(Icons.broken_image,
                                       color: Colors.white70),
                                 ),
@@ -466,9 +445,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                           child: Container(
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: isSelected
-                                  ? Colors.greenAccent
-                                  : Colors.black45,
+                              color: isSelected ? Colors.green : Colors.black45,
                             ),
                             padding: const EdgeInsets.all(4),
                             child: Icon(
@@ -487,19 +464,19 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
           ],
         ),
         Positioned(
-          bottom: 12,
+          bottom: 60,
           left: 16,
           right: 16,
           child: ElevatedButton(
             onPressed: _hasPlaylistChanged() ? _onSavePressed : null,
             style: ElevatedButton.styleFrom(
               backgroundColor:
-              _hasPlaylistChanged() ? Colors.greenAccent : Colors.grey[700],
+                  _hasPlaylistChanged() ? Colors.green : Colors.grey[700],
               foregroundColor:
-              _hasPlaylistChanged() ? Colors.black : Colors.white54,
+                  _hasPlaylistChanged() ? Colors.black : Colors.white54,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
             child: const Text(
               'Save Playlist',
@@ -512,66 +489,60 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
     );
   }
 
-
-  // remember to save it in cache later.
-  // for future got to update locally first and let backend update gradually
   void _onSavePressed() async {
-    // Build bare filenames from selected URLs
-    final selectedFilenames = selectedImages
-        .map((url) => url.split('/').last)
-        .toList();
-
-    // Include screen folder in the playlistFileName
+    final selectedFilenames =
+        selectedImages.map((url) => url.split('/').last).toList();
     final fullFileName = '$_currentScreenName/$_currentPlaylist';
-
     final success = await updatePlaylist(
       userEmail: widget.userEmail,
       playlistFileName: fullFileName,
       selectedFilenames: selectedFilenames,
     );
-
     if (success) {
       originalPlaylistImages = selectedFilenames.toSet();
-      // Refresh previews so the counts & images update
       cachedPlaylistPreviews = await fetchPlaylistPreviews(widget.userEmail);
-      setState(() {}); // rebuild UI
-
+      setState(() {});
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("Playlist Updated", style: TextStyle(fontSize: 20)),
-              SizedBox(width: 8),
-              Icon(Icons.check_circle_outline, color: Colors.green),
-            ]
-          ),
+          content: Row(mainAxisSize: MainAxisSize.min, children: [
+            Text("Playlist Updated", style: TextStyle(fontSize: 20)),
+            SizedBox(width: 8),
+            Icon(Icons.check_circle_outline, color: Colors.green),
+          ]),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: BorderSide(
+              color: Colors.green,
+              width: 2,
+            ),
+          ),
         ),
       );
-
-      // close the dialog box
       Navigator.of(context).pop();
-
-    }
-    else {
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-       SnackBar(
-        content: Text("Failed to update playlist", style: TextStyle(fontSize: 20)),
-        backgroundColor: Colors.redAccent,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        SnackBar(
+          content:
+              Text("Failed to update playlist", style: TextStyle(fontSize: 20)),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
     }
   }
-
 }
-///
+
 class PlayersPage extends StatefulWidget {
-  //const PlayersPage({super.key, required this.pageTitle, required this.pageSubTitle});
-  const PlayersPage({super.key, this.mainPageTitle, this.mainPageSubTitle});
+  final String userEmail;
+
+  const PlayersPage(
+      {super.key,
+      this.mainPageTitle,
+      this.mainPageSubTitle,
+      required this.userEmail});
 
   final String? mainPageTitle;
   final String? mainPageSubTitle;
@@ -585,13 +556,12 @@ class _PlayersPageState extends State<PlayersPage> {
   late String mainPageSubTitle;
   File? _image;
   final ImagePicker _picker = ImagePicker();
-  TextEditingController _textFieldController = TextEditingController();
-  String? _generatedImageUrl;
-  bool _isGenerating = false; // Track image generation state
+  final TextEditingController _textFieldController = TextEditingController();
+  final bool _isGenerating = false;
   String backgroundURL = dotenv.env['BACKGROUND_IMAGE_URL']!;
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
+      GlobalKey<ScaffoldMessengerState>();
 
-  ///This 'override' function is called once when the class is loaded
-  ///(is used to update the pageTitle * subTitle)
   @override
   void initState() {
     super.initState();
@@ -604,55 +574,44 @@ class _PlayersPageState extends State<PlayersPage> {
   }
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
   int selectedIndex = 0;
 
   void _showScreensPage(bool onPlayer) {
-    if (onPlayer) { // user just clicked on a player
+    if (onPlayer) {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) =>
-              ScreensPage(
-                screensPageTitle: "Player: $selectedPlayerName",
-                screensPageSubTitle: "Select Screen to Publish",
-              ),
+          builder: (context) => ScreensPage(
+            screensPageTitle: "Player: $selectedPlayerName",
+            screensPageSubTitle: "Select Screen to Publish",
+          ),
         ),
       );
-    }
-    else { // user clicked 'My Screens' on Menu
+    } else {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) =>
-              ScreensPage(
-                screensPageTitle: "Available Screens",
-                screensPageSubTitle: "Return to Menu to Select Player",
-              ),
+          builder: (context) => ScreensPage(
+            screensPageTitle: "Available Screens",
+            screensPageSubTitle: "Return to Menu to Select Player",
+          ),
         ),
       );
     }
   }
 
-  /// returns true if player status at given index is active, false otherwise
   bool _checkPlayerStatus(int index) {
     return dmbMediaPlayers[index].status == "Active";
   }
 
-  /// logs user out of their account
   void _userLogout() {
-    confirmLogout(context); //*** CONFIRM USER LOGOUT (function is in: dmb_functions.dart)
+    confirmLogout(context);
   }
 
-  //Call this when the user pulls down the screen
   Future<void> _refreshData() async {
     try {
-      //Go to the DMB server to get an updated list of players
-      getUserData("$loginUsername", "$loginPassword", "players-refresh").then((result) {
-        //*** If the return value is a string, then there was an error
-        // getting the data, so don't do anything.
-        // Otherwise, should be Ok to set the
-        // dmbMediaPlayers var with the new data
+      getUserData("$loginUsername", "$loginPassword", "players-refresh")
+          .then((result) {
         if (result.runtimeType != String) {
           setState(() {
             dmbMediaPlayers = result;
@@ -660,21 +619,16 @@ class _PlayersPageState extends State<PlayersPage> {
             mainPageSubTitle = "Select Player";
           });
         }
+      });
+    } catch (err) {
+      if (kDebugMode) {
+        print("Error refreshing data");
       }
-      );
-    }
-    catch (err) {
-      print("Error refreshing data");
     }
   }
 
-  // change from pop up dialog to a sheet to make consistent ui throughout
-  // remember your future, async
   Future<void> _showUploadSheet(File imageFile) async {
-    // save screen width and height
-    double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
-
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.grey[900],
@@ -683,7 +637,8 @@ class _PlayersPageState extends State<PlayersPage> {
       ),
       isScrollControlled: true,
       builder: (_) => Padding(
-        padding: MediaQuery.of(context).viewInsets.add(const EdgeInsets.all(16)),
+        padding:
+            MediaQuery.of(context).viewInsets.add(const EdgeInsets.all(16)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -698,7 +653,10 @@ class _PlayersPageState extends State<PlayersPage> {
             ),
             const Text(
               "Upload Image to Account",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white),
             ),
             const SizedBox(height: 12),
             ClipRRect(
@@ -720,32 +678,37 @@ class _PlayersPageState extends State<PlayersPage> {
               children: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text("Close", style: TextStyle(color: Colors.white)),
+                  child: const Text("Close",
+                      style: TextStyle(color: Colors.white)),
                 ),
                 const SizedBox(width: 10),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.greenAccent,
-                    foregroundColor: Colors.black,
+                    backgroundColor: Colors.green,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onPressed: () async {
                     Navigator.of(context).pop();
-
                     final result = await uploadImage(imageFile, loginUsername);
-
                     final bool success = result['success'] as bool;
                     final String message = result['message'] as String;
-
                     if (!success) {
                       showDialog(
                         context: context,
                         barrierColor: const Color.fromARGB(128, 0, 0, 0),
                         builder: (_) => AlertDialog(
                           backgroundColor: const Color(0xFF1E1E1E),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
                           title: Text(
-                            message.contains('20') ? "Upload Limit Reached" : "Upload Failed",
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            message.contains('20')
+                                ? "Upload Limit Reached"
+                                : "Upload Failed",
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
                           ),
                           content: Text(
                             message.contains('20')
@@ -756,39 +719,37 @@ class _PlayersPageState extends State<PlayersPage> {
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.of(context).pop(),
-                              child: const Text("OK", style: TextStyle(color: Colors.greenAccent)),
+                              child: const Text("OK",
+                                  style: TextStyle(color: Colors.green)),
                             ),
                           ],
                         ),
                       );
-                    }
-                    else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(message, style: TextStyle(fontSize: 20)),
-                                SizedBox(width: 8),
-                                Icon(Icons.check_circle_outline, color: Colors.green),
-                              ]
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        )
-                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Text(message, style: TextStyle(fontSize: 20)),
+                          SizedBox(width: 8),
+                          Icon(Icons.check_circle_outline, color: Colors.green),
+                        ]),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ));
                     }
                   },
-                  child: const Text("Upload"),
+                  child: const Text("Upload",
+                      style: TextStyle(color: Colors.white)),
                 ),
-                SizedBox(height: 20) // extra space between buttons and bottom of screen
               ],
             ),
+            SizedBox(height: screenHeight * 0.03)
           ],
         ),
       ),
     );
   }
+
   Future<void> _takePhoto() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
@@ -809,11 +770,9 @@ class _PlayersPageState extends State<PlayersPage> {
     }
   }
 
-  Future<void> _showPlaylistBottomSheet(BuildContext context, String userEmail) async {
-    // 1) Ensure we've preloaded the playlist data
+  Future<void> _showPlaylistBottomSheet(
+      BuildContext context, String userEmail) async {
     await preloadPlaylistPreviews(userEmail);
-
-    // 2) Open the bottom sheet (it will render "No current playlist" itself if the list is empty)
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -823,145 +782,141 @@ class _PlayersPageState extends State<PlayersPage> {
       ),
       builder: (context) => PlaylistSheet(userEmail: userEmail),
     );
-
-    // 3) When the sheet closes, refresh the cached previews for next time
     try {
       cachedPlaylistPreviews = await fetchPlaylistPreviews(userEmail);
       hasLoadedPlaylistPreviews = true;
     } catch (e) {
-      print("Failed to refresh playlist previews: $e");
+      if (kDebugMode) {
+        print("Failed to refresh playlist previews: $e");
+      }
     }
   }
 
-  /// generates photo using Leonardo.ai API key
-  /// edit this function if we change services (Leonardo, Open AI, etc)
-  Future<Map<String, dynamic>?> _getAIPhoto(String prompt, int width, int height, {String? prevImageID}) async {
-    // model IDs
-    String stable_diffusion = "aa77f04e-3eec-4034-9c07-d0f619684628";
-    String lucid_realism = "05ce0082-2d80-4a2d-8653-4d1c85e2418e";
-    String kino_XL = "aa77f04e-3eec-4034-9c07-d0f619684628";
-    String lightning_XL = "b24e16ff-06e3-43eb-8d33-4416c2d75876";
-
+  Future<Map<String, dynamic>?> _getAIPhoto(
+      String prompt, int width, int height,
+      {String? prevImageID}) async {
+    final stableDiffusion = dotenv.env['STABLE_DIFFUSION_KEY']!;
+    final lucidRealism = dotenv.env['LUCID_REALISM_KEY']!;
     if (!dotenv.isInitialized) {
-      print("ENVIRONMENTAL VARIABLES NOT LOADED");
+      if (kDebugMode) {
+        print("ENVIRONMENTAL VARIABLES NOT LOADED");
+      }
     }
-
-    final apiKey = dotenv.env['LEONARDO_API_KEY_2']; // gets the API key, stored in the private .env file
-
+    final apiKey = dotenv.env['LEONARDO_API_KEY_2'];
     if (apiKey == null) {
-      print("API KEY NOT FOUND IN .env FILE");
+      if (kDebugMode) {
+        print("API KEY NOT FOUND IN .env FILE");
+      }
     }
-
     final url = Uri.parse('https://cloud.leonardo.ai/api/rest/v1/generations');
-
-    // headers for API call
     final headers = {
       'Authorization': 'Bearer $apiKey',
       'Accept': 'application/json',
       'Content-Type': 'application/json',
     };
-    String body = ""; // define based on argument count
-
-    // if prevUrl is not passed in, generate photo just based off prompt
+    String body = "";
     if (prevImageID == null) {
-      print("generating body in _getAIPhoto using just prompt");
+      if (kDebugMode) {
+        print("generating body in _getAIPhoto using just prompt");
+      }
       body = jsonEncode({
         'prompt': prompt,
-        'modelId': lucid_realism,
+        'modelId': lucidRealism,
         'num_images': 1,
         'width': width,
         'height': height,
       });
-    }
-
-    // else prevImageID was passed in, so generate photo based off prevUrl and prompt
-    else {
-      print("generating body in _getAIPhoto using prompt and prevImageID");
+    } else {
+      if (kDebugMode) {
+        print("generating body in _getAIPhoto using prompt and prevImageID");
+      }
       body = jsonEncode({
         'prompt': prompt,
-        'modelId': stable_diffusion,
+        'modelId': stableDiffusion,
         'init_image_id': prevImageID,
-        'init_strength': 0.4, // how closely to stick to given image (0-1)
+        'init_strength': 0.4,
         'num_images': 1,
         'width': width,
         'height': height,
-        'guidance_scale': 5,  // how closely to follow prompt (higher -> closer to prompt)
+        'guidance_scale': 5,
       });
     }
 
     try {
-      final response = await http.post(url, headers: headers, body: body); // call the API
-
-      // response code == 200 means successful response
+      final response = await http.post(url, headers: headers, body: body);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final generationId = data['sdGenerationJob']?['generationId'];
-
         if (generationId == null) {
-          print("No generation ID received");
+          if (kDebugMode) {
+            print("No generation ID received");
+          }
         }
-
-        final pollUrl = Uri.parse('https://cloud.leonardo.ai/api/rest/v1/generations/$generationId');
+        final pollUrl = Uri.parse(
+            'https://cloud.leonardo.ai/api/rest/v1/generations/$generationId');
         bool isCompleted = false;
-        String? imageUrl; // URL to the generated Image
-        String? imageId; // unique ID of the generated Image
-
-        // make continuous calls to the API until image is received or it times out
+        String? imageUrl;
+        String? imageId;
         for (int i = 0; i < 30; i++) {
           await Future.delayed(Duration(seconds: 1));
           final pollResponse = await http.get(pollUrl, headers: headers);
-
           if (pollResponse.statusCode == 200) {
             final pollData = jsonDecode(pollResponse.body);
             final status = pollData['generations_by_pk']?['status'];
-
-            if (status == 'COMPLETE') { // exit the loop - image has been received in full
+            if (status == 'COMPLETE') {
               isCompleted = true;
-              final generatedImage = pollData['generations_by_pk']?['generated_images']?[0]; // first image
-              imageUrl = generatedImage['url']?.toString(); // initialize imageUrl
-              imageId = generatedImage['id']?.toString(); // initialize imageID
+              final generatedImage =
+                  pollData['generations_by_pk']?['generated_images']?[0];
+              imageUrl = generatedImage['url']?.toString();
+              imageId = generatedImage['id']?.toString();
               break;
-            }
-            else if (status == 'FAILED') {
+            } else if (status == 'FAILED') {
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text("Image generation failed", style: TextStyle(fontSize: 20)),
+                    content: Text("Image generation failed",
+                        style: TextStyle(fontSize: 20)),
                     backgroundColor: Colors.redAccent,
                     behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
                 );
               }
               return null;
             }
-          }
-          else {
-            print('Poll Error: ${pollResponse.statusCode} - ${pollResponse.body}');
+          } else {
+            if (kDebugMode) {
+              print(
+                  'Poll Error: ${pollResponse.statusCode} - ${pollResponse.body}');
+            }
           }
         }
-
         if (!isCompleted || imageUrl == null) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text("Image generation timed out or no image received", style: TextStyle(fontSize: 20)),
+                content: Text("Image generation timed out or no image received",
+                    style: TextStyle(fontSize: 20)),
                 backgroundColor: Colors.redAccent,
                 behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
               ),
             );
           }
           return null;
         }
-
-        print('Generated Image URL: $imageUrl');
-        return {'image_id': imageId, 'image_url': imageUrl}; // return a Map with the imageId and imageUrl
-      }
-      else {
-        print('API Error: ${response.statusCode} - ${response.body}');
+        if (kDebugMode) {
+          print('Generated Image URL: $imageUrl');
+        }
+        return {'image_id': imageId, 'image_url': imageUrl};
+      } else {
+        if (kDebugMode) {
+          print('API Error: ${response.statusCode} - ${response.body}');
+        }
         String errorMsg;
-        switch (response.statusCode) { // identify the error
+        switch (response.statusCode) {
           case 401:
             errorMsg = 'Invalid API key. Please check your credentials.';
             break;
@@ -980,99 +935,153 @@ class _PlayersPageState extends State<PlayersPage> {
               content: Text(errorMsg, style: TextStyle(fontSize: 20)),
               backgroundColor: Colors.redAccent,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
           );
         }
         return null;
       }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Request Error: $e');
+      }
     }
-    catch (e) {
-      print('Request Error: $e');
-    }
+    return null;
   }
 
-  /// call this function when the user clicks 'New Photo' after generating one
   void onNewPhoto() {
-    Navigator.of(context).pop(); // Close the image dialog
+    Navigator.of(context).pop();
     setState(() {
-      _generatedImageUrl = null; // Clear the previous image
-      _textFieldController.clear(); // Clear the text field for new input
+      _textFieldController.clear();
     });
-    _showAIPromptDialog(); // let the user generate a new photo, forgetting the previous one
+    _showAIPromptDialog();
   }
 
-  /// call this function when the user clicks 'Edit Photo' after generating one
   void onEdit(String prevImageID) {
-    Navigator.of(context).pop(); // Close the image dialog
+    Navigator.of(context).pop();
     setState(() {
-      _generatedImageUrl = null; // Clear the previous image
-      _textFieldController.clear(); // Clear the text field for new input
+      _textFieldController.clear();
     });
-    _showAIPromptDialog(prevImageID: prevImageID); // let the user generate a new photo based off of a new prompt and the previous photo
-
+    _showAIPromptDialog(prevImageID: prevImageID);
   }
 
-  Future<void> onSubmit(String imageUrl, String username) async {
+  Future<String> onSubmit(
+      String imageUrl,
+      String username,
+      BuildContext dialogContext,
+      GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey) async {
     try {
-      final response = await http.get(Uri.parse(imageUrl));
+      final response = await http
+          .get(Uri.parse(imageUrl))
+          .timeout(Duration(seconds: 30), onTimeout: () {
+        throw TimeoutException("Image download timed out");
+      });
+
       if (response.statusCode != 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessengerKey.currentState?.showSnackBar(
           SnackBar(
-            content: Text("Failed to download image", style: TextStyle(fontSize: 20)),
+            content: Text(
+                "Failed to download image: HTTP ${response.statusCode}",
+                style: TextStyle(fontSize: 20)),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
-        print("ERROR ON onSubmit FUNCTION!");
-        return;
+        if (kDebugMode) {
+          print("ERROR ON onSubmit FUNCTION: HTTP ${response.statusCode}");
+        }
+        return "error";
       }
-
       final bytes = response.bodyBytes;
       final tempDir = await getTemporaryDirectory();
       final filename = path.basename(imageUrl);
       final tempFile = File("${tempDir.path}/$filename");
       await tempFile.writeAsBytes(bytes);
-
-      // Change upload and get back a Map<String, dynamic>
       final result = await uploadImage(tempFile, username);
+      if (result is! Map<String, dynamic> ||
+          !result.containsKey('success') ||
+          !result.containsKey('message')) {
+        throw Exception("Invalid response from uploadImage");
+      }
       final bool success = result['success'] as bool;
       final String message = result['message'] as String;
+      await tempFile.delete();
 
-      // delete the temp file if upload succeeded
       if (success) {
-        await tempFile.delete();
+        scaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(
+            content: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text("Image Saved to your Account",
+                    style: TextStyle(fontSize: 20)),
+                SizedBox(width: 8),
+                Icon(Icons.check_circle_outline, color: Colors.green),
+              ],
+            ),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: BorderSide(color: Colors.green, width: 2),
+            ),
+          ),
+        );
+        return "success";
+      } else {
+        await showDialog(
+          context: dialogContext,
+          barrierColor: const Color.fromARGB(128, 0, 0, 0),
+          builder: (_) => AlertDialog(
+            backgroundColor: const Color(0xFF1E1E1E),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text(
+              message.contains('20') ? "Upload Limit Reached" : "Upload Failed",
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            content: Text(
+              message.contains('20')
+                  ? "You cannot upload more than 20 images. Please delete one first."
+                  : message,
+              style: const TextStyle(color: Colors.white70),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text("OK", style: TextStyle(color: Colors.green)),
+              ),
+            ],
+          ),
+        );
+        return "too many images";
       }
-    }
-    catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
+    } catch (e) {
+      scaffoldMessengerKey.currentState?.showSnackBar(
         SnackBar(
           content: Text("Error: $e", style: TextStyle(fontSize: 20)),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
+      return "error";
     } finally {
-      // Close the image dialog no matter what
-      Navigator.of(context).pop();
+      Navigator.of(dialogContext).pop();
     }
   }
 
-
-  /// show the loading circle between when user submits prompt to when photo is displayed
-  void showLoadingCircle(BuildContext context) {
-    // save screen width and height
+  void showLoadingCircle(BuildContext context, {bool isGenerating = false}) {
     double screenWidth = MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height;
-
     final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
-    final int colorNum = int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
-
+    final int colorNum = int.parse(lightGreyTheme!, radix: 16);
     showDialog(
       context: context,
-      barrierDismissible: false, // Prevents tapping outside to dismiss
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return Dialog(
           backgroundColor: Colors.transparent,
@@ -1086,30 +1095,34 @@ class _PlayersPageState extends State<PlayersPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const CircularProgressIndicator( // loading button
+                  const CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
                   ),
-                  SizedBox(height: screenWidth * 0.1),
-                  Text(
-                    "Generating Image...",
-                    style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.05),
-                  ),
-                  const SizedBox(height: 10),
-                  TextButton( // cancel button
-                    onPressed: () {
-                      Navigator.of(context).pop(); // Close loading dialog
-                    },
-                    style: TextButton.styleFrom(
-                      backgroundColor: Color(colorNum),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  if (isGenerating) ...[
+                    SizedBox(height: screenWidth * 0.1),
+                    Text(
+                      "Generating Image...",
+                      style: TextStyle(
+                          color: Colors.white, fontSize: screenWidth * 0.05),
+                    ),
+                    const SizedBox(height: 10),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      style: TextButton.styleFrom(
+                        backgroundColor: Color(colorNum),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        "Cancel",
+                        style: TextStyle(
+                            color: Colors.white, fontSize: screenWidth * 0.04),
                       ),
                     ),
-                    child: Text(
-                      "Cancel",
-                      style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.04),
-                    ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -1119,196 +1132,263 @@ class _PlayersPageState extends State<PlayersPage> {
     );
   }
 
-  /// helper function to create and display the image
-  Future<void> _generateAndShowImage(String inputPrompt, BuildContext dialogContext, int width, int height, {String? prevImageID}) async {
-    // save screen width and height
-    double screenWidth = MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height;
+  Future<void> _generateAndShowImage(String inputPrompt,
+      BuildContext dialogContext, int numLeft, int width, int height,
+      {String? prevImageID}) async {
+    double screenWidth = MediaQuery.of(dialogContext).size.width;
+    double screenHeight = MediaQuery.of(dialogContext).size.height;
 
-    print("Starting _generateAndShowImage with prompt: $inputPrompt");
-
-    Map<String?, dynamic>? ai_image; // map that stores the ImageUrl and ImageID
-
-    if (prevImageID == null) { // generate just based off prompt
-      print("Calling _getAIPhoto just based on prompt");
-      ai_image = await _getAIPhoto(inputPrompt, width, height);
+    if (kDebugMode) {
+      print("Starting _generateAndShowImage with prompt: $inputPrompt");
     }
-    else { // generate based off prompt and the previous Image
-      print("Calling _getAIPhoto based on prompt and prevImageID");
-      ai_image = await _getAIPhoto(inputPrompt, width, height, prevImageID: prevImageID);
-    }
-    String? imageUrl = ai_image?['image_url'];
-    String? imageId = ai_image?['image_id'];
 
-    print("Image generation result: URL=$imageUrl, ID=$imageId");
-    Navigator.of(dialogContext).pop(); // Dismiss the loading dialog
+    Map<String, dynamic>? aiImage;
+
+    if (prevImageID == null) {
+      if (kDebugMode) {
+        print("Calling _getAIPhoto just based on prompt");
+      }
+      aiImage = await _getAIPhoto(inputPrompt, width, height);
+    } else {
+      if (kDebugMode) {
+        print("Calling _getAIPhoto based on prompt and prevImageID");
+      }
+      aiImage = await _getAIPhoto(inputPrompt, width, height,
+          prevImageID: prevImageID);
+    }
+
+    String? imageUrl = aiImage?['image_url'];
+    String? imageId = aiImage?['image_id'];
+
+    if (kDebugMode) {
+      print("Image generation result: URL=$imageUrl, ID=$imageId");
+    }
+    Navigator.of(dialogContext).pop();
 
     if (imageUrl != null && imageId != null) {
-      ScaffoldMessenger.of(dialogContext).showSnackBar(
+      int newNumLeft = numLeft - 1;
+
+      final setNumLeft = Uri.parse(
+          'https://www.digitalmediabridge.tv/screen-builder/assets/api/ai_images_track.php?type=set&email=${Uri.encodeComponent(widget.userEmail)}&count=$newNumLeft');
+      final response = await http.get(setNumLeft);
+      final data = jsonDecode(response.body);
+      if (kDebugMode) {
+        print('Set Images Left Response: ${data.runtimeType}, Content: $data');
+      }
+
+      _scaffoldMessengerKey.currentState?.showSnackBar(
         SnackBar(
           content: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text("Image generated successfully", style: TextStyle(fontSize: 20)),
-                SizedBox(width: 8),
-                Icon(Icons.check_circle_outline, color: Colors.green),
-              ]
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("Image generated successfully",
+                  style: TextStyle(fontSize: 20)),
+              SizedBox(width: 8),
+              Icon(Icons.check_circle_outline, color: Colors.green),
+            ],
           ),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        )
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: BorderSide(color: Colors.green, width: 2),
+          ),
+        ),
       );
-      try {
-        // show image in slide up box
-        await showModalBottomSheet(
-            context: dialogContext,
-            backgroundColor: Colors.grey[900],
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            isScrollControlled: true,
-            builder: (BuildContext context) {
-              return Padding(
-                padding: const EdgeInsets.all(16.0), // padding on all sides
-                child: SingleChildScrollView(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: screenHeight * 0.9,
-                      maxWidth: screenWidth * 0.9,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "AI Generated Image",
-                          style: TextStyle(
-                            fontSize: screenWidth * 0.06,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(height: screenHeight * 0.02),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            width: screenWidth * 0.9,
-                            height: screenHeight * 0.6,
-                            child: Image.network(
-                              imageUrl,
-                              fit: BoxFit.contain, // Ensures the image fits within the specified dimensions
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return const Center(
-                                  child: CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
-                                  ),
-                                );
-                              },
-                              errorBuilder: (context, error, stackTrace) {
-                                print("Error loading image: $error");
-                                return const Text(
-                                  "Failed to load image",
-                                  style: TextStyle(color: Colors.white),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
 
-                        SizedBox(height: screenHeight * 0.02),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                onNewPhoto();
-                              },
-                              child: const Row(
-                                children: [
-                                  Icon(Icons.edit, color: Colors.orange),
-                                  SizedBox(width: 8),
-                                  Text("Try Again"),
-                                ],
+      try {
+        await showModalBottomSheet(
+          context: dialogContext,
+          backgroundColor: Colors.grey[900],
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          isScrollControlled: true,
+          builder: (BuildContext context) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 5,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[700],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    Text(
+                      "AI Generated Image",
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.07,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: screenWidth * 0.9,
+                        height: screenHeight * 0.6,
+                        child: Image.network(
+                          imageUrl,
+                          fit: BoxFit.contain,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return const Center(
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.orange),
                               ),
-                            ),
-                          ],
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            if (kDebugMode) {
+                              print("Error loading image: $error");
+                            }
+                            return const Text(
+                              "Failed to load image",
+                              style: TextStyle(color: Colors.white),
+                            );
+                          },
                         ),
-                        const SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: const Text("Close", style: TextStyle(color: Colors.white)),
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            onNewPhoto();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black.withValues(alpha: 0.7),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            const SizedBox(width: 10),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.greenAccent),
-                              onPressed: () async {
-                                onSubmit(imageUrl, loginUsername);
-                              },
-                              child: const Text("Save & Upload"),
-                            ),
-                          ],
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.edit, color: Colors.orange),
+                              SizedBox(width: 8),
+                              Text("Try Again",
+                                  style: TextStyle(color: Colors.white)),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 25),
                       ],
                     ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text("Close",
+                              style: TextStyle(color: Colors.white)),
+                        ),
+                        const SizedBox(width: 10),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: () async {
+                            Navigator.of(context)
+                                .pop();
+                            showLoadingCircle(
+                                dialogContext);
+                            await onSubmit(
+                                imageUrl,
+                                loginUsername,
+                                dialogContext,
+                                _scaffoldMessengerKey);
+                          },
+                          child: const Text("Save & Upload",
+                              style: TextStyle(color: Colors.white)),
+                        ),
+                      ],
                     ),
-                  ),
-              );
-            }
+                    const SizedBox(height: 35),
+                  ],
+                ),
+              ),
+            );
+          },
         );
-        print("Image dialog shown successfully");
-      }
-      catch (e) {
-        print("Error showing image dialog: $e");
-        if (dialogContext.mounted) {
-          ScaffoldMessenger.of(dialogContext).showSnackBar(
-            SnackBar(
-              content: Text("Error displaying image: $e", style: TextStyle(fontSize: 20)),
-              backgroundColor: Colors.redAccent,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-          );
+        if (kDebugMode) {
+          print("Image dialog shown successfully");
         }
-      }
-    }
-    else {
-      print("Showing failure snackbar");
-      if (dialogContext.mounted) {
-        ScaffoldMessenger.of(dialogContext).showSnackBar(
+      } catch (e) {
+        if (kDebugMode) {
+          print("Error showing image dialog: $e");
+        }
+        _scaffoldMessengerKey.currentState?.showSnackBar(
           SnackBar(
-            content: Text("Failed to generate a valid image", style: TextStyle(fontSize: 20)),
+            content: Text("Error displaying image: $e",
+                style: TextStyle(fontSize: 20)),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
       }
+    } else {
+      _scaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text("Failed to generate a valid image",
+              style: TextStyle(fontSize: 20)),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
     }
   }
 
-  /// shows the prompt text box and takes in user input
   Future<void> _showAIPromptDialog({String? prevImageID}) async {
-    double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
-
     final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
-    final int colorNum = int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
+    final int colorNum =
+        int.parse(lightGreyTheme!, radix: 16);
+    final numLeftURL = Uri.parse(
+      'https://www.digitalmediabridge.tv/screen-builder/assets/api/ai_images_track.php?type=get&email=${Uri.encodeComponent(widget.userEmail)}',
+    );
 
-    // Set default dimensions (16x9)
+    final response = await http.get(numLeftURL);
+    int numLeft;
+    try {
+      final List<dynamic> list = jsonDecode(response.body);
+
+      if (list.isEmpty || list.first == null || list.first.toString().isEmpty) {
+        numLeft = 20;
+      } else {
+        numLeft = int.tryParse(list.first.toString()) ?? 20;
+      }
+    } catch (e) {
+      debugPrint('$e');
+      numLeft = 20;
+    }
+    if (kDebugMode) {
+      print("Num Left: $numLeft");
+    }
+
     int desiredImageWidth = 1536;
     int desiredImageHeight = 864;
-
-    // Initialize with 16x9 selected by default
     List<bool> isSelected = [true, false, false];
-
-    final dialogContext = context; // Store state context
+    final dialogContext = context;
     await showDialog(
       context: dialogContext,
       builder: (BuildContext context) {
+        final screenWidth = MediaQuery.of(context).size.width;
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             return AlertDialog(
@@ -1325,146 +1405,218 @@ class _PlayersPageState extends State<PlayersPage> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: _textFieldController,
-                    style: TextStyle(color: Colors.white),
-                    cursorColor: Colors.white,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Color(colorNum),
-                      hintText: 'Example: Show me large dog',
-                      hintStyle: const TextStyle(color: Colors.white54),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey[700]!),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey[700]!),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: Colors.blueAccent),
-                      ),
-                    ),
-                    onFieldSubmitted: (value) async {
-                      final prompt = value.trim();
-                      if (prompt.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Please enter a prompt", style: TextStyle(fontSize: 20)),
-                            backgroundColor: Colors.redAccent,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                        );
-                        return;
-                      }
-                      Navigator.of(context).pop(); // Close prompt dialog
-                      showLoadingCircle(dialogContext);
-                      await _generateAndShowImage(
-                        prompt,
-                        dialogContext,
-                        desiredImageWidth,
-                        desiredImageHeight,
-                        prevImageID: prevImageID,
-                      );
-                    },
-                  ),
-                  SizedBox(height: screenHeight * 0.03), // space between Text Box and 'Image Dimensions'
-                  Text(
-                    "Image Dimensions",
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: screenWidth * 0.04,
-                    ),
-                  ),
-                  SizedBox(height: screenHeight * 0.01), // space between 'Image Dimensions' text and options
-                  Wrap(
-                    spacing: screenWidth * 0.01,
-                    runSpacing: 8.0,
+              contentPadding: EdgeInsets.all(16),
+              content: FractionallySizedBox(
+                widthFactor: 0.9,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      ToggleButtons(
-                        isSelected: isSelected,
-                        onPressed: (index) {
-                          setState(() {
-                            // Ensure only one button is selected
-                            for (int i = 0; i < isSelected.length; i++) {
-                              isSelected[i] = i == index;
-                            }
-                            // Update dimensions
-                            if (index == 0) {
-                              desiredImageWidth = 1536;
-                              desiredImageHeight = 864;
-                            } else if (index == 1) {
-                              desiredImageWidth = 1024;
-                              desiredImageHeight = 1024;
-                            } else if (index == 2) {
-                              desiredImageWidth = 864;
-                              desiredImageHeight = 1536;
-                            }
-                          });
+                      Text("$numLeft Image Generations Remaining",
+                          style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: screenWidth * 0.04)),
+                      SizedBox(height: screenHeight * 0.02),
+                      TextFormField(
+                        controller: _textFieldController,
+                        style: TextStyle(color: Colors.white),
+                        cursorColor: Colors.white,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Color(colorNum),
+                          hintText: 'Enter text ... ',
+                          hintStyle: const TextStyle(color: Colors.white54),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey[700]!),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey[700]!),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide:
+                                const BorderSide(color: Colors.blueAccent),
+                          ),
+                        ),
+                        onFieldSubmitted: (value) async {
+                          final prompt = value.trim();
+                          if (prompt.isEmpty) {
+                            ScaffoldMessenger.of(context).clearSnackBars();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Please enter a prompt",
+                                    style: TextStyle(fontSize: 20)),
+                                backgroundColor: Colors.redAccent,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10)),
+                              ),
+                            );
+                            return;
+                          }
+                          if (prompt.length > 1500) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    "Prompt can be no more than 1500 characters",
+                                    style: TextStyle(fontSize: 20)),
+                                backgroundColor: Colors.redAccent,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10)),
+                              ),
+                            );
+                            return;
+                          }
+                          Navigator.of(context).pop();
+                          showLoadingCircle(dialogContext, isGenerating: true);
+                          await _generateAndShowImage(
+                            prompt,
+                            dialogContext,
+                            numLeft,
+                            desiredImageWidth,
+                            desiredImageHeight,
+                            prevImageID: prevImageID,
+                          );
                         },
-                        selectedColor: Colors.white, // selected text color
-                        fillColor: Color(colorNum), // selected button color
-                        color: Colors.white, // unselected text color
-                        borderColor: Colors.grey,
-                        selectedBorderColor: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        children: const [
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text("16 x 9"),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text("10 x 10"),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text("9 x 16"),
-                          ),
-                        ],
                       ),
-                      SizedBox(height: screenHeight * 0.1), // space between Dimensions and 'Enter' Button
+                      SizedBox(height: screenHeight * 0.03),
+                      Text(
+                        "Image Dimensions",
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: screenWidth * 0.04,
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.01),
+                      MediaQuery(
+                        data: MediaQuery.of(context).copyWith(
+                          textScaler: TextScaler.linear(1.0),
+                        ),
+                        child: Wrap(
+                          spacing: screenWidth * 0.01,
+                          runSpacing: 8.0,
+                          children: [
+                            ToggleButtons(
+                              isSelected: isSelected,
+                              onPressed: (index) {
+                                setState(() {
+                                  for (int i = 0; i < isSelected.length; i++) {
+                                    isSelected[i] = i == index;
+                                  }
+                                  if (index == 0) {
+                                    desiredImageWidth = 1536;
+                                    desiredImageHeight = 864;
+                                  } else if (index == 1) {
+                                    desiredImageWidth = 1024;
+                                    desiredImageHeight = 1024;
+                                  } else if (index == 2) {
+                                    desiredImageWidth = 864;
+                                    desiredImageHeight = 1536;
+                                  }
+                                });
+                              },
+                              selectedColor: Colors.white,
+                              fillColor: Color(colorNum),
+                              color: Colors.white,
+                              borderColor: Colors.grey,
+                              selectedBorderColor: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              constraints: const BoxConstraints(
+                                minWidth: 60,
+                                minHeight: 36,
+                                maxWidth: 60,
+                                maxHeight: 36,
+                              ),
+                              children: const [
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 0),
+                                  child: Text("16 x 9"),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 0),
+                                  child: Text("10 x 10"),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 0),
+                                  child: Text("9 x 16"),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.05),
                     ],
                   ),
-                ],
+                ),
               ),
               actions: [
                 TextButton(
                   onPressed: () async {
                     final prompt = _textFieldController.text.trim();
                     if (prompt.isEmpty) {
+                      ScaffoldMessenger.of(context).clearSnackBars();
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text("Please enter a prompt", style: TextStyle(fontSize: 20)),
+                          content: Text("Please enter a prompt",
+                              style: TextStyle(fontSize: 20)),
                           backgroundColor: Colors.redAccent,
                           behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
                       );
                       return;
                     }
-                    Navigator.of(context).pop(); // Close prompt dialog
-                    showLoadingCircle(dialogContext);
+                    if (prompt.length > 1500) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                              "Prompt can be no longer than 1500 characters",
+                              style: TextStyle(fontSize: 20)),
+                          backgroundColor: Colors.redAccent,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                      );
+                      return;
+                    }
+                    if (numLeft <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("AI Image Generation Limit Reached",
+                              style: TextStyle(fontSize: 20)),
+                          backgroundColor: Colors.redAccent,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                      );
+                      return;
+                    }
+                    Navigator.of(context).pop();
+                    showLoadingCircle(dialogContext, isGenerating: true);
                     await _generateAndShowImage(
                       prompt,
                       dialogContext,
+                      numLeft,
                       desiredImageWidth,
                       desiredImageHeight,
                       prevImageID: prevImageID,
                     );
                   },
                   style: TextButton.styleFrom(
-                    backgroundColor: Color(0xFF06470C), // dark green
-                    foregroundColor: Colors.white, // Text color
-                    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: screenHeight * 0.02), // Responsive padding
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.04,
+                        vertical: screenHeight * 0.02),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20), // Rounded corners
+                      borderRadius: BorderRadius.circular(20),
                     ),
                   ),
                   child: Row(
@@ -1492,27 +1644,19 @@ class _PlayersPageState extends State<PlayersPage> {
         );
       },
     );
-    _textFieldController.clear(); // Clear the text controller
+    _textFieldController.clear();
   }
 
-  final List<String> uploadOptions = ['Camera', 'Gallery', 'Create AI Image'];
-
+  final List<String> uploadOptions = ['Camera', 'Gallery', 'AI Image'];
   String? selectedOption;
 
-  /// menu on the right of the screen
   @override
   Widget build(BuildContext context) {
-    // save screen width and height
-    final double vw = MediaQuery.of(context).size.width / 100; // width of screen (by percentage)
-    final double vh = MediaQuery.of(context).size.height / 100; // height of screen (by percentage)
-
+    final double vw = MediaQuery.of(context).size.width / 100;
+    final double vh = MediaQuery.of(context).size.height / 100;
     final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
-    final int colorNum = int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
-
-    Color buttonColor = Color(colorNum);
+    final int colorNum = int.parse(lightGreyTheme!, radix: 16);
     Color backgroundColor = Color(colorNum);
-
-    // debugged, players page to go out of app when called to go back
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -1534,14 +1678,14 @@ class _PlayersPageState extends State<PlayersPage> {
               width: vw * 60,
               child: Drawer(
                 child: Container(
-                  decoration: BoxDecoration(color: backgroundColor), // color of menu side bar),
+                  decoration: BoxDecoration(color: backgroundColor),
                   child: SafeArea(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Padding(
-                          //reminder to check tablet later
-                          padding: EdgeInsets.fromLTRB(vw * 4, vh * 4, 0, vh * 2),
+                          padding:
+                              EdgeInsets.fromLTRB(vw * 4, vh * 4, 0, vh * 2),
                           child: Text(
                             "Menu",
                             style: TextStyle(
@@ -1551,15 +1695,19 @@ class _PlayersPageState extends State<PlayersPage> {
                             ),
                           ),
                         ),
-                        // const Divider(color: Colors.white24, height: 1),
-
                         Expanded(
                           child: ListView(
-                            padding: EdgeInsets.zero,
+                            padding: EdgeInsets.symmetric(vertical: vw * 2),
                             children: [
                               ListTile(
-                                leading: Icon(Icons.tv_outlined, color: Colors.orange, size: vw * 5),
-                                title: Text("Screens", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
+                                contentPadding:
+                                    EdgeInsets.symmetric(horizontal: vw * 4),
+                                leading: Icon(Icons.tv_outlined,
+                                    color: Colors.orange, size: vw * 7),
+                                title: Text("Screens",
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: vw * 4.5)),
                                 onTap: () {
                                   Navigator.pop(context);
                                   _showScreensPage(false);
@@ -1567,64 +1715,85 @@ class _PlayersPageState extends State<PlayersPage> {
                                 dense: true,
                                 shape: const ContinuousRectangleBorder(),
                               ),
-
-                              // const Divider(color: Colors.white24, height: 1),
-
+                              SizedBox(height: vw * 3),
                               ListTile(
-                                leading: Icon(Icons.collections, color: Colors.orange, size: vw * 5),
-                                title: Text("Image Playlists", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
+                                contentPadding:
+                                    EdgeInsets.symmetric(horizontal: vw * 4),
+                                leading: Icon(Icons.collections,
+                                    color: Colors.orange, size: vw * 7),
+                                title: Text("Image Playlists",
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: vw * 4.5)),
                                 onTap: () {
                                   Navigator.pop(context);
-                                  _showPlaylistBottomSheet(context, loginUsername);
+                                  _showPlaylistBottomSheet(
+                                      context, loginUsername);
                                   preloadPlaylistPreviews(loginUsername);
                                   setState(() {});
                                 },
                                 dense: true,
                                 shape: const ContinuousRectangleBorder(),
                               ),
-                              // const Divider(color: Colors.white12, height: 1),
-
-                              ExpansionTile(
-                                leading: Icon(Icons.upload, color: Colors.orange, size: vw * 5),
-                                title: Text("Upload Image", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
-                                iconColor: Colors.white,
-                                textColor: Colors.white,
-                                tilePadding: EdgeInsets.symmetric(horizontal: vw * 4),
-                                // make sure align, got to check later
-                                childrenPadding: EdgeInsets.zero,
-                                children: uploadOptions.map((opt) {
-                                  IconData icon;
-                                  void Function() action;
-                                  if (opt == 'Camera') {
-                                    icon = Icons.camera_alt;
-                                    action = _takePhoto;
-                                  } else if (opt == 'Gallery') {
-                                    icon = Icons.photo_library;
-                                    action = _chooseFromGallery;
-                                  } else {
-                                    icon = Icons.auto_awesome;
-                                    action = () => _showAIPromptDialog();
-                                  }
-                                  return ListTile(
-                                    leading: Icon(icon, color: Colors.orange, size: vw * 4),
-                                    title: Text(opt, style: TextStyle(color: Colors.white, fontSize: vw * 4)),
-                                    contentPadding: EdgeInsets.symmetric(horizontal: vw * 4),
-                                    onTap: () {
-                                      Navigator.pop(context);
-                                      action();
-                                    },
-                                    dense: true,
-                                    shape: const ContinuousRectangleBorder(),
-                                  );
-                                }).toList(),
+                              SizedBox(height: vw * 3),
+                              Theme(
+                                data: Theme.of(context)
+                                    .copyWith(dividerColor: Colors.transparent),
+                                child: ExpansionTile(
+                                  leading: Icon(Icons.upload,
+                                      color: Colors.orange, size: vw * 7),
+                                  title: Text("Upload Image",
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: vw * 4.5)),
+                                  iconColor: Colors.white,
+                                  textColor: Colors.white,
+                                  tilePadding:
+                                      EdgeInsets.symmetric(horizontal: vw * 4),
+                                  childrenPadding: EdgeInsets.zero,
+                                  children: uploadOptions.map((opt) {
+                                    IconData icon;
+                                    void Function() action;
+                                    if (opt == 'Camera') {
+                                      icon = Icons.camera_alt;
+                                      action = _takePhoto;
+                                    } else if (opt == 'Gallery') {
+                                      icon = Icons.photo_library;
+                                      action = _chooseFromGallery;
+                                    } else {
+                                      icon = Icons.auto_awesome;
+                                      action = () => _showAIPromptDialog();
+                                    }
+                                    return ListTile(
+                                      leading: Icon(icon,
+                                          color: Colors.orange, size: vw * 4),
+                                      title: Text(opt,
+                                          style: TextStyle(
+                                              color: Colors.white70,
+                                              fontSize: vw * 5)),
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: vw * 7),
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                        action();
+                                      },
+                                      dense: true,
+                                      shape: RoundedRectangleBorder(
+                                        side: BorderSide.none,
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
                               ),
                             ],
                           ),
                         ),
-                        // const Divider(color: Colors.white24, height: 1),
                         ListTile(
-                          leading: Icon(Icons.logout, color: Colors.orange, size: vw * 5),
-                          title: Text("Logout", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
+                          leading: Icon(Icons.logout,
+                              color: Colors.orange, size: vw * 5),
+                          title: Text("Logout",
+                              style: TextStyle(
+                                  color: Colors.white, fontSize: vw * 5)),
                           onTap: () {
                             Navigator.pop(context);
                             _userLogout();
@@ -1632,6 +1801,7 @@ class _PlayersPageState extends State<PlayersPage> {
                           dense: true,
                           shape: const ContinuousRectangleBorder(),
                         ),
+                        SizedBox(height: vh * 2),
                       ],
                     ),
                   ),
@@ -1647,16 +1817,22 @@ class _PlayersPageState extends State<PlayersPage> {
                         ? backgroundURL
                         : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?fit=crop&w=1536&h=864', // Fallback image
                   ),
-                  fit: BoxFit.cover, // Adjusts image to cover the entire background
+                  fit: BoxFit.cover,
                   onError: (exception, stackTrace) {
-                    print('Failed to load background image: $exception');
+                    if (kDebugMode) {
+                      print('Failed to load background image: $exception');
+                    }
                   },
                 ),
               ),
               child: RefreshIndicator(
                 onRefresh: _refreshData,
                 child: ListView.separated(
-                  padding: EdgeInsets.only(top: vh * 2, left: vw * 6, right: vw * 6, bottom: vh * 1.5),
+                  padding: EdgeInsets.only(
+                      top: vh * 2,
+                      left: vw * 6,
+                      right: vw * 6,
+                      bottom: vh * 1.5),
                   itemCount: dmbMediaPlayers.length,
                   physics: const AlwaysScrollableScrollPhysics(),
                   itemBuilder: (BuildContext context, int index) {
@@ -1673,19 +1849,17 @@ class _PlayersPageState extends State<PlayersPage> {
                               borderRadius: BorderRadius.circular(10),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.white.withOpacity(0.3), // White shadow with opacity
-                                  spreadRadius: 6, // How far the shadow spreads
-                                  blurRadius: 6, // How blurry the shadow is
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  spreadRadius: 6,
+                                  blurRadius: 6,
                                 ),
                               ],
                             ),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(10),
                               onTap: () {
-                                selectedPlayerName = dmbMediaPlayers[index].name;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text("${dmbMediaPlayers[index].name} Selected")),
-                                );
+                                selectedPlayerName =
+                                    dmbMediaPlayers[index].name;
                                 _showScreensPage(true);
                               },
                               child: Ink(
@@ -1702,7 +1876,8 @@ class _PlayersPageState extends State<PlayersPage> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Text(
                                             dmbMediaPlayers[index].name,
@@ -1715,11 +1890,14 @@ class _PlayersPageState extends State<PlayersPage> {
                                         ],
                                       ),
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           _checkPlayerStatus(index)
-                                              ? _activeScreenText(context, index, vw)
-                                              : _inActiveScreenText(context, index, vw),
+                                              ? _activeScreenText(
+                                                  context, index, vw)
+                                              : _inActiveScreenText(
+                                                  context, index, vw),
                                         ],
                                       ),
                                     ],
@@ -1732,28 +1910,24 @@ class _PlayersPageState extends State<PlayersPage> {
                       ),
                     );
                   },
-                  separatorBuilder: (context, index) => const Divider(color: Colors.black),
+                  separatorBuilder: (context, index) => const Divider(
+                      color: Colors.transparent),
                 ),
               ),
             ),
-          )
-
-      ),
+          )),
     );
   }
 }
 
-///**** This is the 'App bar' to the players tab when you don't want
-/// to show a 'back' btn
 PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
-  // Calculate viewport units
   final double vw = MediaQuery.of(context).size.width / 100;
   final double vh = MediaQuery.of(context).size.height / 100;
 
   return PreferredSize(
-    preferredSize: Size.fromHeight(vh * 11), // 11% of screen height
+    preferredSize: Size.fromHeight(vh * 11),
     child: AppBar(
-      backgroundColor: Colors.black.withOpacity(0.8), // app bar background
+      backgroundColor: Colors.black.withValues(alpha: 0.8),
       automaticallyImplyLeading: false,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1764,7 +1938,7 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.white,
-              fontSize: vw * 6, // Increase font size to 6% of smaller dimension
+              fontSize: vw * 6,
             ),
           ),
           Text(
@@ -1772,23 +1946,23 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
             style: TextStyle(
               fontStyle: FontStyle.italic,
               color: Colors.white,
-              fontSize: vw * 5.5, // Increase font size to 5% of smaller dimension
+              fontSize: vw * 5.5,
             ),
           ),
         ],
       ),
-      titleSpacing: vw * 4, // Add padding to the left of the title (4% of screen width)
-      toolbarHeight: vh * 12, // Match toolbarHeight to preferredSize height
+      titleSpacing: vw * 4,
+      toolbarHeight: vh * 12,
       actions: [
         Builder(
           builder: (context) => IconButton(
             icon: Icon(
               Icons.menu,
               color: Colors.white,
-              size: vw * 8, // Increase icon size to 8% of smaller dimension
+              size: vw * 8,
             ),
             onPressed: () => Scaffold.of(context).openEndDrawer(),
-            padding: EdgeInsets.all(vw * 2), // Add padding around icon
+            padding: EdgeInsets.all(vw * 2),
           ),
         ),
       ],
@@ -1796,52 +1970,42 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
   );
 }
 
-
-///**** As the list is being displayed use this object to show a
-/// player whose status is 'active'
 LinearGradient _gradientActiveMediaPlayer(BuildContext context) {
   return const LinearGradient(
     begin: AlignmentDirectional.topCenter,
     end: AlignmentDirectional.bottomCenter,
     colors: [
       Colors.black,
-      Color(0xFF06470C), // dark green
+      Colors.green,
     ],
   );
 }
 
-///**** As the list is being displayed use this object to show a
-/// player whose status is 'inactive'
 LinearGradient _gradientInActiveMediaPlayer(BuildContext context) {
   return const LinearGradient(
     begin: AlignmentDirectional.topCenter,
     end: AlignmentDirectional.bottomCenter,
     colors: [
       Colors.black,
-      Color(0xFF8B0000), // dark red
+      Colors.red,
     ],
   );
 }
 
-///*** As the list is being displayed, show a (slightly) different
-/// text (label) to the user for players that are active vs. inactive
 Text _activeScreenText(BuildContext context, pIndex, vw) {
-  return Text("${dmbMediaPlayers[pIndex]
-      .status} - Current Screen: ${dmbMediaPlayers[pIndex]
-      .currentScreen}",
+  return Text(
+      "${dmbMediaPlayers[pIndex].status} - Screen: ${dmbMediaPlayers[pIndex].currentScreen}",
       style: TextStyle(
-          fontSize: vw * 4.5,
+          fontSize: vw * 4,
           fontStyle: FontStyle.italic,
           color: Colors.white70));
 }
 
 Text _inActiveScreenText(BuildContext context, pIndex, vw) {
-  return Text("${dmbMediaPlayers[pIndex]
-      .status} - Last Screen: ${dmbMediaPlayers[pIndex]
-      .currentScreen}",
+  return Text(
+      "${dmbMediaPlayers[pIndex].status} - Screen: ${dmbMediaPlayers[pIndex].currentScreen}",
       style: TextStyle(
           fontSize: vw * 4,
           fontStyle: FontStyle.italic,
-          color: Colors.white70)
-  );
+          color: Colors.white70));
 }
