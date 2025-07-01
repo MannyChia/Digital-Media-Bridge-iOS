@@ -359,15 +359,6 @@ class LoginPage extends StatelessWidget {
                                     builder: (context) => const HomePage()),
                               );
                             }
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Username & Password are required',
-                                  style: TextStyle(fontSize: 16.sp),
-                                ),
-                              ),
-                            );
                           }
                         },
                         child: Text(

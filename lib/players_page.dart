@@ -30,6 +30,7 @@ bool playersNoBackButton = true;
 
 class PlaylistSheet extends StatefulWidget {
   final String userEmail;
+
   const PlaylistSheet({super.key, required this.userEmail});
 
   @override
@@ -536,7 +537,12 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
 
 class PlayersPage extends StatefulWidget {
   final String userEmail;
-  const PlayersPage({super.key, this.mainPageTitle, this.mainPageSubTitle, required this.userEmail});
+
+  const PlayersPage(
+      {super.key,
+      this.mainPageTitle,
+      this.mainPageSubTitle,
+      required this.userEmail});
 
   final String? mainPageTitle;
   final String? mainPageSubTitle;
@@ -553,9 +559,8 @@ class _PlayersPageState extends State<PlayersPage> {
   final TextEditingController _textFieldController = TextEditingController();
   final bool _isGenerating = false;
   String backgroundURL = dotenv.env['BACKGROUND_IMAGE_URL']!;
-  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
-
-
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
+      GlobalKey<ScaffoldMessengerState>();
 
   @override
   void initState() {
@@ -791,7 +796,7 @@ class _PlayersPageState extends State<PlayersPage> {
       String prompt, int width, int height,
       {String? prevImageID}) async {
     final stableDiffusion = dotenv.env['STABLE_DIFFUSION_KEY']!;
-    final lucidRealism   = dotenv.env['LUCID_REALISM_KEY']!;
+    final lucidRealism = dotenv.env['LUCID_REALISM_KEY']!;
     if (!dotenv.isInitialized) {
       if (kDebugMode) {
         print("ENVIRONMENTAL VARIABLES NOT LOADED");
@@ -961,24 +966,32 @@ class _PlayersPageState extends State<PlayersPage> {
     _showAIPromptDialog(prevImageID: prevImageID);
   }
 
-  Future<String> onSubmit(String imageUrl, String username, BuildContext dialogContext, GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey) async {
+  Future<String> onSubmit(
+      String imageUrl,
+      String username,
+      BuildContext dialogContext,
+      GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey) async {
     try {
-      // Add timeout to HTTP request
-      final response = await http.get(Uri.parse(imageUrl)).timeout(Duration(seconds: 30), onTimeout: () {
+      final response = await http
+          .get(Uri.parse(imageUrl))
+          .timeout(Duration(seconds: 30), onTimeout: () {
         throw TimeoutException("Image download timed out");
       });
 
       if (response.statusCode != 200) {
         scaffoldMessengerKey.currentState?.showSnackBar(
           SnackBar(
-            content: Text("Failed to download image: HTTP ${response.statusCode}", style: TextStyle(fontSize: 20)),
+            content: Text(
+                "Failed to download image: HTTP ${response.statusCode}",
+                style: TextStyle(fontSize: 20)),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
         if (kDebugMode) {
-        print("ERROR ON onSubmit FUNCTION: HTTP ${response.statusCode}");
+          print("ERROR ON onSubmit FUNCTION: HTTP ${response.statusCode}");
         }
         return "error";
       }
@@ -988,13 +1001,13 @@ class _PlayersPageState extends State<PlayersPage> {
       final tempFile = File("${tempDir.path}/$filename");
       await tempFile.writeAsBytes(bytes);
       final result = await uploadImage(tempFile, username);
-      if (result is! Map<String, dynamic> || !result.containsKey('success') || !result.containsKey('message')) {
+      if (result is! Map<String, dynamic> ||
+          !result.containsKey('success') ||
+          !result.containsKey('message')) {
         throw Exception("Invalid response from uploadImage");
       }
       final bool success = result['success'] as bool;
       final String message = result['message'] as String;
-
-      // Always delete the temp file
       await tempFile.delete();
 
       if (success) {
@@ -1003,7 +1016,8 @@ class _PlayersPageState extends State<PlayersPage> {
             content: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text("Image Saved to your Account", style: TextStyle(fontSize: 20)),
+                Text("Image Saved to your Account",
+                    style: TextStyle(fontSize: 20)),
                 SizedBox(width: 8),
                 Icon(Icons.check_circle_outline, color: Colors.green),
               ],
@@ -1017,16 +1031,17 @@ class _PlayersPageState extends State<PlayersPage> {
         );
         return "success";
       } else {
-        // Show error dialog directly
         await showDialog(
           context: dialogContext,
           barrierColor: const Color.fromARGB(128, 0, 0, 0),
           builder: (_) => AlertDialog(
             backgroundColor: const Color(0xFF1E1E1E),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: Text(
               message.contains('20') ? "Upload Limit Reached" : "Upload Failed",
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.bold),
             ),
             content: Text(
               message.contains('20')
@@ -1050,7 +1065,8 @@ class _PlayersPageState extends State<PlayersPage> {
           content: Text("Error: $e", style: TextStyle(fontSize: 20)),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
       return "error";
@@ -1086,7 +1102,8 @@ class _PlayersPageState extends State<PlayersPage> {
                     SizedBox(height: screenWidth * 0.1),
                     Text(
                       "Generating Image...",
-                      style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.05),
+                      style: TextStyle(
+                          color: Colors.white, fontSize: screenWidth * 0.05),
                     ),
                     const SizedBox(height: 10),
                     TextButton(
@@ -1101,7 +1118,8 @@ class _PlayersPageState extends State<PlayersPage> {
                       ),
                       child: Text(
                         "Cancel",
-                        style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.04),
+                        style: TextStyle(
+                            color: Colors.white, fontSize: screenWidth * 0.04),
                       ),
                     ),
                   ],
@@ -1114,7 +1132,9 @@ class _PlayersPageState extends State<PlayersPage> {
     );
   }
 
-  Future<void> _generateAndShowImage(String inputPrompt, BuildContext dialogContext, int numLeft, int width, int height, {String? prevImageID}) async {
+  Future<void> _generateAndShowImage(String inputPrompt,
+      BuildContext dialogContext, int numLeft, int width, int height,
+      {String? prevImageID}) async {
     double screenWidth = MediaQuery.of(dialogContext).size.width;
     double screenHeight = MediaQuery.of(dialogContext).size.height;
 
@@ -1122,37 +1142,47 @@ class _PlayersPageState extends State<PlayersPage> {
       print("Starting _generateAndShowImage with prompt: $inputPrompt");
     }
 
-    Map<String, dynamic>? aiImage; // Map to store the imageUrl and imageId
+    Map<String, dynamic>? aiImage;
 
     if (prevImageID == null) {
-      print("Calling _getAIPhoto just based on prompt");
+      if (kDebugMode) {
+        print("Calling _getAIPhoto just based on prompt");
+      }
       aiImage = await _getAIPhoto(inputPrompt, width, height);
     } else {
-      print("Calling _getAIPhoto based on prompt and prevImageID");
-      aiImage = await _getAIPhoto(inputPrompt, width, height, prevImageID: prevImageID);
+      if (kDebugMode) {
+        print("Calling _getAIPhoto based on prompt and prevImageID");
+      }
+      aiImage = await _getAIPhoto(inputPrompt, width, height,
+          prevImageID: prevImageID);
     }
 
     String? imageUrl = aiImage?['image_url'];
     String? imageId = aiImage?['image_id'];
 
-    print("Image generation result: URL=$imageUrl, ID=$imageId");
-    Navigator.of(dialogContext).pop(); // Dismiss the loading dialog
+    if (kDebugMode) {
+      print("Image generation result: URL=$imageUrl, ID=$imageId");
+    }
+    Navigator.of(dialogContext).pop();
 
     if (imageUrl != null && imageId != null) {
-      // decrement the number of images the user can generate
-      int newNumLeft = numLeft -1;
+      int newNumLeft = numLeft - 1;
 
-      final setNumLeft = Uri.parse('https://www.digitalmediabridge.tv/screen-builder/assets/api/ai_images_track.php?type=set&email=${Uri.encodeComponent(widget.userEmail)}&count=$newNumLeft');
+      final setNumLeft = Uri.parse(
+          'https://www.digitalmediabridge.tv/screen-builder/assets/api/ai_images_track.php?type=set&email=${Uri.encodeComponent(widget.userEmail)}&count=$newNumLeft');
       final response = await http.get(setNumLeft);
       final data = jsonDecode(response.body);
-      print('Set Images Left Response: ${data.runtimeType}, Content: $data');
+      if (kDebugMode) {
+        print('Set Images Left Response: ${data.runtimeType}, Content: $data');
+      }
 
       _scaffoldMessengerKey.currentState?.showSnackBar(
         SnackBar(
           content: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("Image generated successfully", style: TextStyle(fontSize: 20)),
+              Text("Image generated successfully",
+                  style: TextStyle(fontSize: 20)),
               SizedBox(width: 8),
               Icon(Icons.check_circle_outline, color: Colors.green),
             ],
@@ -1166,7 +1196,6 @@ class _PlayersPageState extends State<PlayersPage> {
       );
 
       try {
-        // Show image in slide-up bottom sheet
         await showModalBottomSheet(
           context: dialogContext,
           backgroundColor: Colors.grey[900],
@@ -1181,7 +1210,6 @@ class _PlayersPageState extends State<PlayersPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Handlebar for the bottom sheet
                     Container(
                       width: 40,
                       height: 5,
@@ -1212,12 +1240,15 @@ class _PlayersPageState extends State<PlayersPage> {
                             if (loadingProgress == null) return child;
                             return const Center(
                               child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.orange),
                               ),
                             );
                           },
                           errorBuilder: (context, error, stackTrace) {
-                            print("Error loading image: $error");
+                            if (kDebugMode) {
+                              print("Error loading image: $error");
+                            }
                             return const Text(
                               "Failed to load image",
                               style: TextStyle(color: Colors.white),
@@ -1235,7 +1266,7 @@ class _PlayersPageState extends State<PlayersPage> {
                             onNewPhoto();
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black.withOpacity(0.7),
+                            backgroundColor: Colors.black.withValues(alpha: 0.7),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -1244,7 +1275,8 @@ class _PlayersPageState extends State<PlayersPage> {
                             children: [
                               Icon(Icons.edit, color: Colors.orange),
                               SizedBox(width: 8),
-                              Text("Try Again", style: TextStyle(color: Colors.white)),
+                              Text("Try Again",
+                                  style: TextStyle(color: Colors.white)),
                             ],
                           ),
                         ),
@@ -1256,7 +1288,8 @@ class _PlayersPageState extends State<PlayersPage> {
                       children: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(),
-                          child: const Text("Close", style: TextStyle(color: Colors.white)),
+                          child: const Text("Close",
+                              style: TextStyle(color: Colors.white)),
                         ),
                         const SizedBox(width: 10),
                         ElevatedButton(
@@ -1267,11 +1300,18 @@ class _PlayersPageState extends State<PlayersPage> {
                             ),
                           ),
                           onPressed: () async {
-                            Navigator.of(context).pop(); // Close the image preview dialog
-                            showLoadingCircle(dialogContext); // Show loading dialog
-                            await onSubmit(imageUrl, loginUsername, dialogContext, _scaffoldMessengerKey); // Call updated onSubmit
+                            Navigator.of(context)
+                                .pop();
+                            showLoadingCircle(
+                                dialogContext);
+                            await onSubmit(
+                                imageUrl,
+                                loginUsername,
+                                dialogContext,
+                                _scaffoldMessengerKey);
                           },
-                          child: const Text("Save & Upload", style: TextStyle(color: Colors.white)),
+                          child: const Text("Save & Upload",
+                              style: TextStyle(color: Colors.white)),
                         ),
                       ],
                     ),
@@ -1282,27 +1322,33 @@ class _PlayersPageState extends State<PlayersPage> {
             );
           },
         );
-        print("Image dialog shown successfully");
-      }
-      catch (e) {
-        print("Error showing image dialog: $e");
+        if (kDebugMode) {
+          print("Image dialog shown successfully");
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print("Error showing image dialog: $e");
+        }
         _scaffoldMessengerKey.currentState?.showSnackBar(
           SnackBar(
-            content: Text("Error displaying image: $e", style: TextStyle(fontSize: 20)),
+            content: Text("Error displaying image: $e",
+                style: TextStyle(fontSize: 20)),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
       }
-    }
-    else {
+    } else {
       _scaffoldMessengerKey.currentState?.showSnackBar(
         SnackBar(
-          content: Text("Failed to generate a valid image", style: TextStyle(fontSize: 20)),
+          content: Text("Failed to generate a valid image",
+              style: TextStyle(fontSize: 20)),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
     }
@@ -1311,10 +1357,8 @@ class _PlayersPageState extends State<PlayersPage> {
   Future<void> _showAIPromptDialog({String? prevImageID}) async {
     double screenHeight = MediaQuery.of(context).size.height;
     final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
-    final int colorNum = int.parse(lightGreyTheme!, radix: 16); // parse the number in base 16
-
-    // get the number of AI Images this user has left
-    // Construct the URL
+    final int colorNum =
+        int.parse(lightGreyTheme!, radix: 16);
     final numLeftURL = Uri.parse(
       'https://www.digitalmediabridge.tv/screen-builder/assets/api/ai_images_track.php?type=get&email=${Uri.encodeComponent(widget.userEmail)}',
     );
@@ -1330,14 +1374,13 @@ class _PlayersPageState extends State<PlayersPage> {
         numLeft = int.tryParse(list.first.toString()) ?? 20;
       }
     } catch (e) {
-      debugPrint( '$e');
+      debugPrint('$e');
       numLeft = 20;
     }
     if (kDebugMode) {
       print("Num Left: $numLeft");
     }
 
-    // Set default dimensions (16x9)
     int desiredImageWidth = 1536;
     int desiredImageHeight = 864;
     List<bool> isSelected = [true, false, false];
@@ -1365,141 +1408,149 @@ class _PlayersPageState extends State<PlayersPage> {
               contentPadding: EdgeInsets.all(16),
               content: FractionallySizedBox(
                 widthFactor: 0.9,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text("$numLeft Image Generations Remaining", style: TextStyle(color: Colors.white70, fontSize: screenWidth * 0.04)),
-                    SizedBox(height: screenHeight * 0.02),
-                    TextFormField(
-                      controller: _textFieldController,
-                      style: TextStyle(color: Colors.white),
-                      cursorColor: Colors.white,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Color(colorNum),
-                        hintText: 'Enter text ... ',
-                        hintStyle: const TextStyle(color: Colors.white54),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[700]!),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[700]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide:
-                              const BorderSide(color: Colors.blueAccent),
-                        ),
-                      ),
-                      onFieldSubmitted: (value) async {
-                        final prompt = value.trim();
-                        if (prompt.isEmpty) {
-                          ScaffoldMessenger.of(context).clearSnackBars();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("Please enter a prompt",
-                                  style: TextStyle(fontSize: 20)),
-                              backgroundColor: Colors.redAccent,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                            ),
-                          );
-                          return;
-                        }
-                        if (prompt.length > 1500) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("Prompt can be no more than 1500 characters", style: TextStyle(fontSize: 20)),
-                              backgroundColor: Colors.redAccent,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                          );
-                          return;
-                        }
-                        Navigator.of(context).pop(); // Close prompt dialog
-                        showLoadingCircle(dialogContext, isGenerating: true);
-                        await _generateAndShowImage(
-                          prompt,
-                          dialogContext,
-                          numLeft,
-                          desiredImageWidth,
-                          desiredImageHeight,
-                          prevImageID: prevImageID,
-                        );
-                      },
-                    ),
-                    SizedBox(height: screenHeight * 0.03),
-                    Text(
-                      "Image Dimensions",
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: screenWidth * 0.04,
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.01),
-                    MediaQuery(
-                      data: MediaQuery.of(context).copyWith(
-                        textScaler: TextScaler.linear(1.0),
-                      ),
-                      child: Wrap(
-                        spacing: screenWidth * 0.01,
-                        runSpacing: 8.0,
-                        children: [
-                          ToggleButtons(
-                            isSelected: isSelected,
-                            onPressed: (index) {
-                              setState(() {
-                                for (int i = 0; i < isSelected.length; i++) {
-                                  isSelected[i] = i == index;
-                                }
-                                if (index == 0) {
-                                  desiredImageWidth = 1536;
-                                  desiredImageHeight = 864;
-                                } else if (index == 1) {
-                                  desiredImageWidth = 1024;
-                                  desiredImageHeight = 1024;
-                                } else if (index == 2) {
-                                  desiredImageWidth = 864;
-                                  desiredImageHeight = 1536;
-                                }
-                              });
-                            },
-                            selectedColor: Colors.white,
-                            fillColor: Color(colorNum),
-                            color: Colors.white,
-                            borderColor: Colors.grey,
-                            selectedBorderColor: Colors.white,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text("$numLeft Image Generations Remaining",
+                          style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: screenWidth * 0.04)),
+                      SizedBox(height: screenHeight * 0.02),
+                      TextFormField(
+                        controller: _textFieldController,
+                        style: TextStyle(color: Colors.white),
+                        cursorColor: Colors.white,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Color(colorNum),
+                          hintText: 'Enter text ... ',
+                          hintStyle: const TextStyle(color: Colors.white54),
+                          border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            constraints: const BoxConstraints(
-                              minWidth: 60,
-                              minHeight: 36,
-                              maxWidth: 60,
-                              maxHeight: 36,
-                            ),
-                            children: const [
-                              Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 0),
-                                child: Text("16 x 9"),
-                              ),
-                              Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 0),
-                                child: Text("10 x 10"),
-                              ),
-                              Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 0),
-                                child: Text("9 x 16"),
-                              ),
-                            ],
+                            borderSide: BorderSide(color: Colors.grey[700]!),
                           ),
-                        ],
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey[700]!),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide:
+                                const BorderSide(color: Colors.blueAccent),
+                          ),
+                        ),
+                        onFieldSubmitted: (value) async {
+                          final prompt = value.trim();
+                          if (prompt.isEmpty) {
+                            ScaffoldMessenger.of(context).clearSnackBars();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Please enter a prompt",
+                                    style: TextStyle(fontSize: 20)),
+                                backgroundColor: Colors.redAccent,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10)),
+                              ),
+                            );
+                            return;
+                          }
+                          if (prompt.length > 1500) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    "Prompt can be no more than 1500 characters",
+                                    style: TextStyle(fontSize: 20)),
+                                backgroundColor: Colors.redAccent,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10)),
+                              ),
+                            );
+                            return;
+                          }
+                          Navigator.of(context).pop();
+                          showLoadingCircle(dialogContext, isGenerating: true);
+                          await _generateAndShowImage(
+                            prompt,
+                            dialogContext,
+                            numLeft,
+                            desiredImageWidth,
+                            desiredImageHeight,
+                            prevImageID: prevImageID,
+                          );
+                        },
                       ),
-                    ),
-                    SizedBox(height: screenHeight * 0.05),
-                  ],
+                      SizedBox(height: screenHeight * 0.03),
+                      Text(
+                        "Image Dimensions",
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: screenWidth * 0.04,
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.01),
+                      MediaQuery(
+                        data: MediaQuery.of(context).copyWith(
+                          textScaler: TextScaler.linear(1.0),
+                        ),
+                        child: Wrap(
+                          spacing: screenWidth * 0.01,
+                          runSpacing: 8.0,
+                          children: [
+                            ToggleButtons(
+                              isSelected: isSelected,
+                              onPressed: (index) {
+                                setState(() {
+                                  for (int i = 0; i < isSelected.length; i++) {
+                                    isSelected[i] = i == index;
+                                  }
+                                  if (index == 0) {
+                                    desiredImageWidth = 1536;
+                                    desiredImageHeight = 864;
+                                  } else if (index == 1) {
+                                    desiredImageWidth = 1024;
+                                    desiredImageHeight = 1024;
+                                  } else if (index == 2) {
+                                    desiredImageWidth = 864;
+                                    desiredImageHeight = 1536;
+                                  }
+                                });
+                              },
+                              selectedColor: Colors.white,
+                              fillColor: Color(colorNum),
+                              color: Colors.white,
+                              borderColor: Colors.grey,
+                              selectedBorderColor: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              constraints: const BoxConstraints(
+                                minWidth: 60,
+                                minHeight: 36,
+                                maxWidth: 60,
+                                maxHeight: 36,
+                              ),
+                              children: const [
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 0),
+                                  child: Text("16 x 9"),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 0),
+                                  child: Text("10 x 10"),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 0),
+                                  child: Text("9 x 16"),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.05),
+                    ],
+                  ),
                 ),
               ),
               actions: [
@@ -1523,10 +1574,13 @@ class _PlayersPageState extends State<PlayersPage> {
                     if (prompt.length > 1500) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text("Prompt can be no longer than 1500 characters", style: TextStyle(fontSize: 20)),
+                          content: Text(
+                              "Prompt can be no longer than 1500 characters",
+                              style: TextStyle(fontSize: 20)),
                           backgroundColor: Colors.redAccent,
                           behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
                       );
                       return;
@@ -1534,15 +1588,17 @@ class _PlayersPageState extends State<PlayersPage> {
                     if (numLeft <= 0) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text("AI Image Generation Limit Reached", style: TextStyle(fontSize: 20)),
+                          content: Text("AI Image Generation Limit Reached",
+                              style: TextStyle(fontSize: 20)),
                           backgroundColor: Colors.redAccent,
                           behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
                       );
                       return;
                     }
-                    Navigator.of(context).pop(); // Close prompt dialog
+                    Navigator.of(context).pop();
                     showLoadingCircle(dialogContext, isGenerating: true);
                     await _generateAndShowImage(
                       prompt,
@@ -1709,9 +1765,14 @@ class _PlayersPageState extends State<PlayersPage> {
                                       action = () => _showAIPromptDialog();
                                     }
                                     return ListTile(
-                                      leading: Icon(icon, color: Colors.orange, size: vw * 4),
-                                      title: Text(opt, style: TextStyle(color: Colors.white70, fontSize: vw * 5)),
-                                      contentPadding: EdgeInsets.symmetric(horizontal: vw * 7),
+                                      leading: Icon(icon,
+                                          color: Colors.orange, size: vw * 4),
+                                      title: Text(opt,
+                                          style: TextStyle(
+                                              color: Colors.white70,
+                                              fontSize: vw * 5)),
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: vw * 7),
                                       onTap: () {
                                         Navigator.pop(context);
                                         action();
@@ -1728,8 +1789,11 @@ class _PlayersPageState extends State<PlayersPage> {
                           ),
                         ),
                         ListTile(
-                          leading: Icon(Icons.logout, color: Colors.orange, size: vw * 5),
-                          title: Text("Logout", style: TextStyle(color: Colors.white, fontSize: vw * 5)),
+                          leading: Icon(Icons.logout,
+                              color: Colors.orange, size: vw * 5),
+                          title: Text("Logout",
+                              style: TextStyle(
+                                  color: Colors.white, fontSize: vw * 5)),
                           onTap: () {
                             Navigator.pop(context);
                             _userLogout();
@@ -1737,7 +1801,7 @@ class _PlayersPageState extends State<PlayersPage> {
                           dense: true,
                           shape: const ContinuousRectangleBorder(),
                         ),
-                        SizedBox(height: vh * 2), // paddding between 'logout' and bottom of screen
+                        SizedBox(height: vh * 2),
                       ],
                     ),
                   ),
@@ -1753,7 +1817,7 @@ class _PlayersPageState extends State<PlayersPage> {
                         ? backgroundURL
                         : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?fit=crop&w=1536&h=864', // Fallback image
                   ),
-                  fit: BoxFit.cover, // Adjusts image to cover the entire background
+                  fit: BoxFit.cover,
                   onError: (exception, stackTrace) {
                     if (kDebugMode) {
                       print('Failed to load background image: $exception');
@@ -1764,7 +1828,11 @@ class _PlayersPageState extends State<PlayersPage> {
               child: RefreshIndicator(
                 onRefresh: _refreshData,
                 child: ListView.separated(
-                  padding: EdgeInsets.only(top: vh * 2, left: vw * 6, right: vw * 6, bottom: vh * 1.5),
+                  padding: EdgeInsets.only(
+                      top: vh * 2,
+                      left: vw * 6,
+                      right: vw * 6,
+                      bottom: vh * 1.5),
                   itemCount: dmbMediaPlayers.length,
                   physics: const AlwaysScrollableScrollPhysics(),
                   itemBuilder: (BuildContext context, int index) {
@@ -1781,16 +1849,17 @@ class _PlayersPageState extends State<PlayersPage> {
                               borderRadius: BorderRadius.circular(10),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.white.withOpacity(0.3), // White shadow with opacity
-                                  spreadRadius: 6, // How far the shadow spreads
-                                  blurRadius: 6, // How blurry the shadow is
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  spreadRadius: 6,
+                                  blurRadius: 6,
                                 ),
                               ],
                             ),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(10),
                               onTap: () {
-                                selectedPlayerName = dmbMediaPlayers[index].name;
+                                selectedPlayerName =
+                                    dmbMediaPlayers[index].name;
                                 _showScreensPage(true);
                               },
                               child: Ink(
@@ -1807,7 +1876,8 @@ class _PlayersPageState extends State<PlayersPage> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Text(
                                             dmbMediaPlayers[index].name,
@@ -1820,11 +1890,14 @@ class _PlayersPageState extends State<PlayersPage> {
                                         ],
                                       ),
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           _checkPlayerStatus(index)
-                                              ? _activeScreenText(context, index, vw)
-                                              : _inActiveScreenText(context, index, vw),
+                                              ? _activeScreenText(
+                                                  context, index, vw)
+                                              : _inActiveScreenText(
+                                                  context, index, vw),
                                         ],
                                       ),
                                     ],
@@ -1837,27 +1910,24 @@ class _PlayersPageState extends State<PlayersPage> {
                       ),
                     );
                   },
-                  separatorBuilder: (context, index) => const Divider(color: Colors.transparent), // dividers between players
+                  separatorBuilder: (context, index) => const Divider(
+                      color: Colors.transparent),
                 ),
               ),
             ),
-          )
-      ),
+          )),
     );
   }
 }
 
-///**** This is the 'App bar' to the players tab when you don't want
-/// to show a 'back' btn
 PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
-  // Calculate viewport units
   final double vw = MediaQuery.of(context).size.width / 100;
   final double vh = MediaQuery.of(context).size.height / 100;
 
   return PreferredSize(
-    preferredSize: Size.fromHeight(vh * 11), // 11% of screen height
+    preferredSize: Size.fromHeight(vh * 11),
     child: AppBar(
-      backgroundColor: Colors.black.withOpacity(0.8), // app bar background
+      backgroundColor: Colors.black.withValues(alpha: 0.8),
       automaticallyImplyLeading: false,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1868,7 +1938,7 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.white,
-              fontSize: vw * 6, // Increase font size to 6% of smaller dimension
+              fontSize: vw * 6,
             ),
           ),
           Text(
@@ -1876,23 +1946,23 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
             style: TextStyle(
               fontStyle: FontStyle.italic,
               color: Colors.white,
-              fontSize: vw * 5.5, // Increase font size to 5% of smaller dimension
+              fontSize: vw * 5.5,
             ),
           ),
         ],
       ),
-      titleSpacing: vw * 4, // Add padding to the left of the title (4% of screen width)
-      toolbarHeight: vh * 12, // Match toolbarHeight to preferredSize height
+      titleSpacing: vw * 4,
+      toolbarHeight: vh * 12,
       actions: [
         Builder(
           builder: (context) => IconButton(
             icon: Icon(
               Icons.menu,
               color: Colors.white,
-              size: vw * 8, // Increase icon size to 8% of smaller dimension
+              size: vw * 8,
             ),
             onPressed: () => Scaffold.of(context).openEndDrawer(),
-            padding: EdgeInsets.all(vw * 2), // Add padding around icon
+            padding: EdgeInsets.all(vw * 2),
           ),
         ),
       ],
@@ -1900,9 +1970,6 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
   );
 }
 
-
-///**** As the list is being displayed use this object to show a
-/// player whose status is 'active'
 LinearGradient _gradientActiveMediaPlayer(BuildContext context) {
   return const LinearGradient(
     begin: AlignmentDirectional.topCenter,
@@ -1914,8 +1981,6 @@ LinearGradient _gradientActiveMediaPlayer(BuildContext context) {
   );
 }
 
-///**** As the list is being displayed use this object to show a
-/// player whose status is 'inactive'
 LinearGradient _gradientInActiveMediaPlayer(BuildContext context) {
   return const LinearGradient(
     begin: AlignmentDirectional.topCenter,
@@ -1927,12 +1992,9 @@ LinearGradient _gradientInActiveMediaPlayer(BuildContext context) {
   );
 }
 
-///*** As the list is being displayed, show a (slightly) different
-/// text (label) to the user for players that are active vs. inactive
 Text _activeScreenText(BuildContext context, pIndex, vw) {
-  return Text("${dmbMediaPlayers[pIndex]
-      .status} - Screen: ${dmbMediaPlayers[pIndex]
-      .currentScreen}",
+  return Text(
+      "${dmbMediaPlayers[pIndex].status} - Screen: ${dmbMediaPlayers[pIndex].currentScreen}",
       style: TextStyle(
           fontSize: vw * 4,
           fontStyle: FontStyle.italic,
@@ -1940,12 +2002,10 @@ Text _activeScreenText(BuildContext context, pIndex, vw) {
 }
 
 Text _inActiveScreenText(BuildContext context, pIndex, vw) {
-  return Text("${dmbMediaPlayers[pIndex]
-      .status} - Screen: ${dmbMediaPlayers[pIndex]
-      .currentScreen}",
+  return Text(
+      "${dmbMediaPlayers[pIndex].status} - Screen: ${dmbMediaPlayers[pIndex].currentScreen}",
       style: TextStyle(
           fontSize: vw * 4,
           fontStyle: FontStyle.italic,
-          color: Colors.white70)
-  );
+          color: Colors.white70));
 }
