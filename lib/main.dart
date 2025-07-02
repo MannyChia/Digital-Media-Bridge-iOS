@@ -203,11 +203,18 @@ class _BypassloginPageState extends State<BypassloginPage> {
   }
 }
 
-class LoginPage extends StatelessWidget {
-  LoginPage({super.key});
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  bool _passwordPeak = false;
 
   Future<void> _saveUsername(String login, String password) async {
     await systemStorage.write(key: "KEY_USERNAME", value: login);
@@ -273,12 +280,25 @@ class LoginPage extends StatelessWidget {
                     SizedBox(height: 16.h),
                     TextFormField(
                       controller: passwordController,
-                      obscureText: true,
+                      obscureText: !_passwordPeak,
                       style: TextStyle(color: Colors.white, fontSize: 16.sp),
                       cursorColor: Colors.white,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.grey[800],
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _passwordPeak
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: Colors.white30,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _passwordPeak = !_passwordPeak;
+                            });
+                          },
+                        ),
                         prefixIcon:
                             const Icon(Icons.lock, color: Colors.white30),
                         hintText: 'Password',

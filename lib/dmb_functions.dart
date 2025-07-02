@@ -71,16 +71,17 @@ Future<List<String>> fetchAllUserImages(String userEmail) async {
 
 Future<Map<String, dynamic>> uploadImage(File imageFile, String username) async {
   var uri = Uri.parse('https://digitalmediabridge.tv/screenbuilder-server/api/upload');
-
-  // get imageFile type
   String? mimeType = lookupMimeType(imageFile.path);
-
-  // split mimeType into type and subtype
   String? type = mimeType?.split('/')[0];
   String? subtype = mimeType?.split('/')[1];
 
-  print("TYPE: $type");
-  print("SUBTYPE: $subtype");
+  if (kDebugMode) {
+    print("TYPE: $type");
+  }
+
+  if (kDebugMode) {
+    print("SUBTYPE: $subtype");
+  }
 
   var request = http.MultipartRequest('POST', uri)
     ..fields['filetype'] = 'images'
