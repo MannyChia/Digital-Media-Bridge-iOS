@@ -44,6 +44,13 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
   List<String> _playlistImages = [];
   Set<String> selectedImages = {};
   Set<String> originalPlaylistImages = {};
+  bool _isLoading = true; // display loading circle when playlists are loading
+
+  @override // playlist page init
+  void initState() {
+    super.initState();
+    _refreshPlaylistPreviews(); // fetch playlists on init
+  }
 
   void _openPlaylist(String screenName, String playlistName) async {
     try {
@@ -117,11 +124,26 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
       final updated = await fetchPlaylistPreviews(widget.userEmail);
       setState(() {
         cachedPlaylistPreviews = updated;
+        hasLoadedPlaylistPreviews = true;
+        _isLoading = false; // hide loading circle when playlists load
       });
-    } catch (e) {
+    }
+    catch (e) {
       if (kDebugMode) {
         print("Failed to refresh playlist previews: $e");
       }
+      setState(() {
+        _isLoading = false; // even if playlists don't load, hide loading circle
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to load playlists",
+              style: TextStyle(fontSize: 20)),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
     }
   }
 
@@ -138,14 +160,19 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
               color: Color(0xFF121212),
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            child: AnimatedSwitcher(
+            child: _isLoading
+              ? Center(
+              child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.orange)),
+              )
+              : AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: _pageIndex == 0
-                  ? _buildPlaylistView(scrollController)
-                  : _buildImageView(scrollController),
-            ),
-          );
-        });
+                ? _buildPlaylistView(scrollController)
+                : _buildImageView(scrollController),
+              ),
+            );
+        }
+    );
   }
 
   Widget _buildPlaylistView(ScrollController scrollController) {
@@ -169,21 +196,19 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
-              children: const [
+              children: [
                 Text(
-                  'Edit Playlist',
+                  'Edit Image Playlists',
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
+                    color: Colors.white70,
+                    fontSize: vw * 7,
                   ),
                 ),
-                SizedBox(width: 6),
-                Icon(Icons.playlist_add, color: Colors.white, size: 23),
+                const SizedBox(width: 6),
+                Icon(Icons.playlist_add, color: Colors.white70, size: vw * 7),
               ],
             ),
           ),
-          Divider(color: Colors.white70, thickness: 1, height: 1),
           const SizedBox(height: 8),
           Expanded(
             child: Center(
@@ -566,6 +591,7 @@ class _PlayersPageState extends State<PlayersPage> {
   void initState() {
     super.initState();
     _updateTitle();
+    _refreshData();
   }
 
   void _updateTitle() {
@@ -605,6 +631,7 @@ class _PlayersPageState extends State<PlayersPage> {
   }
 
   void _userLogout() {
+    cachedPlaylistPreviews.clear();
     confirmLogout(context);
   }
 
@@ -772,7 +799,6 @@ class _PlayersPageState extends State<PlayersPage> {
 
   Future<void> _showPlaylistBottomSheet(
       BuildContext context, String userEmail) async {
-    await preloadPlaylistPreviews(userEmail);
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1369,13 +1395,15 @@ class _PlayersPageState extends State<PlayersPage> {
       final List<dynamic> list = jsonDecode(response.body);
 
       if (list.isEmpty || list.first == null || list.first.toString().isEmpty) {
-        numLeft = 20;
-      } else {
-        numLeft = int.tryParse(list.first.toString()) ?? 20;
+        numLeft = 0;
       }
-    } catch (e) {
+      else {
+        numLeft = int.tryParse(list.first.toString()) ?? 0;
+      }
+    }
+    catch (e) {
       debugPrint('$e');
-      numLeft = 20;
+      numLeft = 0;
     }
     if (kDebugMode) {
       print("Num Left: $numLeft");
@@ -1383,6 +1411,7 @@ class _PlayersPageState extends State<PlayersPage> {
 
     int desiredImageWidth = 1536;
     int desiredImageHeight = 864;
+
     List<bool> isSelected = [true, false, false];
     final dialogContext = context;
     await showDialog(
@@ -1832,7 +1861,7 @@ class _PlayersPageState extends State<PlayersPage> {
                       top: vh * 2,
                       left: vw * 6,
                       right: vw * 6,
-                      bottom: vh * 1.5),
+                      bottom: vh * 10),
                   itemCount: dmbMediaPlayers.length,
                   physics: const AlwaysScrollableScrollPhysics(),
                   itemBuilder: (BuildContext context, int index) {
@@ -1929,6 +1958,7 @@ PreferredSizeWidget _appBarNoBackBtn(BuildContext context) {
     child: AppBar(
       backgroundColor: Colors.black.withValues(alpha: 0.8),
       automaticallyImplyLeading: false,
+      centerTitle: false, // left align title
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
