@@ -249,6 +249,7 @@ class _LoginPageState extends State<LoginPage> {
                       controller: emailController,
                       style: TextStyle(color: Colors.white, fontSize: 16.sp),
                       cursorColor: Colors.white,
+                      maxLength: 40,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.grey[800],
@@ -269,6 +270,10 @@ class _LoginPageState extends State<LoginPage> {
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(color: Colors.blueAccent),
                         ),
+                        errorStyle: TextStyle(
+                          fontSize: 16.sp,
+                          color: Colors.red,
+                        ),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -283,6 +288,7 @@ class _LoginPageState extends State<LoginPage> {
                       obscureText: !_passwordPeak,
                       style: TextStyle(color: Colors.white, fontSize: 16.sp),
                       cursorColor: Colors.white,
+                      maxLength: 40,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.grey[800],
@@ -315,6 +321,10 @@ class _LoginPageState extends State<LoginPage> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(color: Colors.blueAccent),
+                        ),
+                        errorStyle: TextStyle(
+                          fontSize: 16.sp,
+                          color: Colors.red,
                         ),
                       ),
                       validator: (value) {
@@ -351,10 +361,15 @@ class _LoginPageState extends State<LoginPage> {
                               "user-login",
                             );
                             if (result == "invalid_login") {
+                              ScaffoldMessenger.of(context).clearSnackBars();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                    content: Text("Invalid Login",
-                                        style: TextStyle(fontSize: 16.sp))),
+                                  content: Text("Invalid Login", style: TextStyle(fontSize: 20)),
+                                  backgroundColor: Colors.redAccent,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape:
+                                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
                               );
                             } else if (result == "no_screens") {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -375,7 +390,8 @@ class _LoginPageState extends State<LoginPage> {
                                         "Cannot Connect To DMB Server",
                                         style: TextStyle(fontSize: 16.sp))),
                               );
-                            } else {
+                            }
+                            else {
                               loginUsername = emailController.text;
                               loginPassword = passwordController.text;
                               await _saveUsername(loginUsername, loginPassword);
