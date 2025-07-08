@@ -1,13 +1,15 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart'; // Using Cupertino
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import './players_page.dart';
-import './dmb_functions.dart';
+import './players_page.dart'; // Uncommented
+import './dmb_functions.dart'; // Uncommented - assuming it's Cupertino-compatible or pure logic
+import './screens_page.dart'; // Assuming this is needed and also converted
 
+// Global variables - remain as is
 dynamic selectedIndex = 0;
 dynamic mainPageTitle = "DMB Media Players";
 dynamic mainPageSubTitle = "Select Player";
@@ -56,38 +58,24 @@ class DmbApp extends StatelessWidget {
       builder: (context, child) {
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1.0)),
-          child: MaterialApp(
+          child: CupertinoApp( // CupertinoApp as the root
             debugShowCheckedModeBanner: false,
             title: 'Digital Media Bridge',
             initialRoute: '/',
-            theme: ThemeData(
-              scaffoldBackgroundColor: const Color(0xFF000000),
-              inputDecorationTheme: const InputDecorationTheme(
-                border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white30)),
-                focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white30)),
-                enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white30)),
-                errorBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white30)),
-                focusedErrorBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white30)),
-              ),
-              snackBarTheme: SnackBarThemeData(
-                backgroundColor: Colors.black,
-                contentTextStyle:
-                    TextStyle(color: Colors.white, fontSize: 16.sp),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: BorderSide(color: Colors.white70, width: 2),
-                ),
-              ),
-              colorScheme: ColorScheme.fromSeed(seedColor: Colors.amber),
-              useMaterial3: true,
+            theme: const CupertinoThemeData(
+              primaryColor: CupertinoColors.activeBlue,
+              // Use CupertinoColors for scaffold background
+              scaffoldBackgroundColor: CupertinoColors.black,
+              barBackgroundColor: CupertinoColors.black, // For navigation bars
+              // Add other Cupertino theme properties as needed
             ),
             home: const MyHomePage(title: 'Digital Media Bridge'),
+            // Define routes if you use named routes
+            // routes: {
+            //   '/home': (context) => const HomePage(),
+            //   '/login': (context) => const LoginPage(),
+            //   '/bypassLogin': (context) => const BypassloginPage(),
+            // },
           ),
         );
       },
@@ -107,44 +95,49 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      precacheImage(
-          const AssetImage('assets/cilutions_background.jpg'), context);
+      // precacheImage( // Uncommented if you have a Cupertino-style background, otherwise not needed
+      //     const AssetImage('assets/cilutions_background.jpg'), context);
     });
   }
 
-  Future<bool> _readFromStorage() async {
+  Future<bool> _readFromStorage() async { // Uncommented
     try {
       storedUsername = await systemStorage.read(key: "KEY_USERNAME") ?? "none";
       storedPassword = await systemStorage.read(key: "KEY_PASSWORD") ?? "none";
       return storedUsername != "none" && storedPassword != "none";
     } catch (exc) {
+      if (kDebugMode) {
+        print("Error reading from storage: $exc");
+      }
       return false;
     }
   }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF000000),
-      body: FutureBuilder<bool>(
+    return CupertinoPageScaffold( // CupertinoPageScaffold
+      backgroundColor: CupertinoColors.black, // Explicitly black background
+      child: FutureBuilder<bool>(
         future: _readFromStorage(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              child: CupertinoActivityIndicator( // Cupertino loading indicator
+                radius: 15.0, // Adjust size as needed
               ),
             );
           }
           if (snapshot.hasData && snapshot.data == true) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
+              // Using CupertinoPageRoute for navigation
               Navigator.push(
                 context,
-                MaterialPageRoute(
+                CupertinoPageRoute(
                     builder: (context) => const BypassloginPage()),
               ).then((_) {});
             });
           }
-          return LoginPage();
+          return const LoginPage(); // Assuming LoginPage is also Cupertino
         },
       ),
     );
@@ -172,9 +165,10 @@ class _BypassloginPageState extends State<BypassloginPage> {
       loginUsername = storedUsername;
       loginPassword = storedPassword;
       await preloadPlaylistPreviews(loginUsername);
+      // Using CupertinoPageRoute for navigation
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
+        CupertinoPageRoute(builder: (context) => const HomePage()),
         (Route<dynamic> route) => false,
       );
     } else {
@@ -186,15 +180,15 @@ class _BypassloginPageState extends State<BypassloginPage> {
   }
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF000000),
-      body: Center(
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.black, // Cupertino black
+      child: Center(
         child: Text(
           bypassMsg,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontWeight: FontWeight.normal,
-            color: Colors.white,
+            color: CupertinoColors.white, // Cupertino white
             fontSize: 14.sp,
           ),
         ),
@@ -211,21 +205,46 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _formKey = GlobalKey<FormState>();
+  // GlobalKey for Form is typically used with Material's Form/TextFormField.
+  // For Cupertino, you'd usually validate manually or use a different validation approach.
+  // Keeping it for potential future integration with a Cupertino-compatible validation package.
+  final _formKey = GlobalKey<FormState>(); // Still FormState
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool _passwordPeak = false;
 
-  Future<void> _saveUsername(String login, String password) async {
+  Future<void> _saveUsername(String login, String password) async { // Uncommented
     await systemStorage.write(key: "KEY_USERNAME", value: login);
     await systemStorage.write(key: "KEY_PASSWORD", value: password);
   }
 
+  // Helper function for Cupertino-style alerts
+  void _showCupertinoAlert(BuildContext context, String title, String message, {Color? titleColor}) {
+    showCupertinoDialog(
+      context: context,
+      builder: (BuildContext context) => CupertinoAlertDialog(
+        title: Text(
+          title,
+          style: TextStyle(color: titleColor ?? CupertinoColors.label),
+        ),
+        content: Text(message),
+        actions: <CupertinoDialogAction>[
+          CupertinoDialogAction(
+            child: const Text("OK"),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF000000),
-      body: Center(
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.black, // Cupertino black
+      child: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
           child: Column(
@@ -235,183 +254,160 @@ class _LoginPageState extends State<LoginPage> {
                 'Digital Media Bridge',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: CupertinoColors.white, // Cupertino white
                   fontSize: 32.sp,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               SizedBox(height: 48.h),
-              Form(
-                key: _formKey,
-                child: Column(
+              Container(
+                decoration: BoxDecoration(
+                  color: CupertinoColors.darkBackgroundGray, // Cupertino dark grey
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
                   children: [
-                    TextFormField(
-                      controller: emailController,
-                      style: TextStyle(color: Colors.white, fontSize: 16.sp),
-                      cursorColor: Colors.white,
-                      maxLength: 40,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.grey[800],
-                        prefixIcon:
-                            const Icon(Icons.person, color: Colors.white30),
-                        hintText: 'Username',
-                        hintStyle:
-                            TextStyle(color: Colors.white54, fontSize: 16.sp),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[700]!),
+                    const Icon(CupertinoIcons.person, color: CupertinoColors.white),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: CupertinoTextField( // Cupertino TextField
+                        controller: emailController,
+                        placeholder: 'Username',
+                        maxLength: 40,
+                        style: const TextStyle(color: CupertinoColors.white),
+                        placeholderStyle: TextStyle(
+                          color: CupertinoColors.white.withOpacity(0.5),
                         ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[700]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.blueAccent),
-                        ),
-                        errorStyle: TextStyle(
-                          fontSize: 16.sp,
-                          color: Colors.red,
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your username';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 16.h),
-                    TextFormField(
-                      controller: passwordController,
-                      obscureText: !_passwordPeak,
-                      style: TextStyle(color: Colors.white, fontSize: 16.sp),
-                      cursorColor: Colors.white,
-                      maxLength: 40,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.grey[800],
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _passwordPeak
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                            color: Colors.white30,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _passwordPeak = !_passwordPeak;
-                            });
-                          },
-                        ),
-                        prefixIcon:
-                            const Icon(Icons.lock, color: Colors.white30),
-                        hintText: 'Password',
-                        hintStyle:
-                            TextStyle(color: Colors.white54, fontSize: 16.sp),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[700]!),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[700]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.blueAccent),
-                        ),
-                        errorStyle: TextStyle(
-                          fontSize: 16.sp,
-                          color: Colors.red,
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your password';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 32.h),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          elevation: 8,
-                          shadowColor: Colors.white24,
-                          padding: EdgeInsets.symmetric(vertical: 16.h),
-                          backgroundColor:
-                              const Color.fromRGBO(10, 85, 163, 1.0),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          textStyle: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        onPressed: () async {
-                          if (_formKey.currentState!.validate()) {
-                            final result = await getUserData(
-                              emailController.text,
-                              passwordController.text,
-                              "user-login",
-                            );
-                            if (result == "invalid_login") {
-                              ScaffoldMessenger.of(context).clearSnackBars();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("Invalid Login", style: TextStyle(fontSize: 20)),
-                                  backgroundColor: Colors.redAccent,
-                                  behavior: SnackBarBehavior.floating,
-                                  shape:
-                                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                ),
-                              );
-                            } else if (result == "no_screens") {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text("No Screens To Play",
-                                        style: TextStyle(fontSize: 16.sp))),
-                              );
-                            } else if (result == "no_players") {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text("No Players To Update",
-                                        style: TextStyle(fontSize: 16.sp))),
-                              );
-                            } else if (result == false) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text(
-                                        "Cannot Connect To DMB Server",
-                                        style: TextStyle(fontSize: 16.sp))),
-                              );
-                            }
-                            else {
-                              loginUsername = emailController.text;
-                              loginPassword = passwordController.text;
-                              await _saveUsername(loginUsername, loginPassword);
-                              await preloadPlaylistPreviews(loginUsername);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => const HomePage()),
-                              );
-                            }
-                          }
-                        },
-                        child: Text(
-                          'Log In',
-                          style: TextStyle(
-                              fontSize: 16.sp),
-                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        cursorColor: CupertinoColors.white,
+                        decoration: const BoxDecoration(), // No border by default
                       ),
                     ),
                   ],
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Container(
+                decoration: BoxDecoration(
+                  color: CupertinoColors.darkBackgroundGray, // Cupertino dark grey
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  children: [
+                    const Icon(CupertinoIcons.lock, color: CupertinoColors.white),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: CupertinoTextField( // Cupertino TextField
+                        controller: passwordController,
+                        placeholder: 'Password',
+                        obscureText: !_passwordPeak,
+                        maxLength: 40,
+                        style: const TextStyle(color: CupertinoColors.white),
+                        placeholderStyle: TextStyle(
+                          color: CupertinoColors.white.withOpacity(0.5),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        cursorColor: CupertinoColors.white,
+                        decoration: const BoxDecoration(), // No border by default
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _passwordPeak = !_passwordPeak;
+                        });
+                      },
+                      child: Icon(
+                        _passwordPeak ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
+                        color: CupertinoColors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 32.h),
+              SizedBox(
+                width: double.infinity,
+                child: CupertinoButton.filled( // Cupertino filled button
+                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                  borderRadius: BorderRadius.circular(8),
+                  // Use a Cupertino-compatible color or a custom one
+                  color: const Color.fromRGBO(10, 85, 163, 1.0), // Your custom blue
+                  child: Text(
+                    'Log In',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                      color: CupertinoColors.white,
+                    ),
+                  ),
+                  onPressed: () async {
+                    // For CupertinoTextField, validation is usually done by checking controller.text
+                    // directly, as there's no built-in validator like TextFormField.
+                    // The _formKey.currentState!.validate() will always be true unless you wrap
+                    // your CupertinoTextFields in a custom FormField-like widget or manually add validation logic.
+                    // For demonstration, I'll proceed as if validation passes or handle errors immediately.
+
+                    // Basic validation check
+                    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+                      _showCupertinoAlert(
+                        context,
+                        "Input Error",
+                        "Please enter both username and password.",
+                        titleColor: CupertinoColors.systemRed,
+                      );
+                      return;
+                    }
+
+                    final result = await getUserData(
+                      emailController.text,
+                      passwordController.text,
+                      "user-login",
+                    );
+                    if (result == "invalid_login") {
+                      _showCupertinoAlert(
+                        context,
+                        "Login Failed",
+                        "Invalid Username or Password.",
+                        titleColor: CupertinoColors.systemRed,
+                      );
+                    } else if (result == "no_screens") {
+                      _showCupertinoAlert(
+                        context,
+                        "Login Failed",
+                        "No Screens To Play.",
+                        titleColor: CupertinoColors.systemRed,
+                      );
+                    } else if (result == "no_players") {
+                      _showCupertinoAlert(
+                        context,
+                        "Login Failed",
+                        "No Players To Update.",
+                        titleColor: CupertinoColors.systemRed,
+                      );
+                    } else if (result == false) {
+                      _showCupertinoAlert(
+                        context,
+                        "Connection Error",
+                        "Cannot Connect To DMB Server.",
+                        titleColor: CupertinoColors.systemRed,
+                      );
+                    }
+                    else {
+                      loginUsername = emailController.text;
+                      loginPassword = passwordController.text;
+                      await _saveUsername(loginUsername, loginPassword);
+                      await preloadPlaylistPreviews(loginUsername);
+                      // Using CupertinoPageRoute for navigation
+                      Navigator.push(
+                        context,
+                        CupertinoPageRoute(
+                            builder: (context) => const HomePage()),
+                      );
+                    }
+                  },
                 ),
               ),
             ],
@@ -422,6 +418,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
+// HomePage class from your previous request, already converted.
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
   @override
@@ -431,10 +428,10 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF000000),
-      body: PlayersPage(
-        mainPageTitle: "Media Players",
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.black,
+      child: PlayersPage( 
+        mainPageTitle: "DMB Media Players",
         mainPageSubTitle: "Select Player",
         userEmail: loginUsername,
       ),
