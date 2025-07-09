@@ -1743,7 +1743,6 @@ Future<void> _showUploadSheet(File imageFile) async {
             ),
           ),
 
-          // Main content with Cupertino navigation bar
           CupertinoPageScaffold(
             backgroundColor: CupertinoColors.transparent,
             navigationBar: _appBarNoBackBtn(context, mainPageTitle, mainPageSubTitle, _toggleDrawer),
@@ -1816,7 +1815,7 @@ Future<void> _showUploadSheet(File imageFile) async {
 
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
-            right: _drawerOpen ? 0 : -vw * 60,
+            right: _drawerOpen ? 0 : -vw * 60, // lol didn't really know how to start from right... ig -vw works
             top: 0,
             bottom: 0,
             width: vw * 60,
