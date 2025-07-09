@@ -48,6 +48,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
   Set<String> selectedImages = {};
   Set<String> originalPlaylistImages = {};
   bool _isLoading = true; // display loading circle when playlists are loading
+  Color darkGreen = Color(0xFF006400); 
 
   @override 
   void initState() {
@@ -335,7 +336,6 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                       onTap: () =>
                           _openPlaylist(preview.screenName, preview.name),
 //                       borderRadius: BorderRadius.circular(12),
-
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -418,6 +418,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
             child: Row(
               children: [
                 GestureDetector(
+                  behavior: HitTestBehavior.opaque, // larger tap area
                   onTap: () async {
                     await _refreshPlaylistPreviews();
                     setState(() {
@@ -465,6 +466,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                   final imageUrl = _playlistImages[index];
                   final isSelected = selectedImages.contains(imageUrl);
                   return GestureDetector(
+                    behavior: HitTestBehavior.opaque, // larger tap area
                     onTap: () {
                       HapticFeedback.lightImpact();
                       setState(() {
@@ -535,6 +537,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
         left: 16,
         right: 16,
         child: CupertinoButton.filled(
+          color: darkGreen,
           onPressed: _hasPlaylistChanged() ? _onSavePressed : null,
           padding: const EdgeInsets.symmetric(vertical: 16),
           borderRadius: BorderRadius.circular(10),
@@ -647,6 +650,7 @@ class _PlayersPageState extends State<PlayersPage> {
   final TextEditingController _textFieldController = TextEditingController();
   final bool _isGenerating = false;
   String backgroundURL = dotenv.env['BACKGROUND_IMAGE_URL']!;
+  Color darkGreen = Color(0xFF006400); 
   // final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
   //     GlobalKey<ScaffoldMessengerState>();
 
@@ -713,112 +717,118 @@ void _showScreensPage(bool onPlayer) {
     }
   }
 
-Future<void> _showUploadSheet(File imageFile) async {
-  double screenHeight = MediaQuery.of(context).size.height;
+  Future<void> _showUploadSheet(File imageFile) async {
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenWidth = MediaQuery.of(context).size.width;
 
-  await showCupertinoModalPopup(
-    context: context,
-    builder: (_) => SafeArea(
-      child: Container(
-        height: screenHeight * 0.6,
-        decoration: const BoxDecoration(
-          color: CupertinoColors.systemGrey6,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Padding(
-          padding:
-              MediaQuery.of(context).viewInsets.add(const EdgeInsets.all(16)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 5,
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: CupertinoColors.systemGrey4,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              const Text(
-                "Upload Image to Account",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: CupertinoColors.black,
-                ),
-              ),
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  color: CupertinoColors.systemGrey4,
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: Image.file(
-                      imageFile,
-                      fit: BoxFit.contain,
+    await showCupertinoModalPopup(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Container(
+          // Let height be flexible
+          constraints: BoxConstraints(
+            maxHeight: screenHeight * 0.9,
+          ),
+          decoration: const BoxDecoration(
+            color: CupertinoColors.black,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Padding(
+            padding: MediaQuery.of(context).viewInsets.add(const EdgeInsets.all(16)),
+            child: SingleChildScrollView( // ✅ Add scroll behavior
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 5,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.systemGrey6,
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  CupertinoButton(
-                    padding: EdgeInsets.zero,
-                    child: const Text("Close"),
-                    onPressed: () => Navigator.of(context).pop(),
+                  Text(
+                    "Upload Image to Account",
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.07,
+                      fontWeight: FontWeight.bold,
+                      color: CupertinoColors.systemGrey6,
+                    ),
                   ),
-                  const SizedBox(width: 10),
-                  CupertinoButton.filled(
-                    child: const Text("Upload"),
-                    onPressed: () async {
-                      if (mounted) {
-                        Navigator.of(context).pop();
-                      }
-                      final result =
-                          await uploadImage(imageFile, loginUsername);
-                      final bool success = result['success'] as bool;
-                      final String message = result['message'] as String;
-                      if (!success) {
-                        await showCupertinoDialog(
-                          context: context,
-                          builder: (_) => CupertinoAlertDialog(
-                            title: Text(
-                              message.contains('20')
-                                  ? "Upload Limit Reached"
-                                  : "Upload Failed",
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            content: Text(
-                              message.contains('20')
-                                  ? "You cannot upload more than 20 images. Please delete one first."
-                                  : message,
-                            ),
-                            actions: [
-                              CupertinoDialogAction(
-                                isDefaultAction: true,
-                                child: const Text("OK"),
-                                onPressed: () => Navigator.of(context).pop(),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      color: CupertinoColors.black,
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: Image.file(
+                          imageFile,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        child: const Text("Close", style: TextStyle(color: CupertinoColors.systemGrey6)),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      const SizedBox(width: 10),
+                      CupertinoButton.filled(
+                        color: darkGreen,
+                        child: const Text("Upload"),
+                        onPressed: () async {
+                          if (mounted) {
+                            Navigator.of(context).pop();
+                          }
+                          final result = await uploadImage(imageFile, loginUsername);
+                          final bool success = result['success'] as bool;
+                          final String message = result['message'] as String;
+                          if (!success) {
+                            await showCupertinoDialog(
+                              context: context,
+                              builder: (_) => CupertinoAlertDialog(
+                                title: Text(
+                                  message.contains('20')
+                                      ? "Upload Limit Reached"
+                                      : "Upload Failed",
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                content: Text(
+                                  message.contains('20')
+                                      ? "You cannot upload more than 20 images. Please delete one first."
+                                      : message,
+                                ),
+                                actions: [
+                                  CupertinoDialogAction(
+                                    isDefaultAction: true,
+                                    child: const Text("OK"),
+                                    onPressed: () => Navigator.of(context).pop(),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        );
-                      }
-                    },
+                            );
+                          }
+                        },
+                      ),
+                    ],
                   ),
+                  SizedBox(height: screenHeight * 0.03),
                 ],
               ),
-              SizedBox(height: screenHeight * 0.03),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
 
 
   Future<void> _takePhoto() async {
@@ -1021,13 +1031,13 @@ Future<void> _showUploadSheet(File imageFile) async {
     return null;
   }
 
-  // void onNewPhoto() {
-  //   Navigator.of(context).pop();
-  //   setState(() {
-  //     _textFieldController.clear();
-  //   });
-  //   _showAIPromptDialog();
-  // }
+  void onNewPhoto() {
+    Navigator.of(context).pop();
+    setState(() {
+      _textFieldController.clear();
+    });
+    _showAIPromptDialog();
+  }
 
   // void onEdit(String prevImageID) {
   //   Navigator.of(context).pop();
@@ -1176,12 +1186,13 @@ Future<void> _showUploadSheet(File imageFile) async {
                     Text(
                       "Generating Image...",
                       style: TextStyle(
-                        color: CupertinoColors.white,
+                        color: CupertinoColors.systemGrey6,
                         fontSize: screenWidth * 0.05,
                       ),
                     ),
                     const SizedBox(height: 10),
                     CupertinoButton.filled(
+                      color: CupertinoColors.systemGrey,
                       borderRadius: BorderRadius.circular(12),
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       onPressed: () {
@@ -1193,6 +1204,7 @@ Future<void> _showUploadSheet(File imageFile) async {
                         "Cancel",
                         style: TextStyle(
                           fontSize: screenWidth * 0.04,
+                          color: CupertinoColors.black,
                         ),
                       ),
                     ),
@@ -1266,116 +1278,123 @@ Future<void> _showUploadSheet(File imageFile) async {
 
       if (!mounted) return;
 
-      try {
+      try { // show the image dialog
         await showCupertinoModalPopup(
           context: context,
           builder: (BuildContext popupContext) {
-            return Container(
-              height: screenHeight * 0.85,
-              decoration: BoxDecoration(
-                color: CupertinoColors.systemGrey6,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 5,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: CupertinoColors.systemGrey,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  Text(
-                    "AI Generated Image",
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.07,
-                      fontWeight: FontWeight.bold,
-                      color: CupertinoColors.label,
-                    ),
-                  ),
-                  SizedBox(height: screenHeight * 0.02),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      width: screenWidth * 0.9,
-                      height: screenHeight * 0.6,
-                      color: CupertinoColors.black,
-                      child: Image.network(
-                        imageUrl,
-                        fit: BoxFit.contain,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return const Center(
-                            child: CupertinoActivityIndicator(radius: 15),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          if (kDebugMode) {
-                            print("Error loading image: $error");
-                          }
-                          return const Center(
-                            child: Text(
-                              "Failed to load image",
-                              style: TextStyle(color: CupertinoColors.destructiveRed),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: screenHeight * 0.02),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
+            return SafeArea(
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: screenHeight * 0.9,
+                ),
+                decoration: BoxDecoration(
+                  color: CupertinoColors.black,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                padding: const EdgeInsets.all(16),
+                child: SingleChildScrollView( 
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      CupertinoButton(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        color: CupertinoColors.black.withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(8),
-                        onPressed: () {
-                          // onNewPhoto();
-                        },
-                        child: Row(
-                          children: const [
-                            Icon(CupertinoIcons.pencil, color: CupertinoColors.systemOrange),
-                            SizedBox(width: 8),
-                            Text("Try Again", style: TextStyle(color: CupertinoColors.white)),
-                          ],
+                      Container(
+                        width: 40,
+                        height: 5,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: CupertinoColors.systemGrey,
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
+                      Text(
+                        "AI Generated Image",
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.07,
+                          fontWeight: FontWeight.bold,
+                          color: CupertinoColors.systemGrey6,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        constraints: BoxConstraints(
+                          maxHeight: screenHeight * 0.4, // Limit image height
+                          maxWidth: screenWidth * 0.9,
+                        ),
+                        color: CupertinoColors.black,
+                        child: Image.network(
+                          imageUrl,
+                          fit: BoxFit.contain,
+                          width: double.infinity,
+                          height: double.infinity,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return const Center(child: CupertinoActivityIndicator(radius: 15));
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Center(
+                              child: Text(
+                                "Failed to load image",
+                                style: TextStyle(color: CupertinoColors.destructiveRed),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          CupertinoButton(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            color: CupertinoColors.systemGrey6,
+                            borderRadius: BorderRadius.circular(8),
+                            onPressed: () {
+                              onNewPhoto();
+                            },
+                            child: Row(
+                              children: const [
+                                Icon(CupertinoIcons.pencil, color: CupertinoColors.systemOrange),
+                                SizedBox(width: 8),
+                                Text("Try Again", style: TextStyle(color: CupertinoColors.white)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          CupertinoButton(
+                            onPressed: () {
+                              if (Navigator.canPop(popupContext)) {
+                                Navigator.of(popupContext).pop();
+                              }
+                            },
+                            child: const Text("Close", style: TextStyle(color: CupertinoColors.systemGrey6)),
+                          ),
+                          const SizedBox(width: 10),
+                          CupertinoButton.filled(
+                            borderRadius: BorderRadius.circular(8),
+                            color: darkGreen,
+                            onPressed: () async {
+                              if (Navigator.canPop(popupContext)) {
+                                Navigator.of(popupContext).pop();
+                              }
+                              showLoadingCircle(context, isGenerating: true);
+                              // await onSubmit(...)
+                            },
+                            child: const Text("Save & Upload", style: TextStyle(color: CupertinoColors.systemGrey6)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 35),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      CupertinoButton(
-                        onPressed: () {
-                          if (Navigator.canPop(popupContext)) {
-                            Navigator.of(popupContext).pop();
-                          }
-                        },
-                        child: const Text("Close"),
-                      ),
-                      const SizedBox(width: 10),
-                      CupertinoButton.filled(
-                        borderRadius: BorderRadius.circular(8),
-                        onPressed: () async {
-                          if (Navigator.canPop(popupContext)) {
-                            Navigator.of(popupContext).pop();
-                          }
-                          showLoadingCircle(context, isGenerating: true);
-                          // await onSubmit(...)
-                        },
-                        child: const Text("Save & Upload"),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 35),
-                ],
+                ),
               ),
             );
           },
@@ -1463,6 +1482,7 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
                     children: List.generate(3, (index) {
                       final labels = ['16 x 9', '10 x 10', '9 x 16'];
                       return GestureDetector(
+                        behavior: HitTestBehavior.opaque, // larger tap area
                         onTap: () {
                           setState(() {
                             for (int i = 0; i < 3; i++) {
@@ -1542,7 +1562,7 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
             },
             child: Text(
               'Generate AI Image',
-              style: TextStyle(color: CupertinoColors.activeGreen, fontSize: screenWidth * 0.045),
+              style: TextStyle(color: CupertinoColors.systemGreen, fontSize: screenWidth * 0.045),
             ),
           ),
           CupertinoDialogAction(
@@ -1612,6 +1632,7 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
                         return Padding(
                           padding: EdgeInsets.only(bottom: vh * 1),
                           child: GestureDetector(
+                            behavior: HitTestBehavior.opaque, // larger tap area
                             onTap: () {
                               selectedPlayerName = player.name;
                               _showScreensPage(true);
@@ -1726,7 +1747,6 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
                       label: 'Logout',
                       vw: vw,
                       onTap: () {
-                        _toggleDrawer();
                        _userLogout();
                       },
                     ),
@@ -1748,6 +1768,7 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
     required VoidCallback onTap,
   }) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque, // larger tap area
       onTap: onTap,
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: vw * 4, vertical: vw * 1.5),
@@ -1806,8 +1827,11 @@ Widget _uploadExpansion(double vw) {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            SizedBox(height: vw * 2), // Add some space between options
             _uploadOption(vw, CupertinoIcons.camera, 'Camera', _takePhoto),
+            SizedBox(height: vw * 2), // Add some space between options
             _uploadOption(vw, CupertinoIcons.photo_on_rectangle, 'Gallery', _chooseFromGallery),
+            SizedBox(height: vw * 2), // Add some space between options
             _uploadOption(vw, CupertinoIcons.sparkles, 'AI Image', _showAIPromptDialog),
           ],
         ),
@@ -1818,6 +1842,7 @@ Widget _uploadExpansion(double vw) {
 
   Widget _uploadOption(double vw, IconData icon, String label, VoidCallback onTap) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque, // larger tap area
       onTap: () {
         _toggleDrawer();
         onTap();
