@@ -29,471 +29,524 @@ dynamic selectedPlayerName;
 
 bool playersNoBackButton = true;
 
-// class PlaylistSheet extends StatefulWidget {
-//   final String userEmail;
+class PlaylistSheet extends StatefulWidget {
+  final String userEmail;
 
-//   const PlaylistSheet({super.key, required this.userEmail});
+  const PlaylistSheet({super.key, required this.userEmail});
 
-//   @override
-//   State<PlaylistSheet> createState() => _PlaylistSheetState();
-// }
+  @override
+  State<PlaylistSheet> createState() => _PlaylistSheetState();
+}
 
-// class _PlaylistSheetState extends State<PlaylistSheet> {
-//   String? _currentScreenName;
-//   int _pageIndex = 0;
-//   String _currentPlaylist = '';
-//   List<String> _playlistImages = [];
-//   Set<String> selectedImages = {};
-//   Set<String> originalPlaylistImages = {};
-//   bool _isLoading = true; // display loading circle when playlists are loading
+class _PlaylistSheetState extends State<PlaylistSheet> {
+  String? _currentScreenName;
+  int _pageIndex = 0;
+  String _currentPlaylist = '';
+  List<String> _playlistImages = [];
+  Set<String> selectedImages = {};
+  Set<String> originalPlaylistImages = {};
+  bool _isLoading = true; // display loading circle when playlists are loading
 
-//   @override // playlist page init
-//   void initState() {
-//     super.initState();
-//     // _refreshPlaylistPreviews(); // fetch playlists on init
-//   }
+  @override 
+  void initState() {
+    super.initState();
+    _refreshPlaylistPreviews(); // fetch playlists on init
+  }
 
-//   void _openPlaylist(String screenName, String playlistName) async {
-//     try {
-//       _currentScreenName = screenName;
-//       _currentPlaylist = playlistName;
-//       final apiUrl = 'https://digitalmediabridge.tv/screen-builder/assets/api/'
-//           'get_images.php?email=${Uri.encodeComponent(widget.userEmail)}';
-//       final response = await http.get(Uri.parse(apiUrl));
-//       if (response.statusCode != 200) {
-//         throw Exception('Failed to fetch image filenames');
-//       }
-//       final filenames = json.decode(response.body) as List<dynamic>;
-//       final allImageUrls = filenames
-//           .map((f) =>
-//               'https://digitalmediabridge.tv/screen-builder/assets/content/'
-//               '${Uri.encodeComponent(widget.userEmail)}/images/$f')
-//           .toList();
-//       final encodedScreen = Uri.encodeComponent(screenName);
-//       final encodedPl = Uri.encodeComponent(playlistName);
-//       final playlistFileUrl =
-//           'https://digitalmediabridge.tv/screen-builder/assets/content/'
-//           '${Uri.encodeComponent(widget.userEmail)}/others/'
-//           '$encodedScreen/$encodedPl';
-//       final playlistResponse = await http.get(Uri.parse(playlistFileUrl));
-//       if (playlistResponse.statusCode != 200) {
-//         throw Exception('Failed to load playlist');
-//       }
-//       final lines = const LineSplitter()
-//           .convert(playlistResponse.body)
-//           .where((l) => l.trim().isNotEmpty)
-//           .toList();
-//       final selectedFilenames =
-//           lines.map((l) => l.split(',').first.trim()).toSet();
-//       final preSelected = <String>{
-//         for (final url in allImageUrls)
-//           if (selectedFilenames.contains(url.split('/').last)) url
-//       };
-//       originalPlaylistImages =
-//           preSelected.map((url) => url.split('/').last).toSet();
-//       setState(() {
-//         _playlistImages = allImageUrls;
-//         selectedImages = preSelected;
-//         _pageIndex = 1;
-//       });
-//     } catch (e) {
-//       if (kDebugMode) {
-//         print("ERROR: $e");
-//       }
-//       // ScaffoldMessenger.of(context).showSnackBar(
-//       //   SnackBar(
-//       //     content: Text("Failed to load playlist images",
-//       //         style: TextStyle(fontSize: 20)),
-//       //     backgroundColor: Colors.redAccent,
-//       //     behavior: SnackBarBehavior.floating,
-//       //     shape:
-//       //         RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-//       //   ),
-//       // );
-//     }
-//   }
+  void _openPlaylist(String screenName, String playlistName) async {
+    try {
+      _currentScreenName = screenName;
+      _currentPlaylist = playlistName;
+      final apiUrl = 'https://digitalmediabridge.tv/screen-builder/assets/api/'
+          'get_images.php?email=${Uri.encodeComponent(widget.userEmail)}';
+      final response = await http.get(Uri.parse(apiUrl));
+      if (response.statusCode != 200) {
+        throw Exception('Failed to fetch image filenames');
+      }
+      final filenames = json.decode(response.body) as List<dynamic>;
+      final allImageUrls = filenames
+          .map((f) =>
+              'https://digitalmediabridge.tv/screen-builder/assets/content/'
+              '${Uri.encodeComponent(widget.userEmail)}/images/$f')
+          .toList();
+      final encodedScreen = Uri.encodeComponent(screenName);
+      final encodedPl = Uri.encodeComponent(playlistName);
+      final playlistFileUrl =
+          'https://digitalmediabridge.tv/screen-builder/assets/content/'
+          '${Uri.encodeComponent(widget.userEmail)}/others/'
+          '$encodedScreen/$encodedPl';
+      final playlistResponse = await http.get(Uri.parse(playlistFileUrl));
+      if (playlistResponse.statusCode != 200) {
+        throw Exception('Failed to load playlist');
+      }
+      final lines = const LineSplitter()
+          .convert(playlistResponse.body)
+          .where((l) => l.trim().isNotEmpty)
+          .toList();
+      final selectedFilenames =
+          lines.map((l) => l.split(',').first.trim()).toSet();
+      final preSelected = <String>{
+        for (final url in allImageUrls)
+          if (selectedFilenames.contains(url.split('/').last)) url
+      };
+      originalPlaylistImages =
+          preSelected.map((url) => url.split('/').last).toSet();
+      setState(() {
+        _playlistImages = allImageUrls;
+        selectedImages = preSelected;
+        _pageIndex = 1;
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        print("ERROR: $e");
+      }
+    showCupertinoDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return CupertinoAlertDialog(
+          title: const Text('Error'),
+          content: const Text('Failed to load playlist images'),
+          actions: [
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+  }
 
-//   bool _hasPlaylistChanged() {
-//     final selectedFilenames =
-//         selectedImages.map((url) => url.split('/').last).toSet();
-//     return selectedFilenames.isNotEmpty &&
-//         !setEquals(selectedFilenames, originalPlaylistImages);
-//   }
+  bool _hasPlaylistChanged() {
+    final selectedFilenames =
+        selectedImages.map((url) => url.split('/').last).toSet();
+    return selectedFilenames.isNotEmpty &&
+        !setEquals(selectedFilenames, originalPlaylistImages);
+  }
 
-//   Future<void> _refreshPlaylistPreviews() async {
-//     try {
-//       final updated = await fetchPlaylistPreviews(widget.userEmail);
-//       setState(() {
-//         cachedPlaylistPreviews = updated;
-//         hasLoadedPlaylistPreviews = true;
-//         _isLoading = false; // hide loading circle when playlists load
-//       });
-//     }
-//     catch (e) {
-//       if (kDebugMode) {
-//         print("Failed to refresh playlist previews: $e");
-//       }
-//       setState(() {
-//         _isLoading = false; // even if playlists don't load, hide loading circle
-//       });
-//       // ScaffoldMessenger.of(context).showSnackBar(
-//       //   SnackBar(
-//       //     content: Text("Failed to load playlists",
-//       //         style: TextStyle(fontSize: 20)),
-//       //     backgroundColor: Colors.redAccent,
-//       //     behavior: SnackBarBehavior.floating,
-//       //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-//       //   ),
-//       // );
-//     }
-//   }
+  Future<void> _refreshPlaylistPreviews() async {
+    try {
+      final updated = await fetchPlaylistPreviews(widget.userEmail);
+      setState(() {
+        cachedPlaylistPreviews = updated;
+        hasLoadedPlaylistPreviews = true;
+        _isLoading = false; // hide loading circle when playlists load
+      });
+    }
+    catch (e) {
+      if (kDebugMode) {
+        print("Failed to refresh playlist previews: $e");
+      }
+      setState(() {
+        _isLoading = false; // even if playlists don't load, hide loading circle
+      });
+    showCupertinoDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return CupertinoAlertDialog(
+          title: const Text('Error'),
+          content: const Text('Failed to load playlists'),
+          actions: [
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return DraggableScrollableSheet(
-//         expand: false,
-//         initialChildSize: 0.65,
-//         maxChildSize: 0.9,
-//         minChildSize: 0.3,
-//         builder: (context, scrollController) {
-//           return Container(
-//             decoration: const BoxDecoration(
-//               color: Color(0xFF121212),
-//               borderRadius: BorderRadius.vertical(top: Radius.circular(24)), 
-//             ),
-//             child: _isLoading
-//               ? Center(
-//               child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.orange)),
-//               )
-//               : AnimatedSwitcher(
-//               duration: const Duration(milliseconds: 300),
-//               child: _pageIndex == 0
-//                 ? _buildPlaylistView(scrollController)
-//                 : _buildImageView(scrollController),
-//               ),
-//             );
-//         }
-//     );
-//   }
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.65,
+        maxChildSize: 0.9,
+        minChildSize: 0.3,
+        builder: (context, scrollController) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFF121212),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)), 
+            ),
+            child: _isLoading
+              ? Center(
+                  child: CupertinoActivityIndicator(),
+              )
+              : AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: _pageIndex == 0
+                ? _buildPlaylistView(scrollController)
+                : _buildImageView(scrollController),
+              ),
+            );
+        }
+    );
+  }
 
-//   Widget _buildPlaylistView(ScrollController scrollController) {
-//     final double vw = MediaQuery.of(context).size.width / 100;
-//     if (cachedPlaylistPreviews.isEmpty) {
-//       return Column(
-//         key: const ValueKey(0),
-//         children: [
-//           const SizedBox(height: 12),
-//           Center(
-//             child: Container(
-//               width: 40,
-//               height: 5,
-//               decoration: BoxDecoration(
-//                 color: Colors.grey[600],
-//                 borderRadius: BorderRadius.circular(10),
-//               ),
-//             ),
-//           ),
-//           const SizedBox(height: 12),
-//           Padding(
-//             padding: const EdgeInsets.symmetric(horizontal: 16),
-//             child: Row(
-//               children: [
-//                 Text(
-//                   'Edit Image Playlists',
-//                   style: TextStyle(
-//                     color: Colors.white70,
-//                     fontSize: vw * 7,
-//                   ),
-//                 ),
-//                 const SizedBox(width: 6),
-//                 Icon(Icons.playlist_add, color: Colors.white70, size: vw * 7),
-//               ],
-//             ),
-//           ),
-//           const SizedBox(height: 8),
-//           Expanded(
-//             child: Center(
-//               child: Text(
-//                 'No current playlist',
-//                 style: TextStyle(
-//                   color: Colors.white70,
-//                   fontSize: 24,
-//                   fontStyle: FontStyle.italic,
-//                 ),
-//               ),
-//             ),
-//           ),
-//         ],
-//       );
-//     }
+  Widget _buildPlaylistView(ScrollController scrollController) {
+    final double vw = MediaQuery.of(context).size.width / 100;
+    if (cachedPlaylistPreviews.isEmpty) {
+      return Column(
+        key: const ValueKey(0),
+        children: [
+          const SizedBox(height: 12),
+          Center(
+            child: Container(
+              width: 40,
+              height: 5,
+              decoration: BoxDecoration(
+              color: CupertinoColors.systemGrey,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Text(
+                  'Edit Image Playlists',
+                  style: TextStyle(
+                    color: CupertinoColors.systemGrey2,
+                    fontSize: vw * 7,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Icon(CupertinoIcons.add, color: CupertinoColors.systemGrey2, size: vw * 7),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: Center(
+              child: Text(
+                'No current playlist',
+                style: TextStyle(
+                  color: CupertinoColors.systemGrey2,
+                  fontSize: 24,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
 
-//     final Map<String, List<PlaylistPreview>> groups = {};
-//     for (final p in cachedPlaylistPreviews) {
-//       groups.putIfAbsent(p.screenName, () => []).add(p);
-//     }
-//     final entries = groups.entries.toList();
-//     return Column(
-//       key: const ValueKey(0),
-//       children: [
-//         const SizedBox(height: 12),
-//         Center(
-//           child: Container(
-//             width: 40,
-//             height: 5,
-//             decoration: BoxDecoration(
-//               color: Colors.grey[600],
-//               borderRadius: BorderRadius.circular(10),
-//             ),
-//           ),
-//         ),
-//         const SizedBox(height: 12),
-//         Padding(
-//           padding: const EdgeInsets.symmetric(horizontal: 16),
-//           child: Row(
-//             children: [
-//               Text(
-//                 'Edit Image Playlists',
-//                 style: TextStyle(
-//                   color: Colors.white70,
-//                   fontSize: vw * 7,
-//                 ),
-//               ),
-//               SizedBox(width: 6),
-//               Icon(Icons.playlist_add, color: Colors.white70, size: vw * 7),
-//             ],
-//           ),
-//         ),
-//         const SizedBox(height: 10),
-//         Expanded(
-//           child: ListView(
-//             controller: scrollController,
-//             padding: const EdgeInsets.symmetric(horizontal: 12),
-//             children: [
-//               for (var i = 0; i < entries.length; i++) ...[
-//                 if (i > 0) const SizedBox(height: 16),
-//                 Padding(
-//                   padding: const EdgeInsets.symmetric(
-//                       vertical: 8.0, horizontal: 4.0),
-//                   child: Row(
-//                       mainAxisAlignment: MainAxisAlignment.start,
-//                       children: [
-//                         Text(
-//                           "Screen: ",
-//                           style: TextStyle(
-//                               color: Colors.white70, fontSize: vw * 5.5),
-//                         ),
-//                         Text(
-//                           entries[i].key,
-//                           style: TextStyle(
-//                             color: Colors.white,
-//                             fontSize: vw * 5.5,
-//                             fontWeight: FontWeight.w900,
-//                           ),
-//                         )
-//                       ]),
-//                 ),
-//                 const SizedBox(height: 8),
-//                 GridView.builder(
-//                   shrinkWrap: true,
-//                   physics: const NeverScrollableScrollPhysics(),
-//                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-//                     crossAxisCount: 2,
-//                     crossAxisSpacing: 12,
-//                     mainAxisSpacing: 12,
-//                     childAspectRatio: 0.85,
-//                   ),
-//                   itemCount: entries[i].value.length,
-//                   itemBuilder: (context, idx) {
-//                     final preview = entries[i].value[idx];
-//                     final displayName = preview.name.endsWith('.pl')
-//                         ? preview.name.substring(0, preview.name.length - 3)
-//                         : preview.name;
-//                     return InkWell(
-//                       onTap: () =>
-//                           _openPlaylist(preview.screenName, preview.name),
+    final Map<String, List<PlaylistPreview>> groups = {};
+    for (final p in cachedPlaylistPreviews) {
+      groups.putIfAbsent(p.screenName, () => []).add(p);
+    }
+    final entries = groups.entries.toList();
+    return Column(
+      key: const ValueKey(0),
+      children: [
+        const SizedBox(height: 12),
+        Center(
+          child: Container(
+            width: 40,
+            height: 5,
+            decoration: BoxDecoration(
+              color: CupertinoColors.systemGrey,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Text(
+                'Edit Image Playlists',
+                style: TextStyle(
+                  color: CupertinoColors.systemGrey2,
+                  fontSize: vw * 7,
+                ),
+              ),
+              SizedBox(width: 6),
+              Icon(CupertinoIcons.add, color: CupertinoColors.systemGrey2, size: vw * 7),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Expanded(
+          child: ListView(
+            controller: scrollController,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            children: [
+              for (var i = 0; i < entries.length; i++) ...[
+                if (i > 0) const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 8.0, horizontal: 4.0),
+                  child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Screen: ",
+                          style: TextStyle(
+                              color: CupertinoColors.systemGrey2, fontSize: vw * 5.5),
+                        ),
+                        Text(
+                          entries[i].key,
+                          style: TextStyle(
+                            color: CupertinoColors.white,
+                            fontSize: vw * 5.5,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        )
+                      ]),
+                ),
+                const SizedBox(height: 8),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.85,
+                  ),
+                  itemCount: entries[i].value.length,
+                  itemBuilder: (context, idx) {
+                    final preview = entries[i].value[idx];
+                    final displayName = preview.name.endsWith('.pl')
+                        ? preview.name.substring(0, preview.name.length - 3)
+                        : preview.name;
+                    return GestureDetector(
+                      onTap: () =>
+                          _openPlaylist(preview.screenName, preview.name),
 //                       borderRadius: BorderRadius.circular(12),
-//                       child: Column(
-//                         crossAxisAlignment: CrossAxisAlignment.start,
-//                         children: [
-//                           Expanded(
-//                             child: ClipRRect(
-//                               borderRadius: BorderRadius.circular(12),
-//                               child: Container(
-//                                 width: double.infinity,
-//                                 color: Colors.grey[700],
-//                                 child: preview.previewImageUrl != null
-//                                     ? Image.network(
-//                                         preview.previewImageUrl!,
-//                                         fit: BoxFit.cover,
-//                                         errorBuilder: (_, __, ___) =>
-//                                             const Center(
-//                                                 child: Icon(Icons.broken_image,
-//                                                     color: Colors.white70)),
-//                                       )
-//                                     : Container(
-//                                         color: Colors.grey[800],
-//                                         child: const Center(
-//                                           child: Icon(Icons.image_not_supported,
-//                                               color: Colors.white70, size: 40),
-//                                         ),
-//                                       ),
-//                               ),
-//                             ),
-//                           ),
-//                           const SizedBox(height: 6),
-//                           Column(
-//                               mainAxisAlignment: MainAxisAlignment.start,
-//                               children: [
-//                                 Text(
-//                                   '$displayName (${preview.itemCount})',
-//                                   style: TextStyle(
-//                                     color: Colors.white,
-//                                     fontWeight: FontWeight.bold,
-//                                     fontSize: vw * 4,
-//                                   ),
-//                                   maxLines: 1,
-//                                   overflow: TextOverflow.ellipsis,
-//                                 ),
-//                               ])
-//                         ],
-//                       ),
-//                     );
-//                   },
-//                 ),
-//               ],
-//             ],
-//           ),
-//         ),
-//       ],
-//     );
-//   }
 
-//   Widget _buildImageView(ScrollController scrollController) {
-//     final displayTitle = _currentPlaylist.endsWith('.pl')
-//         ? _currentPlaylist.substring(0, _currentPlaylist.length - 3)
-//         : _currentPlaylist;
-//     return Stack(
-//       children: [
-//         Column(
-//           key: const ValueKey(1),
-//           children: [
-//             const SizedBox(height: 12),
-//             Center(
-//               child: Container(
-//                 width: 40,
-//                 height: 5,
-//                 decoration: BoxDecoration(
-//                   color: Colors.grey[600],
-//                   borderRadius: BorderRadius.circular(10),
-//                 ),
-//               ),
-//             ),
-//             ListTile(
-//               leading: IconButton(
-//                 icon: const Icon(Icons.arrow_back, color: Colors.white),
-//                 onPressed: () async {
-//                   await _refreshPlaylistPreviews();
-//                   setState(() {
-//                     _pageIndex = 0;
-//                   });
-//                 },
-//               ),
-//               title: Text(
-//                 displayTitle,
-//                 style: const TextStyle(
-//                   color: Colors.white,
-//                   fontWeight: FontWeight.bold,
-//                 ),
-//               ),
-//               trailing: Text(
-//                 "${selectedImages.length} selected",
-//                 style: const TextStyle(color: Colors.white70, fontSize: 13),
-//               ),
-//             ),
-//             Expanded(
-//               child: GridView.builder(
-//                 controller: scrollController,
-//                 padding: const EdgeInsets.only(
-//                     left: 12, right: 12, bottom: 70, top: 12),
-//                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-//                   crossAxisCount: 3,
-//                   crossAxisSpacing: 8,
-//                   mainAxisSpacing: 8,
-//                   childAspectRatio: 1,
-//                 ),
-//                 itemCount: _playlistImages.length,
-//                 itemBuilder: (context, index) {
-//                   final imageUrl = _playlistImages[index];
-//                   final isSelected = selectedImages.contains(imageUrl);
-//                   return GestureDetector(
-//                     onTap: () {
-//                       HapticFeedback.lightImpact();
-//                       setState(() {
-//                         if (isSelected) {
-//                           selectedImages.remove(imageUrl);
-//                         } else {
-//                           selectedImages.add(imageUrl);
-//                         }
-//                       });
-//                     },
-//                     child: Stack(
-//                       children: [
-//                         ClipRRect(
-//                           borderRadius: BorderRadius.circular(12),
-//                           child: AspectRatio(
-//                             aspectRatio: 1,
-//                             child: Container(
-//                               color: Colors.grey[800],
-//                               child: Image.network(
-//                                 imageUrl,
-//                                 fit: BoxFit.cover,
-//                                 errorBuilder: (context, error, stackTrace) =>
-//                                     const Center(
-//                                   child: Icon(Icons.broken_image,
-//                                       color: Colors.white70),
-//                                 ),
-//                               ),
-//                             ),
-//                           ),
-//                         ),
-//                         if (isSelected)
-//                           Positioned.fill(
-//                             child: Container(
-//                               decoration: BoxDecoration(
-//                                 color: Colors.black26,
-//                                 borderRadius: BorderRadius.circular(12),
-//                               ),
-//                             ),
-//                           ),
-//                         Positioned(
-//                           top: 6,
-//                           left: 6,
-//                           child: Container(
-//                             decoration: BoxDecoration(
-//                               shape: BoxShape.circle,
-//                               color: isSelected ? Colors.green : Colors.black45,
-//                             ),
-//                             padding: const EdgeInsets.all(4),
-//                             child: Icon(
-//                               isSelected ? Icons.check : Icons.circle_outlined,
-//                               size: 16,
-//                               color: isSelected ? Colors.black : Colors.white70,
-//                             ),
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   );
-//                 },
-//               ),
-//             ),
-//           ],
-//         ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                width: double.infinity,
+                                color: CupertinoColors.systemGrey2,
+                                child: preview.previewImageUrl != null
+                                    ? Image.network(
+                                        preview.previewImageUrl!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) =>
+                                            const Center(
+                                            child: Icon(CupertinoIcons.exclamationmark_triangle,
+                                              color: CupertinoColors.systemGrey2),
+                                            ),
+                                      )
+                                    : Container(
+                                        color: CupertinoColors.systemGrey3,
+                                        child: const Center(
+                                          child: Icon(CupertinoIcons.photo_fill,
+                                              color: CupertinoColors.systemGrey2, size: 40),
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '$displayName (${preview.itemCount})',
+                                  style: TextStyle(
+                                    color: CupertinoColors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: vw * 4,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ])
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImageView(ScrollController scrollController) {
+    final displayTitle = _currentPlaylist.endsWith('.pl')
+        ? _currentPlaylist.substring(0, _currentPlaylist.length - 3)
+        : _currentPlaylist;
+    return Stack(
+      children: [
+        Column(
+          key: const ValueKey(1),
+          children: [
+            const SizedBox(height: 12),
+            Center(
+              child: Container(
+                width: 40,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: CupertinoColors.systemGrey,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () async {
+                    await _refreshPlaylistPreviews();
+                    setState(() {
+                      _pageIndex = 0;
+                    });
+                  },
+                  child: const Icon(
+                    CupertinoIcons.back,
+                    color: CupertinoColors.white,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    displayTitle,
+                    style: const TextStyle(
+                      color: CupertinoColors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Text(
+                  "${selectedImages.length} selected",
+                  style: const TextStyle(
+                    color: CupertinoColors.systemGrey2,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+            Expanded(
+              child: GridView.builder(
+                controller: scrollController,
+                padding: const EdgeInsets.only(
+                    left: 12, right: 12, bottom: 70, top: 12),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 1,
+                ),
+                itemCount: _playlistImages.length,
+                itemBuilder: (context, index) {
+                  final imageUrl = _playlistImages[index];
+                  final isSelected = selectedImages.contains(imageUrl);
+                  return GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() {
+                        if (isSelected) {
+                          selectedImages.remove(imageUrl);
+                        } else {
+                          selectedImages.add(imageUrl);
+                        }
+                      });
+                    },
+                    child: Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: AspectRatio(
+                            aspectRatio: 1,
+                            child: Container(
+                              color: CupertinoColors.systemGrey4,
+                              child: Image.network(
+                                imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Center(
+                                  child: Icon(CupertinoIcons.exclamationmark_triangle,
+                                  color: CupertinoColors.systemGrey2,
+                                ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (isSelected)
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                // Billy fill free to mess with the opacity
+                                color: CupertinoColors.black.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        Positioned(
+                          top: 6,
+                          left: 6,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isSelected ? CupertinoColors.activeGreen : CupertinoColors.black.withOpacity(0.4),
+                            ),
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(
+                              isSelected ? CupertinoIcons.check_mark : CupertinoIcons.circle,
+                              size: 16,
+                              color: isSelected ? CupertinoColors.black : CupertinoColors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+              Positioned(
+        bottom: 60,
+        left: 16,
+        right: 16,
+        child: CupertinoButton.filled(
+          onPressed: _hasPlaylistChanged() ? _onSavePressed : null,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          borderRadius: BorderRadius.circular(10),
+          child: const Text(
+            'Save Playlist',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+      const SizedBox(height: 40),
+    ],
+  );
+}
 //         Positioned(
 //           bottom: 60,
 //           left: 16,
 //           right: 16,
-//           child: ElevatedButton(
+//           child: CupertinoButton.filled(
 //             onPressed: _hasPlaylistChanged() ? _onSavePressed : null,
 //             style: ElevatedButton.styleFrom(
 //               backgroundColor:
@@ -515,53 +568,54 @@ bool playersNoBackButton = true;
 //     );
 //   }
 
-//   void _onSavePressed() async {
-//     final selectedFilenames =
-//         selectedImages.map((url) => url.split('/').last).toList();
-//     final fullFileName = '$_currentScreenName/$_currentPlaylist';
-//     final success = await updatePlaylist(
-//       userEmail: widget.userEmail,
-//       playlistFileName: fullFileName,
-//       selectedFilenames: selectedFilenames,
-//     );
-//     if (success) {
-//       originalPlaylistImages = selectedFilenames.toSet();
-//       cachedPlaylistPreviews = await fetchPlaylistPreviews(widget.userEmail);
-//       setState(() {});
-//       // ScaffoldMessenger.of(context).showSnackBar(
-//       //   SnackBar(
-//       //     content: Row(mainAxisSize: MainAxisSize.min, children: [
-//       //       Text("Playlist Updated", style: TextStyle(fontSize: 20)),
-//       //       SizedBox(width: 8),
-//       //       Icon(Icons.check_circle_outline, color: Colors.green),
-//       //     ]),
-//       //     behavior: SnackBarBehavior.floating,
-//       //     shape: RoundedRectangleBorder(
-//       //       borderRadius: BorderRadius.circular(10),
-//       //       side: BorderSide(
-//       //         color: Colors.green,
-//       //         width: 2,
-//       //       ),
-//       //     ),
-//       //   ),
-//       // );
-//       Navigator.of(context).pop();
-//     } else {
-//       // ScaffoldMessenger.of(context).showSnackBar(
-//       //   SnackBar(
-//       //     content:
-//       //         Text("Failed to update playlist", style: TextStyle(fontSize: 20)),
-//       //     backgroundColor: Colors.redAccent,
-//       //     behavior: SnackBarBehavior.floating,
-//       //     shape:
-//       //         RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-//       //   ),
-//       // );
-//     }
-//   }
-// }
-// }
-
+  void _onSavePressed() async {
+    final selectedFilenames =
+        selectedImages.map((url) => url.split('/').last).toList();
+    final fullFileName = '$_currentScreenName/$_currentPlaylist';
+    final success = await updatePlaylist(
+      userEmail: widget.userEmail,
+      playlistFileName: fullFileName,
+      selectedFilenames: selectedFilenames,
+    );
+    if (success) {
+      originalPlaylistImages = selectedFilenames.toSet();
+      cachedPlaylistPreviews = await fetchPlaylistPreviews(widget.userEmail);
+      setState(() {});
+   await showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Success'),
+        content: const Text('Playlist updated successfully.'),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            child: const Text('OK'),
+            onPressed: () {
+              Navigator.of(context).pop(); 
+              Navigator.of(context).pop(); 
+            },
+          ),
+        ],
+      ),
+    );
+  } else {
+    await showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Error'),
+        content: const Text('Failed to update playlist.'),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            child: const Text('OK'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+}
 class PlayersPage extends StatefulWidget {
   final String userEmail;
 
@@ -604,38 +658,34 @@ class _PlayersPageState extends State<PlayersPage> {
   // final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int selectedIndex = 0;
 
-  // void _showScreensPage(bool onPlayer) {
-  //   if (onPlayer) {
-  //     Navigator.push(
-  //       context,
-  //       MaterialPageRoute(
-  //         builder: (context) => ScreensPage(
-  //           screensPageTitle: "Player: $selectedPlayerName",
-  //           screensPageSubTitle: "Select Screen to Publish",
-  //         ),
-  //       ),
-  //     );
-  //   } else {
-  //     Navigator.push(
-  //       context,
-  //       MaterialPageRoute(
-  //         builder: (context) => ScreensPage(
-  //           screensPageTitle: "Available Screens",
-  //           screensPageSubTitle: "Return to Menu to Select Player",
-  //         ),
-  //       ),
-  //     );
-  //   }
-  // }
+void _showScreensPage(bool onPlayer) {
+  final String title = onPlayer
+      ? "Player: $selectedPlayerName"
+      : "Available Screens";
+  final String subtitle = onPlayer
+      ? "Select Screen to Publish"
+      : "Return to Menu to Select Player";
+
+  Navigator.push(
+    context,
+    CupertinoPageRoute(
+      builder: (context) => ScreensPage(
+        screensPageTitle: title,
+        screensPageSubTitle: subtitle,
+      ),
+    ),
+  );
+}
+
 
   bool _checkPlayerStatus(int index) {
     return dmbMediaPlayers[index].status == "Active";
   }
 
-  // void _userLogout() {
-  //   cachedPlaylistPreviews.clear();
-  //   confirmLogout(context);
-  // }
+  void _userLogout() {
+    cachedPlaylistPreviews.clear();
+    confirmLogout(context);
+  }
 
   Future<void> _refreshData() async {
     try {
@@ -656,169 +706,155 @@ class _PlayersPageState extends State<PlayersPage> {
     }
   }
 
-  // Future<void> _showUploadSheet(File imageFile) async {
-  //   double screenHeight = MediaQuery.of(context).size.height;
-  //   showModalBottomSheet(
-  //     context: context,
-  //     backgroundColor: Colors.grey[900],
-  //     shape: const RoundedRectangleBorder(
-  //       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-  //     ),
-  //     isScrollControlled: true,
-  //     builder: (_) => Padding(
-  //       padding:
-  //           MediaQuery.of(context).viewInsets.add(const EdgeInsets.all(16)),
-  //       child: Column(
-  //         mainAxisSize: MainAxisSize.min,
-  //         children: [
-  //           Container(
-  //             width: 40,
-  //             height: 5,
-  //             margin: const EdgeInsets.only(bottom: 12),
-  //             decoration: BoxDecoration(
-  //               color: Colors.grey[700],
-  //               borderRadius: BorderRadius.circular(10),
-  //             ),
-  //           ),
-  //           const Text(
-  //             "Upload Image to Account",
-  //             style: TextStyle(
-  //                 fontSize: 18,
-  //                 fontWeight: FontWeight.bold,
-  //                 color: Colors.white),
-  //           ),
-  //           const SizedBox(height: 12),
-  //           ClipRRect(
-  //             borderRadius: BorderRadius.circular(12),
-  //             child: Container(
-  //               color: Colors.grey[800],
-  //               child: AspectRatio(
-  //                 aspectRatio: 1,
-  //                 child: Image.file(
-  //                   imageFile,
-  //                   fit: BoxFit.contain,
-  //                 ),
-  //               ),
-  //             ),
-  //           ),
-  //           const SizedBox(height: 20),
-  //           Row(
-  //             mainAxisAlignment: MainAxisAlignment.end,
-  //             children: [
-  //               TextButton(
-  //                 onPressed: () => Navigator.of(context).pop(),
-  //                 child: const Text("Close",
-  //                     style: TextStyle(color: Colors.white)),
-  //               ),
-  //               const SizedBox(width: 10),
-  //               ElevatedButton(
-  //                 style: ElevatedButton.styleFrom(
-  //                   backgroundColor: Colors.green,
-  //                   shape: RoundedRectangleBorder(
-  //                     borderRadius: BorderRadius.circular(8),
-  //                   ),
-  //                 ),
-  //                 onPressed: () async {
-  //                   Navigator.of(context).pop();
-  //                   final result = await uploadImage(imageFile, loginUsername);
-  //                   final bool success = result['success'] as bool;
-  //                   final String message = result['message'] as String;
-  //                   if (!success) {
-  //                     showDialog(
-  //                       context: context,
-  //                       barrierColor: const Color.fromARGB(128, 0, 0, 0),
-  //                       builder: (_) => AlertDialog(
-  //                         backgroundColor: const Color(0xFF1E1E1E),
-  //                         shape: RoundedRectangleBorder(
-  //                             borderRadius: BorderRadius.circular(16)),
-  //                         title: Text(
-  //                           message.contains('20')
-  //                               ? "Upload Limit Reached"
-  //                               : "Upload Failed",
-  //                           style: const TextStyle(
-  //                               color: Colors.white,
-  //                               fontWeight: FontWeight.bold),
-  //                         ),
-  //                         content: Text(
-  //                           message.contains('20')
-  //                               ? "You cannot upload more than 20 images. Please delete one first."
-  //                               : message,
-  //                           style: const TextStyle(color: Colors.white70),
-  //                         ),
-  //                         actions: [
-  //                           TextButton(
-  //                             onPressed: () => Navigator.of(context).pop(),
-  //                             child: const Text("OK",
-  //                                 style: TextStyle(color: Colors.green)),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                     );
-  //                   } else {
-  //                     // ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-  //                     //   content: Row(mainAxisSize: MainAxisSize.min, children: [
-  //                     //     Text(message, style: TextStyle(fontSize: 20)),
-  //                     //     SizedBox(width: 8),
-  //                     //     Icon(Icons.check_circle_outline, color: Colors.green),
-  //                     //   ]),
-  //                     //   behavior: SnackBarBehavior.floating,
-  //                     //   shape: RoundedRectangleBorder(
-  //                     //       borderRadius: BorderRadius.circular(10)),
-  //                     // ));
-  //                   }
-  //                 },
-  //                 child: const Text("Upload",
-  //                     style: TextStyle(color: Colors.white)),
-  //               ),
-  //             ],
-  //           ),
-  //           SizedBox(height: screenHeight * 0.03)
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
+Future<void> _showUploadSheet(File imageFile) async {
+  double screenHeight = MediaQuery.of(context).size.height;
 
-  // Future<void> _takePhoto() async {
-  //   final pickedFile = await _picker.pickImage(source: ImageSource.camera);
-  //   if (pickedFile != null) {
-  //     setState(() {
-  //       _image = File(pickedFile.path);
-  //     });
-  //     _showUploadSheet(_image!);
-  //   }
-  // }
+  await showCupertinoModalPopup(
+    context: context,
+    builder: (_) => SafeArea(
+      child: Container(
+        height: screenHeight * 0.6,
+        decoration: const BoxDecoration(
+          color: CupertinoColors.systemGrey6,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Padding(
+          padding:
+              MediaQuery.of(context).viewInsets.add(const EdgeInsets.all(16)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 5,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: CupertinoColors.systemGrey4,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const Text(
+                "Upload Image to Account",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: CupertinoColors.black,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  color: CupertinoColors.systemGrey4,
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: Image.file(
+                      imageFile,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    child: const Text("Close"),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  const SizedBox(width: 10),
+                  CupertinoButton.filled(
+                    child: const Text("Upload"),
+                    onPressed: () async {
+                      Navigator.of(context).pop();
+                      final result =
+                          await uploadImage(imageFile, loginUsername);
+                      final bool success = result['success'] as bool;
+                      final String message = result['message'] as String;
+                      if (!success) {
+                        await showCupertinoDialog(
+                          context: context,
+                          builder: (_) => CupertinoAlertDialog(
+                            title: Text(
+                              message.contains('20')
+                                  ? "Upload Limit Reached"
+                                  : "Upload Failed",
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            content: Text(
+                              message.contains('20')
+                                  ? "You cannot upload more than 20 images. Please delete one first."
+                                  : message,
+                            ),
+                            actions: [
+                              CupertinoDialogAction(
+                                isDefaultAction: true,
+                                child: const Text("OK"),
+                                onPressed: () => Navigator.of(context).pop(),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
+              SizedBox(height: screenHeight * 0.03),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
 
-  // Future<void> _chooseFromGallery() async {
-  //   final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-  //   if (pickedFile != null) {
-  //     setState(() {
-  //       _image = File(pickedFile.path);
-  //     });
-  //     _showUploadSheet(_image!);
-  //   }
-  // }
 
-  // Future<void> _showPlaylistBottomSheet(
-  //     BuildContext context, String userEmail) async {
-  //   await showModalBottomSheet(
-  //     context: context,
-  //     isScrollControlled: true,
-  //     backgroundColor: Colors.grey[900],
-  //     shape: const RoundedRectangleBorder(
-  //       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-  //     ),
-  //     builder: (context) => PlaylistSheet(userEmail: userEmail),
-  //   );
-  //   try {
-  //     cachedPlaylistPreviews = await fetchPlaylistPreviews(userEmail);
-  //     hasLoadedPlaylistPreviews = true;
-  //   } catch (e) {
-  //     if (kDebugMode) {
-  //       print("Failed to refresh playlist previews: $e");
-  //     }
-  //   }
-  // }
+  Future<void> _takePhoto() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+      _showUploadSheet(_image!);
+    }
+  }
+
+  Future<void> _chooseFromGallery() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+      _showUploadSheet(_image!);
+    }
+  }
+
+  Future<void> _showPlaylistBottomSheet(
+      BuildContext context, String userEmail) async {
+    await showCupertinoModalPopup(
+      context: context,
+    builder: (_) {
+      final height = MediaQuery.of(context).size.height * 0.75;
+      return SafeArea(
+        child: SizedBox(
+          height: height,
+          child: PlaylistSheet(userEmail: userEmail),
+        ),
+      );
+    },
+  );
+    try {
+      cachedPlaylistPreviews = await fetchPlaylistPreviews(userEmail);
+      hasLoadedPlaylistPreviews = true;
+    } catch (e) {
+      if (kDebugMode) {
+        print("Failed to refresh playlist previews: $e");
+      }
+    }
+  }
 
   // Future<Map<String, dynamic>?> _getAIPhoto( String prompt, int width, int height, {String? prevImageID}) async {
   //   final stableDiffusion = dotenv.env['STABLE_DIFFUSION_KEY']!;
@@ -1678,66 +1714,65 @@ class _PlayersPageState extends State<PlayersPage> {
 
   final List<String> uploadOptions = ['Camera', 'Gallery', 'AI Image'];
   String? selectedOption;
+  bool _drawerOpen = false;
+
+  void _toggleDrawer() => setState(() => _drawerOpen = !_drawerOpen);
 
   @override
   Widget build(BuildContext context) {
     final double vw = MediaQuery.of(context).size.width / 100;
     final double vh = MediaQuery.of(context).size.height / 100;
-    final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
-    final int colorNum = int.parse(lightGreyTheme!, radix: 16);
+    final int colorNum = int.parse(dotenv.env['LIGHT_GREY_THEME']!, radix: 16);
     final Color backgroundColor = Color(colorNum);
 
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) {
-          SystemNavigator.pop();
-        }
+        if (!didPop) SystemNavigator.pop();
       },
-      child: Stack( // outer Stack for the background image
+      child: Stack(
         children: [
+          // Background image
           Positioned.fill(
             child: Image.network(
               backgroundURL.isNotEmpty
                   ? backgroundURL
                   : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?fit=crop&w=1536&h=864',
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                if (kDebugMode) {
-                  print('Failed to load background image: $error');
-                }
-                return Container(color: CupertinoColors.systemGrey);
-              },
+              errorBuilder: (_, __, ___) => Container(color: CupertinoColors.systemGrey),
             ),
           ),
+
           CupertinoPageScaffold(
-            backgroundColor: CupertinoColors.transparent, 
-            navigationBar: _appBarNoBackBtn(context, mainPageTitle, mainPageSubTitle), 
-            child: CustomScrollView( 
+            backgroundColor: CupertinoColors.transparent,
+            navigationBar: _appBarNoBackBtn(context, mainPageTitle, mainPageSubTitle, _toggleDrawer),
+            child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              slivers: <Widget>[
-                CupertinoSliverRefreshControl(
-                  onRefresh: _refreshData,
-                ),
+              slivers: [
+                CupertinoSliverRefreshControl(onRefresh: _refreshData),
                 SliverPadding(
                   padding: EdgeInsets.only(
-                      top: vh * 12, // padding between top of screen and first item 
-                      left: vw * 6,
-                      right: vw * 6,
-                      bottom: vh * 10),
+                    top: vh * 12,
+                    left: vw * 6,
+                    right: vw * 6,
+                    bottom: vh * 10,
+                  ),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
-                      (BuildContext context, int index) {
+                      (context, index) {
+                        final player = dmbMediaPlayers[index];
+                        final active = _checkPlayerStatus(index);
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
+                          padding: EdgeInsets.only(bottom: vh * 1),
                           child: GestureDetector(
                             onTap: () {
-                              // add logic here
+                              selectedPlayerName = player.name;
+                              _showScreensPage(true);
                             },
                             child: Container(
-                              margin: EdgeInsets.symmetric(vertical: vh * 1),
+                              height: vh * 10,
                               decoration: BoxDecoration(
-                                gradient: _checkPlayerStatus(index)
+                                gradient: active
                                     ? _gradientActiveMediaPlayer(context)
                                     : _gradientInActiveMediaPlayer(context),
                                 borderRadius: BorderRadius.circular(10),
@@ -1749,25 +1784,22 @@ class _PlayersPageState extends State<PlayersPage> {
                                   ),
                                 ],
                               ),
-                              height: vh * 10,
-                              width: vw * 90,
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      dmbMediaPlayers[index].name,
-                                      style: TextStyle(
-                                        fontSize: (vw * 5),
-                                        fontWeight: FontWeight.bold,
-                                        color: CupertinoColors.white,
-                                      ),
+                              alignment: Alignment.center,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    player.name,
+                                    style: TextStyle(
+                                      fontSize: vw * 5,
+                                      fontWeight: FontWeight.bold,
+                                      color: CupertinoColors.white,
                                     ),
-                                    _checkPlayerStatus(index)
-                                        ? _activeScreenText(context, index, vw)
-                                        : _inActiveScreenText(context, index, vw),
-                                  ],
-                                ),
+                                  ),
+                                  active
+                                      ? _activeScreenText(context, index, vw)
+                                      : _inActiveScreenText(context, index, vw),
+                                ],
                               ),
                             ),
                           ),
@@ -1780,13 +1812,247 @@ class _PlayersPageState extends State<PlayersPage> {
               ],
             ),
           ),
+
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            right: _drawerOpen ? 0 : -vw * 60, // lol didn't really know how to start from right... ig -vw works
+            top: 0,
+            bottom: 0,
+            width: vw * 60,
+            child: Container(
+              color: backgroundColor,
+              child: SafeArea(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(vw * 4, vh * 4, 0, vh * 2),
+                      child: Text(
+                        'Menu',
+                        style: TextStyle(
+                          color: CupertinoColors.white.withOpacity(0.7),
+                          fontSize: vw * 7,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView(
+                        padding: EdgeInsets.symmetric(vertical: vw * 2),
+                        children: [
+                          _drawerItem(
+                            icon: CupertinoIcons.tv,
+                            label: 'Screens',
+                            vw: vw,
+                            onTap: () {
+                              _toggleDrawer();
+                              _showScreensPage(false);
+                            },
+                          ),
+                          SizedBox(height: vw * 3),
+                          _drawerItem(
+                            icon: CupertinoIcons.collections,
+                            label: 'Image Playlists',
+                            vw: vw,
+                            onTap: () {
+                              _toggleDrawer();
+                              _showPlaylistBottomSheet(context, loginUsername);
+                              preloadPlaylistPreviews(loginUsername);
+                              setState(() {});
+                            },
+                          ),
+                          SizedBox(height: vw * 3),
+                          _uploadExpansion(vw),
+                        ],
+                      ),
+                    ),
+                    _drawerItem(
+                      icon: CupertinoIcons.escape,
+                      label: 'Logout',
+                      vw: vw,
+                      onTap: () {
+                        _toggleDrawer();
+                       _userLogout();
+                      },
+                    ),
+                    SizedBox(height: vh * 2),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
-}
 
-ObstructingPreferredSizeWidget _appBarNoBackBtn(BuildContext context, String title, String subTitle) {
+  Widget _drawerItem({
+    required IconData icon,
+    required String label,
+    required double vw,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: vw * 4, vertical: vw * 1.5),
+        child: Row(
+          children: [
+            Icon(icon, color: CupertinoColors.systemOrange, size: vw * 7),
+            SizedBox(width: vw * 4),
+            Text(label, style: TextStyle(color: CupertinoColors.white, fontSize: vw * 4.5)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _uploadExpansion(double vw) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: uploadOptions.map((opt) {
+        final icon = opt == 'Camera'
+            ? CupertinoIcons.camera
+            : opt == 'Gallery'
+                ? CupertinoIcons.photo_on_rectangle
+                : CupertinoIcons.sparkles;
+        final action = opt == 'Camera'
+            ? _takePhoto
+            : opt == 'Gallery'
+                ? _chooseFromGallery
+                : () {
+            // AI prompt commented for now. Billy if you wanna test wit this that's absolutely fine
+          };
+               // : () => _showAIPromptDialog();
+
+        return GestureDetector(
+          onTap: () {
+            _toggleDrawer();
+            action();
+          },
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: vw * 7, vertical: vw * 1.5),
+            child: Row(
+              children: [
+                Icon(icon, color: CupertinoColors.systemOrange, size: vw * 4),
+                SizedBox(width: vw * 3),
+                Text(opt, style: TextStyle(color: CupertinoColors.systemGrey2, fontSize: vw * 5)),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+  // @override
+  // Widget build(BuildContext context) {
+  //   final double vw = MediaQuery.of(context).size.width / 100;
+  //   final double vh = MediaQuery.of(context).size.height / 100;
+  //   final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
+  //   final int colorNum = int.parse(lightGreyTheme!, radix: 16);
+  //   final Color backgroundColor = Color(colorNum);
+
+  //   return PopScope(
+  //     canPop: false,
+  //     onPopInvokedWithResult: (didPop, result) {
+  //       if (!didPop) {
+  //         SystemNavigator.pop();
+  //       }
+  //     },
+  //     child: Stack( // outer Stack for the background image
+  //       children: [
+  //         Positioned.fill(
+  //           child: Image.network(
+  //             backgroundURL.isNotEmpty
+  //                 ? backgroundURL
+  //                 : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?fit=crop&w=1536&h=864',
+  //             fit: BoxFit.cover,
+  //             errorBuilder: (context, error, stackTrace) {
+  //               if (kDebugMode) {
+  //                 print('Failed to load background image: $error');
+  //               }
+  //               return Container(color: CupertinoColors.systemGrey);
+  //             },
+  //           ),
+  //         ),
+  //         CupertinoPageScaffold(
+  //           backgroundColor: CupertinoColors.transparent, 
+  //           navigationBar: _appBarNoBackBtn(context, mainPageTitle, mainPageSubTitle), 
+  //           child: CustomScrollView( 
+  //             physics: const AlwaysScrollableScrollPhysics(),
+  //             slivers: <Widget>[
+  //               CupertinoSliverRefreshControl(
+  //                 onRefresh: _refreshData,
+  //               ),
+  //               SliverPadding(
+  //                 padding: EdgeInsets.only(
+  //                     top: vh * 12, // padding between top of screen and first item 
+  //                     left: vw * 6,
+  //                     right: vw * 6,
+  //                     bottom: vh * 10),
+  //                 sliver: SliverList(
+  //                   delegate: SliverChildBuilderDelegate(
+  //                     (BuildContext context, int index) {
+  //                       return Padding(
+  //                         padding: const EdgeInsets.only(bottom: 10),
+  //                         child: GestureDetector(
+  //                           onTap: () {
+  //                             // add logic here
+  //                           },
+  //                           child: Container(
+  //                             margin: EdgeInsets.symmetric(vertical: vh * 1),
+  //                             decoration: BoxDecoration(
+  //                               gradient: _checkPlayerStatus(index)
+  //                                   ? _gradientActiveMediaPlayer(context)
+  //                                   : _gradientInActiveMediaPlayer(context),
+  //                               borderRadius: BorderRadius.circular(10),
+  //                               boxShadow: [
+  //                                 BoxShadow(
+  //                                   color: CupertinoColors.systemGrey.withAlpha(80),
+  //                                   blurRadius: 8,
+  //                                   offset: const Offset(0, 4),
+  //                                 ),
+  //                               ],
+  //                             ),
+  //                             height: vh * 10,
+  //                             width: vw * 90,
+  //                             child: Center(
+  //                               child: Column(
+  //                                 mainAxisAlignment: MainAxisAlignment.center,
+  //                                 children: [
+  //                                   Text(
+  //                                     dmbMediaPlayers[index].name,
+  //                                     style: TextStyle(
+  //                                       fontSize: (vw * 5),
+  //                                       fontWeight: FontWeight.bold,
+  //                                       color: CupertinoColors.white,
+  //                                     ),
+  //                                   ),
+  //                                   _checkPlayerStatus(index)
+  //                                       ? _activeScreenText(context, index, vw)
+  //                                       : _inActiveScreenText(context, index, vw),
+  //                                 ],
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ),
+  //                       );
+  //                     },
+  //                     childCount: dmbMediaPlayers.length,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+// }
+
+ObstructingPreferredSizeWidget _appBarNoBackBtn(BuildContext context, String title, String subTitle, VoidCallback onMenuPressed) {
   final double vw = MediaQuery.of(context).size.width / 100;
 
   return CupertinoNavigationBar(
@@ -1828,9 +2094,7 @@ ObstructingPreferredSizeWidget _appBarNoBackBtn(BuildContext context, String tit
         color: CupertinoColors.white,
         size: vw * 8,
       ),
-      onPressed: () {
-        // show drawer
-      },
+      onPressed: onMenuPressed, // show drawer
     ),
     padding: null, 
   );
