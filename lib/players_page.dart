@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import './main.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
 import './screens_page.dart';
 import './dmb_functions.dart';
 import 'package:flutter/cupertino.dart';
@@ -46,6 +48,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
   Set<String> selectedImages = {};
   Set<String> originalPlaylistImages = {};
   bool _isLoading = true; // display loading circle when playlists are loading
+  Color darkGreen = Color(0xFF006400); 
 
   @override 
   void initState() {
@@ -111,7 +114,9 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
               isDefaultAction: true,
               child: const Text('OK'),
               onPressed: () {
-                Navigator.of(context).pop();
+                if (mounted) {
+                  Navigator.of(context).pop();
+                }
               },
             ),
           ],
@@ -155,7 +160,9 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
               isDefaultAction: true,
               child: const Text('OK'),
               onPressed: () {
-                Navigator.of(context).pop();
+                if (mounted) {
+                  Navigator.of(context).pop();
+                }
               },
             ),
           ],
@@ -329,7 +336,6 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                       onTap: () =>
                           _openPlaylist(preview.screenName, preview.name),
 //                       borderRadius: BorderRadius.circular(12),
-
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -412,6 +418,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
             child: Row(
               children: [
                 GestureDetector(
+                  behavior: HitTestBehavior.opaque, // larger tap area
                   onTap: () async {
                     await _refreshPlaylistPreviews();
                     setState(() {
@@ -459,6 +466,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                   final imageUrl = _playlistImages[index];
                   final isSelected = selectedImages.contains(imageUrl);
                   return GestureDetector(
+                    behavior: HitTestBehavior.opaque, // larger tap area
                     onTap: () {
                       HapticFeedback.lightImpact();
                       setState(() {
@@ -529,6 +537,7 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
         left: 16,
         right: 16,
         child: CupertinoButton.filled(
+          color: darkGreen,
           onPressed: _hasPlaylistChanged() ? _onSavePressed : null,
           padding: const EdgeInsets.symmetric(vertical: 16),
           borderRadius: BorderRadius.circular(10),
@@ -591,8 +600,9 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
             isDefaultAction: true,
             child: const Text('OK'),
             onPressed: () {
-              Navigator.of(context).pop(); 
-              Navigator.of(context).pop(); 
+              if (mounted) {
+                Navigator.of(context).pop();
+              }
             },
           ),
         ],
@@ -640,6 +650,7 @@ class _PlayersPageState extends State<PlayersPage> {
   final TextEditingController _textFieldController = TextEditingController();
   final bool _isGenerating = false;
   String backgroundURL = dotenv.env['BACKGROUND_IMAGE_URL']!;
+  Color darkGreen = Color(0xFF006400); 
   // final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
   //     GlobalKey<ScaffoldMessengerState>();
 
@@ -706,110 +717,118 @@ void _showScreensPage(bool onPlayer) {
     }
   }
 
-Future<void> _showUploadSheet(File imageFile) async {
-  double screenHeight = MediaQuery.of(context).size.height;
+  Future<void> _showUploadSheet(File imageFile) async {
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenWidth = MediaQuery.of(context).size.width;
 
-  await showCupertinoModalPopup(
-    context: context,
-    builder: (_) => SafeArea(
-      child: Container(
-        height: screenHeight * 0.6,
-        decoration: const BoxDecoration(
-          color: CupertinoColors.systemGrey6,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Padding(
-          padding:
-              MediaQuery.of(context).viewInsets.add(const EdgeInsets.all(16)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 5,
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: CupertinoColors.systemGrey4,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              const Text(
-                "Upload Image to Account",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: CupertinoColors.black,
-                ),
-              ),
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  color: CupertinoColors.systemGrey4,
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: Image.file(
-                      imageFile,
-                      fit: BoxFit.contain,
+    await showCupertinoModalPopup(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Container(
+          // Let height be flexible
+          constraints: BoxConstraints(
+            maxHeight: screenHeight * 0.9,
+          ),
+          decoration: const BoxDecoration(
+            color: CupertinoColors.black,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Padding(
+            padding: MediaQuery.of(context).viewInsets.add(const EdgeInsets.all(16)),
+            child: SingleChildScrollView( // ✅ Add scroll behavior
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 5,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.systemGrey6,
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  CupertinoButton(
-                    padding: EdgeInsets.zero,
-                    child: const Text("Close"),
-                    onPressed: () => Navigator.of(context).pop(),
+                  Text(
+                    "Upload Image to Account",
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.07,
+                      fontWeight: FontWeight.bold,
+                      color: CupertinoColors.systemGrey6,
+                    ),
                   ),
-                  const SizedBox(width: 10),
-                  CupertinoButton.filled(
-                    child: const Text("Upload"),
-                    onPressed: () async {
-                      Navigator.of(context).pop();
-                      final result =
-                          await uploadImage(imageFile, loginUsername);
-                      final bool success = result['success'] as bool;
-                      final String message = result['message'] as String;
-                      if (!success) {
-                        await showCupertinoDialog(
-                          context: context,
-                          builder: (_) => CupertinoAlertDialog(
-                            title: Text(
-                              message.contains('20')
-                                  ? "Upload Limit Reached"
-                                  : "Upload Failed",
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            content: Text(
-                              message.contains('20')
-                                  ? "You cannot upload more than 20 images. Please delete one first."
-                                  : message,
-                            ),
-                            actions: [
-                              CupertinoDialogAction(
-                                isDefaultAction: true,
-                                child: const Text("OK"),
-                                onPressed: () => Navigator.of(context).pop(),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      color: CupertinoColors.black,
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: Image.file(
+                          imageFile,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        child: const Text("Close", style: TextStyle(color: CupertinoColors.systemGrey6)),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      const SizedBox(width: 10),
+                      CupertinoButton.filled(
+                        color: darkGreen,
+                        child: const Text("Upload"),
+                        onPressed: () async {
+                          if (mounted) {
+                            Navigator.of(context).pop();
+                          }
+                          final result = await uploadImage(imageFile, loginUsername);
+                          final bool success = result['success'] as bool;
+                          final String message = result['message'] as String;
+                          if (!success) {
+                            await showCupertinoDialog(
+                              context: context,
+                              builder: (_) => CupertinoAlertDialog(
+                                title: Text(
+                                  message.contains('20')
+                                      ? "Upload Limit Reached"
+                                      : "Upload Failed",
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                content: Text(
+                                  message.contains('20')
+                                      ? "You cannot upload more than 20 images. Please delete one first."
+                                      : message,
+                                ),
+                                actions: [
+                                  CupertinoDialogAction(
+                                    isDefaultAction: true,
+                                    child: const Text("OK"),
+                                    onPressed: () => Navigator.of(context).pop(),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        );
-                      }
-                    },
+                            );
+                          }
+                        },
+                      ),
+                    ],
                   ),
+                  SizedBox(height: screenHeight * 0.03),
                 ],
               ),
-              SizedBox(height: screenHeight * 0.03),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
 
 
   Future<void> _takePhoto() async {
@@ -856,169 +875,169 @@ Future<void> _showUploadSheet(File imageFile) async {
     }
   }
 
-  // Future<Map<String, dynamic>?> _getAIPhoto( String prompt, int width, int height, {String? prevImageID}) async {
-  //   final stableDiffusion = dotenv.env['STABLE_DIFFUSION_KEY']!;
-  //   final lucidRealism = dotenv.env['LUCID_REALISM_KEY']!;
-  //   if (!dotenv.isInitialized) {
-  //     if (kDebugMode) {
-  //       print("ENVIRONMENTAL VARIABLES NOT LOADED");
-  //     }
-  //   }
-  //   final apiKey = dotenv.env['LEONARDO_API_KEY_2'];
-  //   if (apiKey == null) {
-  //     if (kDebugMode) {
-  //       print("API KEY NOT FOUND IN .env FILE");
-  //     }
-  //   }
-  //   final url = Uri.parse('https://cloud.leonardo.ai/api/rest/v1/generations');
-  //   final headers = {
-  //     'Authorization': 'Bearer $apiKey',
-  //     'Accept': 'application/json',
-  //     'Content-Type': 'application/json',
-  //   };
-  //   String body = "";
-  //   if (prevImageID == null) {
-  //     if (kDebugMode) {
-  //       print("generating body in _getAIPhoto using just prompt");
-  //     }
-  //     body = jsonEncode({
-  //       'prompt': prompt,
-  //       'modelId': lucidRealism,
-  //       'num_images': 1,
-  //       'width': width,
-  //       'height': height,
-  //     });
-  //   } else {
-  //     if (kDebugMode) {
-  //       print("generating body in _getAIPhoto using prompt and prevImageID");
-  //     }
-  //     body = jsonEncode({
-  //       'prompt': prompt,
-  //       'modelId': stableDiffusion,
-  //       'init_image_id': prevImageID,
-  //       'init_strength': 0.4,
-  //       'num_images': 1,
-  //       'width': width,
-  //       'height': height,
-  //       'guidance_scale': 5,
-  //     });
-  //   }
+  Future<Map<String, dynamic>?> _getAIPhoto( String prompt, int width, int height, {String? prevImageID}) async {
+    final stableDiffusion = dotenv.env['STABLE_DIFFUSION_KEY']!;
+    final lucidRealism = dotenv.env['LUCID_REALISM_KEY']!;
+    if (!dotenv.isInitialized) {
+      if (kDebugMode) {
+        print("ENVIRONMENTAL VARIABLES NOT LOADED");
+      }
+    }
+    final apiKey = dotenv.env['LEONARDO_API_KEY_2'];
+    if (apiKey == null) {
+      if (kDebugMode) {
+        print("API KEY NOT FOUND IN .env FILE");
+      }
+    }
+    final url = Uri.parse('https://cloud.leonardo.ai/api/rest/v1/generations');
+    final headers = {
+      'Authorization': 'Bearer $apiKey',
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    };
+    String body = "";
+    if (prevImageID == null) {
+      if (kDebugMode) {
+        print("generating body in _getAIPhoto using just prompt");
+      }
+      body = jsonEncode({
+        'prompt': prompt,
+        'modelId': lucidRealism,
+        'num_images': 1,
+        'width': width,
+        'height': height,
+      });
+    } else {
+      if (kDebugMode) {
+        print("generating body in _getAIPhoto using prompt and prevImageID");
+      }
+      body = jsonEncode({
+        'prompt': prompt,
+        'modelId': stableDiffusion,
+        'init_image_id': prevImageID,
+        'init_strength': 0.4,
+        'num_images': 1,
+        'width': width,
+        'height': height,
+        'guidance_scale': 5,
+      });
+    }
 
-  //   try {
-  //     final response = await http.post(url, headers: headers, body: body);
-  //     if (response.statusCode == 200) {
-  //       final data = jsonDecode(response.body);
-  //       final generationId = data['sdGenerationJob']?['generationId'];
-  //       if (generationId == null) {
-  //         if (kDebugMode) {
-  //           print("No generation ID received");
-  //         }
-  //       }
-  //       final pollUrl = Uri.parse(
-  //           'https://cloud.leonardo.ai/api/rest/v1/generations/$generationId');
-  //       bool isCompleted = false;
-  //       String? imageUrl;
-  //       String? imageId;
-  //       for (int i = 0; i < 30; i++) {
-  //         await Future.delayed(Duration(seconds: 1));
-  //         final pollResponse = await http.get(pollUrl, headers: headers);
-  //         if (pollResponse.statusCode == 200) {
-  //           final pollData = jsonDecode(pollResponse.body);
-  //           final status = pollData['generations_by_pk']?['status'];
-  //           if (status == 'COMPLETE') {
-  //             isCompleted = true;
-  //             final generatedImage =
-  //                 pollData['generations_by_pk']?['generated_images']?[0];
-  //             imageUrl = generatedImage['url']?.toString();
-  //             imageId = generatedImage['id']?.toString();
-  //             break;
-  //           } else if (status == 'FAILED') {
-  //             if (mounted) {
-  //               // ScaffoldMessenger.of(context).showSnackBar(
-  //               //   SnackBar(
-  //               //     content: Text("Image generation failed",
-  //               //         style: TextStyle(fontSize: 20)),
-  //               //     backgroundColor: Colors.redAccent,
-  //               //     behavior: SnackBarBehavior.floating,
-  //               //     shape: RoundedRectangleBorder(
-  //               //         borderRadius: BorderRadius.circular(10)),
-  //               //   ),
-  //               // );
-  //             }
-  //             return null;
-  //           }
-  //         } else {
-  //           if (kDebugMode) {
-  //             print(
-  //                 'Poll Error: ${pollResponse.statusCode} - ${pollResponse.body}');
-  //           }
-  //         }
-  //       }
-  //       if (!isCompleted || imageUrl == null) {
-  //         if (mounted) {
-  //           // ScaffoldMessenger.of(context).showSnackBar(
-  //           //   SnackBar(
-  //           //     content: Text("Image generation timed out or no image received",
-  //           //         style: TextStyle(fontSize: 20)),
-  //           //     backgroundColor: Colors.redAccent,
-  //           //     behavior: SnackBarBehavior.floating,
-  //           //     shape: RoundedRectangleBorder(
-  //           //         borderRadius: BorderRadius.circular(10)),
-  //           //   ),
-  //           // );
-  //         }
-  //         return null;
-  //       }
-  //       if (kDebugMode) {
-  //         print('Generated Image URL: $imageUrl');
-  //       }
-  //       return {'image_id': imageId, 'image_url': imageUrl};
-  //     } else {
-  //       if (kDebugMode) {
-  //         print('API Error: ${response.statusCode} - ${response.body}');
-  //       }
-  //       String errorMsg;
-  //       switch (response.statusCode) {
-  //         case 401:
-  //           errorMsg = 'Invalid API key. Please check your credentials.';
-  //           break;
-  //         case 429:
-  //           errorMsg = 'Rate limit exceeded. Please try again later.';
-  //           break;
-  //         case 400:
-  //           errorMsg = 'Invalid request: ${response.body}';
-  //           break;
-  //         default:
-  //           errorMsg = 'Error: ${response.statusCode} - ${response.body}';
-  //       }
-  //       if (mounted) {
-  //         // ScaffoldMessenger.of(context).showSnackBar(
-  //         //   SnackBar(
-  //         //     content: Text(errorMsg, style: TextStyle(fontSize: 20)),
-  //         //     backgroundColor: Colors.redAccent,
-  //         //     behavior: SnackBarBehavior.floating,
-  //         //     shape: RoundedRectangleBorder(
-  //         //         borderRadius: BorderRadius.circular(10)),
-  //         //   ),
-  //         // );
-  //       }
-  //       return null;
-  //     }
-  //   } catch (e) {
-  //     if (kDebugMode) {
-  //       print('Request Error: $e');
-  //     }
-  //   }
-  //   return null;
-  // }
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final generationId = data['sdGenerationJob']?['generationId'];
+        if (generationId == null) {
+          if (kDebugMode) {
+            print("No generation ID received");
+          }
+        }
+        final pollUrl = Uri.parse(
+            'https://cloud.leonardo.ai/api/rest/v1/generations/$generationId');
+        bool isCompleted = false;
+        String? imageUrl;
+        String? imageId;
+        for (int i = 0; i < 30; i++) {
+          await Future.delayed(Duration(seconds: 1));
+          final pollResponse = await http.get(pollUrl, headers: headers);
+          if (pollResponse.statusCode == 200) {
+            final pollData = jsonDecode(pollResponse.body);
+            final status = pollData['generations_by_pk']?['status'];
+            if (status == 'COMPLETE') {
+              isCompleted = true;
+              final generatedImage =
+                  pollData['generations_by_pk']?['generated_images']?[0];
+              imageUrl = generatedImage['url']?.toString();
+              imageId = generatedImage['id']?.toString();
+              break;
+            } else if (status == 'FAILED') {
+              if (mounted) {
+                // ScaffoldMessenger.of(context).showSnackBar(
+                //   SnackBar(
+                //     content: Text("Image generation failed",
+                //         style: TextStyle(fontSize: 20)),
+                //     backgroundColor: Colors.redAccent,
+                //     behavior: SnackBarBehavior.floating,
+                //     shape: RoundedRectangleBorder(
+                //         borderRadius: BorderRadius.circular(10)),
+                //   ),
+                // );
+              }
+              return null;
+            }
+          } else {
+            if (kDebugMode) {
+              print(
+                  'Poll Error: ${pollResponse.statusCode} - ${pollResponse.body}');
+            }
+          }
+        }
+        if (!isCompleted || imageUrl == null) {
+          if (mounted) {
+            // ScaffoldMessenger.of(context).showSnackBar(
+            //   SnackBar(
+            //     content: Text("Image generation timed out or no image received",
+            //         style: TextStyle(fontSize: 20)),
+            //     backgroundColor: Colors.redAccent,
+            //     behavior: SnackBarBehavior.floating,
+            //     shape: RoundedRectangleBorder(
+            //         borderRadius: BorderRadius.circular(10)),
+            //   ),
+            // );
+          }
+          return null;
+        }
+        if (kDebugMode) {
+          print('Generated Image URL: $imageUrl');
+        }
+        return {'image_id': imageId, 'image_url': imageUrl};
+      } else {
+        if (kDebugMode) {
+          print('API Error: ${response.statusCode} - ${response.body}');
+        }
+        String errorMsg;
+        switch (response.statusCode) {
+          case 401:
+            errorMsg = 'Invalid API key. Please check your credentials.';
+            break;
+          case 429:
+            errorMsg = 'Rate limit exceeded. Please try again later.';
+            break;
+          case 400:
+            errorMsg = 'Invalid request: ${response.body}';
+            break;
+          default:
+            errorMsg = 'Error: ${response.statusCode} - ${response.body}';
+        }
+        if (mounted) {
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   SnackBar(
+          //     content: Text(errorMsg, style: TextStyle(fontSize: 20)),
+          //     backgroundColor: Colors.redAccent,
+          //     behavior: SnackBarBehavior.floating,
+          //     shape: RoundedRectangleBorder(
+          //         borderRadius: BorderRadius.circular(10)),
+          //   ),
+          // );
+        }
+        return null;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Request Error: $e');
+      }
+    }
+    return null;
+  }
 
-  // void onNewPhoto() {
-  //   Navigator.of(context).pop();
-  //   setState(() {
-  //     _textFieldController.clear();
-  //   });
-  //   _showAIPromptDialog();
-  // }
+  void onNewPhoto() {
+    Navigator.of(context).pop();
+    setState(() {
+      _textFieldController.clear();
+    });
+    _showAIPromptDialog();
+  }
 
   // void onEdit(String prevImageID) {
   //   Navigator.of(context).pop();
@@ -1137,580 +1156,428 @@ Future<void> _showUploadSheet(File imageFile) async {
   //   }
   // }
 
-  // void showLoadingCircle(BuildContext context, {bool isGenerating = false}) {
-  //   double screenWidth = MediaQuery.of(context).size.width;
-  //   final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
-  //   final int colorNum = int.parse(lightGreyTheme!, radix: 16);
-  //   showDialog(
-  //     context: context,
-  //     barrierDismissible: false,
-  //     builder: (BuildContext context) {
-  //       return Dialog(
-  //         backgroundColor: Colors.transparent,
-  //         child: Center(
-  //           child: Container(
-  //             padding: const EdgeInsets.all(20),
-  //             decoration: BoxDecoration(
-  //               color: Colors.black,
-  //               borderRadius: BorderRadius.circular(10),
-  //             ),
-  //             child: Column(
-  //               mainAxisSize: MainAxisSize.min,
-  //               children: [
-  //                 const CircularProgressIndicator(
-  //                   valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
-  //                 ),
-  //                 if (isGenerating) ...[
-  //                   SizedBox(height: screenWidth * 0.1),
-  //                   Text(
-  //                     "Generating Image...",
-  //                     style: TextStyle(
-  //                         color: Colors.white, fontSize: screenWidth * 0.05),
-  //                   ),
-  //                   const SizedBox(height: 10),
-  //                   TextButton(
-  //                     onPressed: () {
-  //                       Navigator.of(context).pop();
-  //                     },
-  //                     style: TextButton.styleFrom(
-  //                       backgroundColor: Color(colorNum),
-  //                       shape: RoundedRectangleBorder(
-  //                         borderRadius: BorderRadius.circular(12),
-  //                       ),
-  //                     ),
-  //                     child: Text(
-  //                       "Cancel",
-  //                       style: TextStyle(
-  //                           color: Colors.white, fontSize: screenWidth * 0.04),
-  //                     ),
-  //                   ),
-  //                 ],
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
+  void showLoadingCircle(BuildContext context, {bool isGenerating = false}) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
+    final int colorNum = int.parse(lightGreyTheme!, radix: 16);
 
-  // Future<void> _generateAndShowImage(String inputPrompt,
-  //     BuildContext dialogContext, int numLeft, int width, int height,
-  //     {String? prevImageID}) async {
-  //   double screenWidth = MediaQuery.of(dialogContext).size.width;
-  //   double screenHeight = MediaQuery.of(dialogContext).size.height;
+    showCupertinoDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return CupertinoPopupSurface(
+          isSurfacePainted: true,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: CupertinoColors.black,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CupertinoActivityIndicator(
+                    radius: 15,
+                    animating: true,
+                  ),
+                  if (isGenerating) ...[
+                    SizedBox(height: screenWidth * 0.1),
+                    Text(
+                      "Generating Image...",
+                      style: TextStyle(
+                        color: CupertinoColors.systemGrey6,
+                        fontSize: screenWidth * 0.05,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    CupertinoButton.filled(
+                      color: CupertinoColors.systemGrey,
+                      borderRadius: BorderRadius.circular(12),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      onPressed: () {
+                        if (mounted) {
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      child: Text(
+                        "Cancel",
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.04,
+                          color: CupertinoColors.black,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
-  //   if (kDebugMode) {
-  //     print("Starting _generateAndShowImage with prompt: $inputPrompt");
-  //   }
 
-  //   Map<String, dynamic>? aiImage;
+  Future<void> _generateAndShowImage(
+    String inputPrompt,
+    int numLeft,
+    int width,
+    int height, {
+    String? prevImageID,
+  }) async {
+    if (!mounted) return; // widget already disposed
 
-  //   if (prevImageID == null) {
-  //     if (kDebugMode) {
-  //       print("Calling _getAIPhoto just based on prompt");
-  //     }
-  //     aiImage = await _getAIPhoto(inputPrompt, width, height);
-  //   } else {
-  //     if (kDebugMode) {
-  //       print("Calling _getAIPhoto based on prompt and prevImageID");
-  //     }
-  //     aiImage = await _getAIPhoto(inputPrompt, width, height,
-  //         prevImageID: prevImageID);
-  //   }
+    final navigator = Navigator.of(context); // stable context
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
 
-  //   String? imageUrl = aiImage?['image_url'];
-  //   String? imageId = aiImage?['image_id'];
+    if (kDebugMode) {
+      print("Starting _generateAndShowImage with prompt: $inputPrompt");
+    }
 
-  //   if (kDebugMode) {
-  //     print("Image generation result: URL=$imageUrl, ID=$imageId");
-  //   }
-  //   Navigator.of(dialogContext).pop();
+    Map<String, dynamic>? aiImage;
 
-  //   if (imageUrl != null && imageId != null) {
-  //     int newNumLeft = numLeft - 1;
+    if (prevImageID == null) {
+      if (kDebugMode) {
+        print("Calling _getAIPhoto just based on prompt");
+      }
+      aiImage = await _getAIPhoto(inputPrompt, width, height);
+    } else {
+      if (kDebugMode) {
+        print("Calling _getAIPhoto based on prompt and prevImageID");
+      }
+      aiImage = await _getAIPhoto(inputPrompt, width, height, prevImageID: prevImageID);
+    }
 
-  //     final setNumLeft = Uri.parse(
-  //         'https://www.digitalmediabridge.tv/screen-builder/assets/api/ai_images_track.php?type=set&email=${Uri.encodeComponent(widget.userEmail)}&count=$newNumLeft');
-  //     final response = await http.get(setNumLeft);
-  //     final data = jsonDecode(response.body);
-  //     if (kDebugMode) {
-  //       print('Set Images Left Response: ${data.runtimeType}, Content: $data');
-  //     }
+    if (!mounted) return;
 
-  //     // _scaffoldMessengerKey.currentState?.showSnackBar(
-  //     //   SnackBar(
-  //     //     content: Row(
-  //     //       mainAxisSize: MainAxisSize.min,
-  //     //       children: [
-  //     //         Text("Image generated successfully",
-  //     //             style: TextStyle(fontSize: 20)),
-  //     //         SizedBox(width: 8),
-  //     //         Icon(Icons.check_circle_outline, color: Colors.green),
-  //     //       ],
-  //     //     ),
-  //     //     behavior: SnackBarBehavior.floating,
-  //     //     shape: RoundedRectangleBorder(
-  //     //       borderRadius: BorderRadius.circular(10),
-  //     //       side: BorderSide(color: Colors.green, width: 2),
-  //     //     ),
-  //     //   ),
-  //     // );
+    String? imageUrl = aiImage?['image_url'];
+    String? imageId = aiImage?['image_id'];
 
-  //     try {
-  //       await showModalBottomSheet(
-  //         context: dialogContext,
-  //         backgroundColor: Colors.grey[900],
-  //         shape: const RoundedRectangleBorder(
-  //           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-  //         ),
-  //         isScrollControlled: true,
-  //         builder: (BuildContext context) {
-  //           return Padding(
-  //             padding: const EdgeInsets.all(16),
-  //             child: SingleChildScrollView(
-  //               child: Column(
-  //                 mainAxisSize: MainAxisSize.min,
-  //                 children: [
-  //                   Container(
-  //                     width: 40,
-  //                     height: 5,
-  //                     margin: const EdgeInsets.only(bottom: 12),
-  //                     decoration: BoxDecoration(
-  //                       color: Colors.grey[700],
-  //                       borderRadius: BorderRadius.circular(10),
-  //                     ),
-  //                   ),
-  //                   Text(
-  //                     "AI Generated Image",
-  //                     style: TextStyle(
-  //                       fontSize: screenWidth * 0.07,
-  //                       fontWeight: FontWeight.bold,
-  //                       color: Colors.white,
-  //                     ),
-  //                   ),
-  //                   SizedBox(height: screenHeight * 0.02),
-  //                   ClipRRect(
-  //                     borderRadius: BorderRadius.circular(12),
-  //                     child: Container(
-  //                       width: screenWidth * 0.9,
-  //                       height: screenHeight * 0.6,
-  //                       child: Image.network(
-  //                         imageUrl,
-  //                         fit: BoxFit.contain,
-  //                         loadingBuilder: (context, child, loadingProgress) {
-  //                           if (loadingProgress == null) return child;
-  //                           return const Center(
-  //                             child: CircularProgressIndicator(
-  //                               valueColor: AlwaysStoppedAnimation<Color>(
-  //                                   Colors.orange),
-  //                             ),
-  //                           );
-  //                         },
-  //                         errorBuilder: (context, error, stackTrace) {
-  //                           if (kDebugMode) {
-  //                             print("Error loading image: $error");
-  //                           }
-  //                           return const Text(
-  //                             "Failed to load image",
-  //                             style: TextStyle(color: Colors.white),
-  //                           );
-  //                         },
-  //                       ),
-  //                     ),
-  //                   ),
-  //                   SizedBox(height: screenHeight * 0.02),
-  //                   Row(
-  //                     mainAxisAlignment: MainAxisAlignment.start,
-  //                     children: [
-  //                       ElevatedButton(
-  //                         onPressed: () {
-  //                           onNewPhoto();
-  //                         },
-  //                         style: ElevatedButton.styleFrom(
-  //                           backgroundColor: Colors.black.withValues(alpha: 0.7),
-  //                           shape: RoundedRectangleBorder(
-  //                             borderRadius: BorderRadius.circular(8),
-  //                           ),
-  //                         ),
-  //                         child: const Row(
-  //                           children: [
-  //                             Icon(Icons.edit, color: Colors.orange),
-  //                             SizedBox(width: 8),
-  //                             Text("Try Again",
-  //                                 style: TextStyle(color: Colors.white)),
-  //                           ],
-  //                         ),
-  //                       ),
-  //                     ],
-  //                   ),
-  //                   const SizedBox(height: 10),
-  //                   Row(
-  //                     mainAxisAlignment: MainAxisAlignment.end,
-  //                     children: [
-  //                       TextButton(
-  //                         onPressed: () => Navigator.of(context).pop(),
-  //                         child: const Text("Close",
-  //                             style: TextStyle(color: Colors.white)),
-  //                       ),
-  //                       const SizedBox(width: 10),
-  //                       ElevatedButton(
-  //                         style: ElevatedButton.styleFrom(
-  //                           backgroundColor: Colors.green,
-  //                           shape: RoundedRectangleBorder(
-  //                             borderRadius: BorderRadius.circular(8),
-  //                           ),
-  //                         ),
-  //                         onPressed: () async {
-  //                           Navigator.of(context)
-  //                               .pop();
-  //                           showLoadingCircle(
-  //                               dialogContext);
-  //                           await onSubmit(
-  //                               imageUrl,
-  //                               loginUsername,
-  //                               dialogContext,
-  //                               _scaffoldMessengerKey);
-  //                         },
-  //                         child: const Text("Save & Upload",
-  //                             style: TextStyle(color: Colors.white)),
-  //                       ),
-  //                     ],
-  //                   ),
-  //                   const SizedBox(height: 35),
-  //                 ],
-  //               ),
-  //             ),
-  //           );
-  //         },
-  //       );
-  //       if (kDebugMode) {
-  //         print("Image dialog shown successfully");
-  //       }
-  //     } catch (e) {
-  //       if (kDebugMode) {
-  //         print("Error showing image dialog: $e");
-  //       }
-  //       // _scaffoldMessengerKey.currentState?.showSnackBar(
-  //       //   SnackBar(
-  //       //     content: Text("Error displaying image: $e",
-  //       //         style: TextStyle(fontSize: 20)),
-  //       //     backgroundColor: Colors.redAccent,
-  //       //     behavior: SnackBarBehavior.floating,
-  //       //     shape:
-  //       //         RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-  //       //   ),
-  //       // );
-  //     }
-  //   } else {
-  //     // _scaffoldMessengerKey.currentState?.showSnackBar(
-  //     //   SnackBar(
-  //     //     content: Text("Failed to generate a valid image",
-  //     //         style: TextStyle(fontSize: 20)),
-  //     //     backgroundColor: Colors.redAccent,
-  //     //     behavior: SnackBarBehavior.floating,
-  //     //     shape:
-  //     //         RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-  //     //   ),
-  //     // );
-  //   }
-  // }
+    if (kDebugMode) {
+      print("Image generation result: URL=$imageUrl, ID=$imageId");
+    }
 
-  // Future<void> _showAIPromptDialog({String? prevImageID}) async {
-  //   double screenHeight = MediaQuery.of(context).size.height;
-  //   final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
-  //   final int colorNum =
-  //       int.parse(lightGreyTheme!, radix: 16);
-  //   final numLeftURL = Uri.parse(
-  //     'https://www.digitalmediabridge.tv/screen-builder/assets/api/ai_images_track.php?type=get&email=${Uri.encodeComponent(widget.userEmail)}',
-  //   );
+    if (navigator.canPop()) {
+      navigator.pop(); // close loading dialog
+    }
 
-  //   final response = await http.get(numLeftURL);
-  //   int numLeft;
-  //   try {
-  //     final List<dynamic> list = jsonDecode(response.body);
+    if (imageUrl != null && imageId != null) {
+      int newNumLeft = numLeft - 1;
 
-  //     if (list.isEmpty || list.first == null || list.first.toString().isEmpty) {
-  //       numLeft = 0;
-  //     }
-  //     else {
-  //       numLeft = int.tryParse(list.first.toString()) ?? 0;
-  //     }
-  //   }
-  //   catch (e) {
-  //     debugPrint('$e');
-  //     numLeft = 0;
-  //   }
-  //   if (kDebugMode) {
-  //     print("Num Left: $numLeft");
-  //   }
+      final setNumLeft = Uri.parse(
+        'https://www.digitalmediabridge.tv/screen-builder/assets/api/ai_images_track.php?type=set&email=${Uri.encodeComponent(widget.userEmail)}&count=$newNumLeft',
+      );
+      final response = await http.get(setNumLeft);
+      final data = jsonDecode(response.body);
 
-  //   int desiredImageWidth = 1536;
-  //   int desiredImageHeight = 864;
+      if (kDebugMode) {
+        print('Set Images Left Response: ${data.runtimeType}, Content: $data');
+      }
 
-  //   List<bool> isSelected = [true, false, false];
-  //   final dialogContext = context;
-  //   await showDialog(
-  //     context: dialogContext,
-  //     builder: (BuildContext context) {
-  //       final screenWidth = MediaQuery.of(context).size.width;
-  //       return StatefulBuilder(
-  //         builder: (BuildContext context, StateSetter setState) {
-  //           return AlertDialog(
-  //             title: Center(
-  //               child: Text(
-  //                 "Describe Your Image",
-  //                 style: TextStyle(
-  //                   color: Colors.white,
-  //                   fontSize: screenWidth * 0.06,
-  //                 ),
-  //               ),
-  //             ),
-  //             backgroundColor: Colors.black,
-  //             shape: RoundedRectangleBorder(
-  //               borderRadius: BorderRadius.circular(20),
-  //             ),
-  //             contentPadding: EdgeInsets.all(16),
-  //             content: FractionallySizedBox(
-  //               widthFactor: 0.9,
-  //               child: SingleChildScrollView(
-  //                 child: Column(
-  //                   mainAxisSize: MainAxisSize.min,
-  //                   children: [
-  //                     Text("$numLeft Image Generations Remaining",
-  //                         style: TextStyle(
-  //                             color: Colors.white70,
-  //                             fontSize: screenWidth * 0.04)),
-  //                     SizedBox(height: screenHeight * 0.02),
-  //                     TextFormField(
-  //                       controller: _textFieldController,
-  //                       style: TextStyle(color: Colors.white),
-  //                       cursorColor: Colors.white,
-  //                       decoration: InputDecoration(
-  //                         filled: true,
-  //                         fillColor: Color(colorNum),
-  //                         hintText: 'Enter text ... ',
-  //                         hintStyle: const TextStyle(color: Colors.white54),
-  //                         border: OutlineInputBorder(
-  //                           borderRadius: BorderRadius.circular(8),
-  //                           borderSide: BorderSide(color: Colors.grey[700]!),
-  //                         ),
-  //                         enabledBorder: OutlineInputBorder(
-  //                           borderRadius: BorderRadius.circular(8),
-  //                           borderSide: BorderSide(color: Colors.grey[700]!),
-  //                         ),
-  //                         focusedBorder: OutlineInputBorder(
-  //                           borderRadius: BorderRadius.circular(8),
-  //                           borderSide:
-  //                               const BorderSide(color: Colors.blueAccent),
-  //                         ),
-  //                       ),
-  //                       onFieldSubmitted: (value) async {
-  //                         final prompt = value.trim();
-  //                         if (prompt.isEmpty) {
-  //                           // ScaffoldMessenger.of(context).clearSnackBars();
-  //                           // ScaffoldMessenger.of(context).showSnackBar(
-  //                           //   SnackBar(
-  //                           //     content: Text("Please enter a prompt",
-  //                           //         style: TextStyle(fontSize: 20)),
-  //                           //     backgroundColor: Colors.redAccent,
-  //                           //     behavior: SnackBarBehavior.floating,
-  //                           //     shape: RoundedRectangleBorder(
-  //                           //         borderRadius: BorderRadius.circular(10)),
-  //                           //   ),
-  //                           // );
-  //                           return;
-  //                         }
-  //                         if (prompt.length > 1500) {
-  //                           // ScaffoldMessenger.of(context).showSnackBar(
-  //                           //   SnackBar(
-  //                           //     content: Text(
-  //                           //         "Prompt can be no more than 1500 characters",
-  //                           //         style: TextStyle(fontSize: 20)),
-  //                           //     backgroundColor: Colors.redAccent,
-  //                           //     behavior: SnackBarBehavior.floating,
-  //                           //     shape: RoundedRectangleBorder(
-  //                           //         borderRadius: BorderRadius.circular(10)),
-  //                           //   ),
-  //                           // );
-  //                           return;
-  //                         }
-  //                         Navigator.of(context).pop();
-  //                         showLoadingCircle(dialogContext, isGenerating: true);
-  //                         await _generateAndShowImage(
-  //                           prompt,
-  //                           dialogContext,
-  //                           numLeft,
-  //                           desiredImageWidth,
-  //                           desiredImageHeight,
-  //                           prevImageID: prevImageID,
-  //                         );
-  //                       },
-  //                     ),
-  //                     SizedBox(height: screenHeight * 0.03),
-  //                     Text(
-  //                       "Image Dimensions",
-  //                       style: TextStyle(
-  //                         color: Colors.white70,
-  //                         fontSize: screenWidth * 0.04,
-  //                       ),
-  //                     ),
-  //                     SizedBox(height: screenHeight * 0.01),
-  //                     MediaQuery(
-  //                       data: MediaQuery.of(context).copyWith(
-  //                         textScaler: TextScaler.linear(1.0),
-  //                       ),
-  //                       child: Wrap(
-  //                         spacing: screenWidth * 0.01,
-  //                         runSpacing: 8.0,
-  //                         children: [
-  //                           ToggleButtons(
-  //                             isSelected: isSelected,
-  //                             onPressed: (index) {
-  //                               setState(() {
-  //                                 for (int i = 0; i < isSelected.length; i++) {
-  //                                   isSelected[i] = i == index;
-  //                                 }
-  //                                 if (index == 0) {
-  //                                   desiredImageWidth = 1536;
-  //                                   desiredImageHeight = 864;
-  //                                 } else if (index == 1) {
-  //                                   desiredImageWidth = 1024;
-  //                                   desiredImageHeight = 1024;
-  //                                 } else if (index == 2) {
-  //                                   desiredImageWidth = 864;
-  //                                   desiredImageHeight = 1536;
-  //                                 }
-  //                               });
-  //                             },
-  //                             selectedColor: Colors.white,
-  //                             fillColor: Color(colorNum),
-  //                             color: Colors.white,
-  //                             borderColor: Colors.grey,
-  //                             selectedBorderColor: Colors.white,
-  //                             borderRadius: BorderRadius.circular(8),
-  //                             constraints: const BoxConstraints(
-  //                               minWidth: 60,
-  //                               minHeight: 36,
-  //                               maxWidth: 60,
-  //                               maxHeight: 36,
-  //                             ),
-  //                             children: const [
-  //                               Padding(
-  //                                 padding: EdgeInsets.symmetric(horizontal: 0),
-  //                                 child: Text("16 x 9"),
-  //                               ),
-  //                               Padding(
-  //                                 padding: EdgeInsets.symmetric(horizontal: 0),
-  //                                 child: Text("10 x 10"),
-  //                               ),
-  //                               Padding(
-  //                                 padding: EdgeInsets.symmetric(horizontal: 0),
-  //                                 child: Text("9 x 16"),
-  //                               ),
-  //                             ],
-  //                           ),
-  //                         ],
-  //                       ),
-  //                     ),
-  //                     SizedBox(height: screenHeight * 0.05),
-  //                   ],
-  //                 ),
-  //               ),
-  //             ),
-  //             actions: [
-  //               TextButton(
-  //                 onPressed: () async {
-  //                   final prompt = _textFieldController.text.trim();
-  //                   if (prompt.isEmpty) {
-  //                     // ScaffoldMessenger.of(context).clearSnackBars();
-  //                     // ScaffoldMessenger.of(context).showSnackBar(
-  //                     //   SnackBar(
-  //                     //     content: Text("Please enter a prompt",
-  //                     //         style: TextStyle(fontSize: 20)),
-  //                     //     backgroundColor: Colors.redAccent,
-  //                     //     behavior: SnackBarBehavior.floating,
-  //                     //     shape: RoundedRectangleBorder(
-  //                     //         borderRadius: BorderRadius.circular(10)),
-  //                     //   ),
-  //                     // );
-  //                     return;
-  //                   }
-  //                   if (prompt.length > 1500) {
-  //                     // ScaffoldMessenger.of(context).showSnackBar(
-  //                     //   SnackBar(
-  //                     //     content: Text(
-  //                     //         "Prompt can be no longer than 1500 characters",
-  //                     //         style: TextStyle(fontSize: 20)),
-  //                     //     backgroundColor: Colors.redAccent,
-  //                     //     behavior: SnackBarBehavior.floating,
-  //                     //     shape: RoundedRectangleBorder(
-  //                     //         borderRadius: BorderRadius.circular(10)),
-  //                     //   ),
-  //                     // );
-  //                     return;
-  //                   }
-  //                   if (numLeft <= 0) {
-  //                     // ScaffoldMessenger.of(context).showSnackBar(
-  //                     //   SnackBar(
-  //                     //     content: Text("AI Image Generation Limit Reached",
-  //                     //         style: TextStyle(fontSize: 20)),
-  //                     //     backgroundColor: Colors.redAccent,
-  //                     //     behavior: SnackBarBehavior.floating,
-  //                     //     shape: RoundedRectangleBorder(
-  //                     //         borderRadius: BorderRadius.circular(10)),
-  //                     //   ),
-  //                     // );
-  //                     return;
-  //                   }
-  //                   Navigator.of(context).pop();
-  //                   showLoadingCircle(dialogContext, isGenerating: true);
-  //                   await _generateAndShowImage(
-  //                     prompt,
-  //                     dialogContext,
-  //                     numLeft,
-  //                     desiredImageWidth,
-  //                     desiredImageHeight,
-  //                     prevImageID: prevImageID,
-  //                   );
-  //                 },
-  //                 style: TextButton.styleFrom(
-  //                   backgroundColor: Colors.green,
-  //                   foregroundColor: Colors.white,
-  //                   padding: EdgeInsets.symmetric(
-  //                       horizontal: screenWidth * 0.04,
-  //                       vertical: screenHeight * 0.02),
-  //                   shape: RoundedRectangleBorder(
-  //                     borderRadius: BorderRadius.circular(20),
-  //                   ),
-  //                 ),
-  //                 child: Row(
-  //                   mainAxisAlignment: MainAxisAlignment.center,
-  //                   children: [
-  //                     SizedBox(width: _isGenerating ? 8 : 4),
-  //                     Row(
-  //                       mainAxisAlignment: MainAxisAlignment.center,
-  //                       children: [
-  //                         Text(
-  //                           'Generate AI Image ',
-  //                           style: TextStyle(
-  //                             color: Colors.white,
-  //                             fontSize: screenWidth * 0.05,
-  //                           ),
-  //                         ),
-  //                       ],
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ),
-  //             ],
-  //           );
-  //         },
-  //       );
-  //     },
-  //   );
-  //   _textFieldController.clear();
-  // }
+      if (!mounted) return;
+
+      try { // show the image dialog
+        await showCupertinoModalPopup(
+          context: context,
+          builder: (BuildContext popupContext) {
+            return SafeArea(
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: screenHeight * 0.9,
+                ),
+                decoration: BoxDecoration(
+                  color: CupertinoColors.black,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                padding: const EdgeInsets.all(16),
+                child: SingleChildScrollView( 
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 5,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: CupertinoColors.systemGrey,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      Text(
+                        "AI Generated Image",
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.07,
+                          fontWeight: FontWeight.bold,
+                          color: CupertinoColors.systemGrey6,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        constraints: BoxConstraints(
+                          maxHeight: screenHeight * 0.4, // Limit image height
+                          maxWidth: screenWidth * 0.9,
+                        ),
+                        color: CupertinoColors.black,
+                        child: Image.network(
+                          imageUrl,
+                          fit: BoxFit.contain,
+                          width: double.infinity,
+                          height: double.infinity,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return const Center(child: CupertinoActivityIndicator(radius: 15));
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Center(
+                              child: Text(
+                                "Failed to load image",
+                                style: TextStyle(color: CupertinoColors.destructiveRed),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          CupertinoButton(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            color: CupertinoColors.systemGrey6,
+                            borderRadius: BorderRadius.circular(8),
+                            onPressed: () {
+                              onNewPhoto();
+                            },
+                            child: Row(
+                              children: const [
+                                Icon(CupertinoIcons.pencil, color: CupertinoColors.systemOrange),
+                                SizedBox(width: 8),
+                                Text("Try Again", style: TextStyle(color: CupertinoColors.white)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          CupertinoButton(
+                            onPressed: () {
+                              if (Navigator.canPop(popupContext)) {
+                                Navigator.of(popupContext).pop();
+                              }
+                            },
+                            child: const Text("Close", style: TextStyle(color: CupertinoColors.systemGrey6)),
+                          ),
+                          const SizedBox(width: 10),
+                          CupertinoButton.filled(
+                            borderRadius: BorderRadius.circular(8),
+                            color: darkGreen,
+                            onPressed: () async {
+                              if (Navigator.canPop(popupContext)) {
+                                Navigator.of(popupContext).pop();
+                              }
+                              showLoadingCircle(context, isGenerating: true);
+                              // await onSubmit(...)
+                            },
+                            child: const Text("Save & Upload", style: TextStyle(color: CupertinoColors.systemGrey6)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 35),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          print("Error showing image dialog: $e");
+        }
+      }
+    } else {
+      if (kDebugMode) {
+        print("Failed to generate a valid image");
+      }
+    }
+  }
+
+
+
+Future<void> _showAIPromptDialog({String? prevImageID}) async {
+  double screenHeight = MediaQuery.of(context).size.height;
+  double screenWidth = MediaQuery.of(context).size.width;
+  final int colorNum = int.parse(dotenv.env['LIGHT_GREY_THEME']!, radix: 16);
+  final Uri numLeftURL = Uri.parse(
+    'https://www.digitalmediabridge.tv/screen-builder/assets/api/ai_images_track.php?type=get&email=${Uri.encodeComponent(widget.userEmail)}',
+  );
+
+  final response = await http.get(numLeftURL);
+  int numLeft;
+  try {
+    final list = jsonDecode(response.body);
+    numLeft = int.tryParse(list.first.toString()) ?? 0;
+  } catch (_) {
+    numLeft = 0;
+  }
+
+  int desiredImageWidth = 1536;
+  int desiredImageHeight = 864;
+  List<bool> isSelected = [true, false, false];
+
+  await showCupertinoDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return CupertinoAlertDialog(
+        title: Text(
+          "Describe Your Image",
+          style: TextStyle(fontSize: screenWidth * 0.05),
+        ),
+        content: StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Padding(
+              padding: const EdgeInsets.only(top: 12.0),
+              child: Column(
+                children: [
+                  Text(
+                    "$numLeft Image Generations Remaining",
+                    style: TextStyle(
+                      color: CupertinoColors.systemGrey,
+                      fontSize: screenWidth * 0.035,
+                    ),
+                  ),
+                  SizedBox(height: screenHeight * 0.015),
+                  CupertinoTextField(
+                    controller: _textFieldController,
+                    placeholder: 'Enter prompt...',
+                    style: const TextStyle(color: CupertinoColors.white),
+                    placeholderStyle: const TextStyle(color: CupertinoColors.inactiveGray),
+                    cursorColor: CupertinoColors.white,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Color(colorNum),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  SizedBox(height: screenHeight * 0.03),
+                  Text(
+                    "Image Dimensions",
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.035,
+                      color: CupertinoColors.systemGrey,
+                    ),
+                  ),
+                  SizedBox(height: screenHeight * 0.01),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(3, (index) {
+                      final labels = ['16 x 9', '10 x 10', '9 x 16'];
+                      return GestureDetector(
+                        behavior: HitTestBehavior.opaque, // larger tap area
+                        onTap: () {
+                          setState(() {
+                            for (int i = 0; i < 3; i++) {
+                              isSelected[i] = i == index;
+                            }
+                            if (index == 0) {
+                              desiredImageWidth = 1536;
+                              desiredImageHeight = 864;
+                            } else if (index == 1) {
+                              desiredImageWidth = 1024;
+                              desiredImageHeight = 1024;
+                            } else {
+                              desiredImageWidth = 864;
+                              desiredImageHeight = 1536;
+                            }
+                          });
+                        },
+                        child: Container(
+                          margin: EdgeInsets.symmetric(horizontal: 4),
+                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: isSelected[index]
+                                ? CupertinoColors.systemGrey
+                                : CupertinoColors.darkBackgroundGray,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: CupertinoColors.white),
+                          ),
+                          child: Text(
+                            labels[index],
+                            style: const TextStyle(color: CupertinoColors.white),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () async {
+              final prompt = _textFieldController.text.trim();
+              if (prompt.isEmpty || prompt.length > 1500) {
+                Fluttertoast.showToast(
+                  msg: "Please enter a prompt",
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.CENTER,
+                  backgroundColor: CupertinoColors.systemRed,
+                  textColor: CupertinoColors.white,
+                );
+                return;
+              }
+              else if (numLeft <= 0) {
+                Fluttertoast.showToast(
+                  msg: "No AI Image Generations Remaining",
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.CENTER,
+                  backgroundColor: CupertinoColors.systemRed,
+                  textColor: CupertinoColors.white,
+                );
+                return;
+              }
+              // else, generate and show the image
+              if (mounted) {
+                Navigator.of(context).pop();
+              }
+              showLoadingCircle(context, isGenerating: true);
+              await _generateAndShowImage(
+                prompt,
+                numLeft,
+                desiredImageWidth,
+                desiredImageHeight,
+                prevImageID: prevImageID,
+              );
+            },
+            child: Text(
+              'Generate AI Image',
+              style: TextStyle(color: CupertinoColors.systemGreen, fontSize: screenWidth * 0.045),
+            ),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("Cancel"),
+          ),
+        ],
+      );
+    },
+  );
+
+  _textFieldController.clear();
+}
+
 
   final List<String> uploadOptions = ['Camera', 'Gallery', 'AI Image'];
   String? selectedOption;
@@ -1765,6 +1632,7 @@ Future<void> _showUploadSheet(File imageFile) async {
                         return Padding(
                           padding: EdgeInsets.only(bottom: vh * 1),
                           child: GestureDetector(
+                            behavior: HitTestBehavior.opaque, // larger tap area
                             onTap: () {
                               selectedPlayerName = player.name;
                               _showScreensPage(true);
@@ -1812,10 +1680,18 @@ Future<void> _showUploadSheet(File imageFile) async {
               ],
             ),
           ),
-
+          // allow user to tap away
+          if (_drawerOpen)
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: _toggleDrawer,
+                child: Container(),
+              ),
+            ),
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
-            right: _drawerOpen ? 0 : -vw * 60, // lol didn't really know how to start from right... ig -vw works
+            right: _drawerOpen ? 0 : -vw * 60, 
             top: 0,
             bottom: 0,
             width: vw * 60,
@@ -1871,7 +1747,6 @@ Future<void> _showUploadSheet(File imageFile) async {
                       label: 'Logout',
                       vw: vw,
                       onTap: () {
-                        _toggleDrawer();
                        _userLogout();
                       },
                     ),
@@ -1893,6 +1768,7 @@ Future<void> _showUploadSheet(File imageFile) async {
     required VoidCallback onTap,
   }) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque, // larger tap area
       onTap: onTap,
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: vw * 4, vertical: vw * 1.5),
@@ -1907,44 +1783,87 @@ Future<void> _showUploadSheet(File imageFile) async {
     );
   }
 
-  Widget _uploadExpansion(double vw) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: uploadOptions.map((opt) {
-        final icon = opt == 'Camera'
-            ? CupertinoIcons.camera
-            : opt == 'Gallery'
-                ? CupertinoIcons.photo_on_rectangle
-                : CupertinoIcons.sparkles;
-        final action = opt == 'Camera'
-            ? _takePhoto
-            : opt == 'Gallery'
-                ? _chooseFromGallery
-                : () {
-            // AI prompt commented for now. Billy if you wanna test wit this that's absolutely fine
-          };
-               // : () => _showAIPromptDialog();
+  bool _uploadExpanded = false; // Place this as a state variable in your class
 
-        return GestureDetector(
-          onTap: () {
-            _toggleDrawer();
-            action();
-          },
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: vw * 7, vertical: vw * 1.5),
-            child: Row(
-              children: [
-                Icon(icon, color: CupertinoColors.systemOrange, size: vw * 4),
-                SizedBox(width: vw * 3),
-                Text(opt, style: TextStyle(color: CupertinoColors.systemGrey2, fontSize: vw * 5)),
-              ],
-            ),
+Widget _uploadExpansion(double vw) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      // "Upload Image" button styled like other menu buttons
+      GestureDetector(
+        behavior: HitTestBehavior.opaque, // larger tap area
+        onTap: () {
+          setState(() {
+            _uploadExpanded = !_uploadExpanded;
+          });
+        },
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: vw * 4, vertical: vw * 1.5),
+          child: Row(
+            children: [
+              Icon(CupertinoIcons.upload_circle, color: CupertinoColors.systemOrange, size: vw * 7),
+              SizedBox(width: vw * 4),
+              Text(
+                'Upload Image',
+                style: TextStyle(
+                  color: CupertinoColors.white,
+                  fontSize: vw * 4.5,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+              Spacer(),
+              Icon(
+                _uploadExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
+                color: CupertinoColors.white,
+                size: vw * 4,
+              ),
+            ],
           ),
-        );
-      }).toList(),
+        ),
+      ),
+
+      // Dropdown options with your distinct style
+      if (_uploadExpanded)
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: vw * 2), // Add some space between options
+            _uploadOption(vw, CupertinoIcons.camera, 'Camera', _takePhoto),
+            SizedBox(height: vw * 2), // Add some space between options
+            _uploadOption(vw, CupertinoIcons.photo_on_rectangle, 'Gallery', _chooseFromGallery),
+            SizedBox(height: vw * 2), // Add some space between options
+            _uploadOption(vw, CupertinoIcons.sparkles, 'AI Image', _showAIPromptDialog),
+          ],
+        ),
+    ],
+  );
+}
+
+
+  Widget _uploadOption(double vw, IconData icon, String label, VoidCallback onTap) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque, // larger tap area
+      onTap: () {
+        _toggleDrawer();
+        onTap();
+        setState(() {
+          _uploadExpanded = false;
+        });
+      },
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: vw * 7, vertical: vw * 1.5),
+        child: Row(
+          children: [
+            Icon(icon, color: CupertinoColors.systemOrange, size: vw * 4),
+            SizedBox(width: vw * 3),
+            Text(label, style: TextStyle(color: CupertinoColors.systemGrey2, fontSize: vw * 5)),
+          ],
+        ),
+      ),
     );
   }
 }
+
   // @override
   // Widget build(BuildContext context) {
   //   final double vw = MediaQuery.of(context).size.width / 100;
@@ -2050,7 +1969,7 @@ Future<void> _showUploadSheet(File imageFile) async {
   //     ),
   //   );
   // }
-// }
+  // }
 
 ObstructingPreferredSizeWidget _appBarNoBackBtn(BuildContext context, String title, String subTitle, VoidCallback onMenuPressed) {
   final double vw = MediaQuery.of(context).size.width / 100;

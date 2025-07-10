@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import './main.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:mime/mime.dart';
 import './players_page.dart';
 import './screens_page.dart';
@@ -362,88 +363,70 @@ void _deleteStorage() async {
   await systemStorage.deleteAll();
 }
 
-confirmLogout(BuildContext context) {
+void confirmLogout(BuildContext context) {
+  // Using MediaQuery for responsive sizing
   final double vw = MediaQuery.of(context).size.width / 100;
   final double vh = MediaQuery.of(context).size.height / 100;
 
-  Widget cancelButton = OutlinedButton(
-    child: const Text(
-      "CANCEL",
-      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-    ),
-    onPressed: () {
-      Navigator.of(context).pop();
-    },
-  );
-  Widget continueButton = OutlinedButton(
-    child: const Text(
-      "LOGOUT",
-      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-    ),
-    onPressed: () {
-      Navigator.of(context).pop();
-      _deleteStorage();
-      loginUsername = "none";
-      loginPassword = "none";
-      selectedIndex = 0;
-      dmbMediaPlayers = [];
-      dmbScreens = [];
-      Navigator.of(context)
-          .pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
-    },
-  );
-  AlertDialog alert = AlertDialog(
-    backgroundColor: Colors.transparent,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(10),
-    ),
-    contentPadding: EdgeInsets.zero,
-    clipBehavior: Clip.antiAlias,
-    content: Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            "CONFIRM LOGOUT",
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: vw * 7,
-            ),
+  // Create the Cupertino alert dialog
+  showCupertinoDialog(
+    context: context,
+    barrierDismissible: true,
+    builder: (BuildContext context) {
+      return CupertinoAlertDialog(
+        title: Text(
+          'Confirm Logout',
+          style: TextStyle(
+            fontSize: vw * 5, // Adjusted for Cupertino aesthetic
+            fontWeight: FontWeight.bold,
           ),
-          SizedBox(height: vh * 2),
-          Text(
-            "Do you want to log out of the DMB App?",
+        ),
+        content: Padding(
+          padding: EdgeInsets.only(top: vh * 1),
+          child: Text(
+            'Do you want to log out of the DMB App?',
             style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.normal,
               fontSize: vw * 4,
             ),
           ),
-          SizedBox(height: vh * 2),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              cancelButton,
-              const SizedBox(width: 10),
-              continueButton,
-            ],
+        ),
+        actions: [
+          // Cancel button
+          CupertinoDialogAction(
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: CupertinoColors.activeBlue,
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          // Logout button
+          CupertinoDialogAction(
+            isDestructiveAction: true, // Red color for destructive action
+            child: const Text(
+              'Logout',
+              style: TextStyle(
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+            onPressed: () {
+              Navigator.of(context).pop();
+              _deleteStorage();
+              loginUsername = "none";
+              loginPassword = "none";
+              selectedIndex = 0;
+              dmbMediaPlayers = [];
+              dmbScreens = [];
+              Navigator.of(context)
+                  .pushNamedAndRemoveUntil('/', (Route<dynamic> route) => false);
+            },
           ),
         ],
-      ),
-    ),
-  );
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return alert;
+      );
     },
-    barrierDismissible: true,
-    barrierColor: Colors.black54,
   );
 }
