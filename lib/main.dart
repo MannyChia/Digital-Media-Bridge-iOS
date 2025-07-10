@@ -11,7 +11,7 @@ import './screens_page.dart'; // Assuming this is needed and also converted
 
 // Global variables - remain as is
 dynamic selectedIndex = 0;
-dynamic mainPageTitle = "DMB Media Players";
+dynamic mainPageTitle = "Select Media Player";
 dynamic mainPageSubTitle = "Select Player";
 dynamic storedUsername = "none";
 dynamic storedPassword = "none";
@@ -431,7 +431,7 @@ class _HomePageState extends State<HomePage> {
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.black,
       child: PlayersPage( 
-        mainPageTitle: "DMB Media Players",
+        mainPageTitle: "Select Media Player",
         mainPageSubTitle: "Select Player",
         userEmail: loginUsername,
       ),

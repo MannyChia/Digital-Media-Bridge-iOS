@@ -207,79 +207,65 @@ getUserData(String username, String password, String requestType) async {
   }
 }
 
-confirmPublish(BuildContext context, String playerName, String screenName) {
+void confirmPublish(BuildContext context, String playerName, String screenName) {
   final double vw = MediaQuery.of(context).size.width / 100;
   final double vh = MediaQuery.of(context).size.height / 100;
 
-  Widget cancelButton = OutlinedButton(
-    child: Text(
-      "CANCEL",
-      style: TextStyle(
-          color: Colors.white, fontWeight: FontWeight.bold, fontSize: vw * 4),
-    ),
-    onPressed: () {
-      Navigator.of(context).pop();
+  showCupertinoDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return CupertinoAlertDialog(
+        title: Text(
+          "CONFIRM PUBLISH",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: vw * 5,
+          ),
+        ),
+        content: Padding(
+          padding: EdgeInsets.only(top: vh * 2),
+          child: Text(
+            "Do you want to play screen '$screenName' on player $playerName?",
+            style: TextStyle(fontSize: vw * 4),
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              "CANCEL",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: vw * 4,
+                color: CupertinoColors.systemRed,
+              ),
+            ),
+          ),
+          CupertinoDialogAction(
+            onPressed: () {
+              Navigator.of(context).pop();
+              publishScreen(loginUsername, playerName, screenName).then((result) {
+                if (result) {
+                  publishSuccess(context);
+                }
+              });
+            },
+            child: Text(
+              "PUBLISH",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: vw * 4,
+                color: CupertinoColors.activeGreen,
+              ),
+            ),
+          ),
+        ],
+      );
     },
   );
-  Widget continueButton = OutlinedButton(
-    child: Text(
-      "PUBLISH",
-      style: TextStyle(
-          color: Colors.white, fontWeight: FontWeight.bold, fontSize: vw * 4),
-    ),
-    onPressed: () {
-      Navigator.of(context).pop();
-      publishScreen(loginUsername, playerName, screenName).then((result) {
-        if (result) {
-          publishSuccess(context);
-        }
-      });
-    },
-  );
-  showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Center(
-              child: Container(
-                  padding: EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Text(
-                      "CONFIRM PUBLISH",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: vw * 7,
-                      ),
-                    ),
-                    SizedBox(height: vh * 2),
-                    Text(
-                      "Do you want to play screen '$screenName' on player $playerName?",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.normal,
-                        fontSize: vw * 4,
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        cancelButton,
-                        SizedBox(width: 10),
-                        continueButton,
-                      ],
-                    ),
-                  ]))),
-        );
-      });
 }
+
 
 publishScreen(String userName, String playerName, String screenName) async {
   var publishData = {
@@ -302,62 +288,48 @@ publishScreen(String userName, String playerName, String screenName) async {
   }
 }
 
-publishSuccess(BuildContext context) {
+  void publishSuccess(BuildContext context) {
   final double vw = MediaQuery.of(context).size.width / 100;
   final double vh = MediaQuery.of(context).size.height / 100;
 
-  Widget okButton = OutlinedButton(
-    child: Text(
-      "OK",
-      style: TextStyle(
-          color: Colors.white, fontWeight: FontWeight.bold, fontSize: vw * 4),
-    ),
-    onPressed: () {
-      Navigator.of(context).pop();
+  showCupertinoDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return CupertinoAlertDialog(
+        title: Text(
+          "PUBLISH SUCCESS",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: vw * 5,
+          ),
+        ),
+        content: Padding(
+          padding: EdgeInsets.only(top: vh * 2),
+          child: Text(
+            "Note: It may take up to 30 seconds for the screen change to take effect.",
+            style: TextStyle(fontSize: vw * 4),
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(),
+            isDefaultAction: true,
+            child: Text(
+              "OK",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: vw * 4,
+                color: CupertinoColors.activeGreen,
+              ),
+            ),
+          ),
+        ],
+      );
     },
   );
-
-  showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Center(
-              child: Container(
-                  padding: EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: Colors.green,
-                      width: 5,
-                    ),
-                  ),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Text(
-                      "PUBLISH SUCCESS",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: vw * 7,
-                      ),
-                    ),
-                    SizedBox(height: vh * 2),
-                    Text(
-                      "Note: It may take up to 30 seconds for the screen change to take effect",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.normal,
-                        fontSize: vw * 4,
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    okButton,
-                  ]))),
-        );
-      });
 }
+
 
 void _deleteStorage() async {
   await systemStorage.deleteAll();

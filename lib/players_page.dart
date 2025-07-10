@@ -48,7 +48,6 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
   Set<String> selectedImages = {};
   Set<String> originalPlaylistImages = {};
   bool _isLoading = true; // display loading circle when playlists are loading
-  Color darkGreen = Color(0xFF006400); 
 
   @override 
   void initState() {
@@ -533,11 +532,11 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
           ],
         ),
               Positioned(
-        bottom: 60,
+        bottom: 30,
         left: 16,
         right: 16,
         child: CupertinoButton.filled(
-          color: darkGreen,
+          color: CupertinoColors.systemGreen,
           onPressed: _hasPlaylistChanged() ? _onSavePressed : null,
           padding: const EdgeInsets.symmetric(vertical: 16),
           borderRadius: BorderRadius.circular(10),
@@ -590,25 +589,26 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
       originalPlaylistImages = selectedFilenames.toSet();
       cachedPlaylistPreviews = await fetchPlaylistPreviews(widget.userEmail);
       setState(() {});
-   await showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Success'),
-        content: const Text('Playlist updated successfully.'),
-        actions: [
-          CupertinoDialogAction(
-            isDefaultAction: true,
-            child: const Text('OK'),
-            onPressed: () {
-              if (mounted) {
-                Navigator.of(context).pop();
-              }
-            },
+      await showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Success'),
+            content: const Text('Playlist updated successfully.'),
+            actions: [
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                child: const Text('OK'),
+                onPressed: () {
+                  if (mounted) {
+                    Navigator.of(context).pop(); // close the 'Success' dialog
+                  }
+                  Navigator.of(context).pop(); // close the playlist sheet
+                },
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  } else {
+        );
+    } else {
     await showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
@@ -649,8 +649,8 @@ class _PlayersPageState extends State<PlayersPage> {
   final ImagePicker _picker = ImagePicker();
   final TextEditingController _textFieldController = TextEditingController();
   final bool _isGenerating = false;
+  bool _isCancelled = false;
   String backgroundURL = dotenv.env['BACKGROUND_IMAGE_URL']!;
-  Color darkGreen = Color(0xFF006400); 
   // final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
   //     GlobalKey<ScaffoldMessengerState>();
 
@@ -671,7 +671,7 @@ class _PlayersPageState extends State<PlayersPage> {
 
 void _showScreensPage(bool onPlayer) {
   final String title = onPlayer
-      ? "Player: $selectedPlayerName"
+      ? "Publish Screen to $selectedPlayerName"
       : "Available Screens";
   final String subtitle = onPlayer
       ? "Select Screen to Publish"
@@ -705,7 +705,7 @@ void _showScreensPage(bool onPlayer) {
         if (result.runtimeType != String) {
           setState(() {
             dmbMediaPlayers = result;
-            mainPageTitle = "DMB Media Players (${dmbMediaPlayers.length})";
+            mainPageTitle = "Select Media Player";
             mainPageSubTitle = "Select Player";
           });
         }
@@ -735,7 +735,7 @@ void _showScreensPage(bool onPlayer) {
           ),
           child: Padding(
             padding: MediaQuery.of(context).viewInsets.add(const EdgeInsets.all(16)),
-            child: SingleChildScrollView( // ✅ Add scroll behavior
+            child: SingleChildScrollView( 
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -779,15 +779,32 @@ void _showScreensPage(bool onPlayer) {
                         child: const Text("Close", style: TextStyle(color: CupertinoColors.systemGrey6)),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 20),
                       CupertinoButton.filled(
-                        color: darkGreen,
-                        child: const Text("Upload"),
+                        borderRadius: BorderRadius.circular(8),
+                        color: CupertinoColors.systemGreen,
+                        child: const Text("Upload", style: TextStyle(color: CupertinoColors.black)),
                         onPressed: () async {
-                          if (mounted) {
-                            Navigator.of(context).pop();
-                          }
+                          // close the upload sheet
+                          Navigator.of(context).pop();
+                          // show loading spinner
+                          showCupertinoDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (_) => Container(
+                              color: CupertinoColors.black.withOpacity(0.4),
+                              child: const Center(
+                                child: CupertinoActivityIndicator(radius: 15),
+                              ),
+                            ),
+                          );
                           final result = await uploadImage(imageFile, loginUsername);
+
+                          // hide the loading circle
+                          if (Navigator.canPop(context)) {
+                            Navigator.of(context).pop(); // hide spinner
+                          }
+
                           final bool success = result['success'] as bool;
                           final String message = result['message'] as String;
                           if (!success) {
@@ -813,6 +830,15 @@ void _showScreensPage(bool onPlayer) {
                                   ),
                                 ],
                               ),
+                            );
+                          }
+                          else { // upload was a success
+                            Fluttertoast.showToast(
+                              msg: "Image uploaded to account",
+                              toastLength: Toast.LENGTH_LONG,
+                              gravity: ToastGravity.CENTER,
+                              backgroundColor: CupertinoColors.systemGreen,
+                              textColor: CupertinoColors.white,
                             );
                           }
                         },
@@ -1156,68 +1182,31 @@ void _showScreensPage(bool onPlayer) {
   //   }
   // }
 
-  void showLoadingCircle(BuildContext context, {bool isGenerating = false}) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
-    final int colorNum = int.parse(lightGreyTheme!, radix: 16);
-
+  void showLoadingCircle(BuildContext context) {
     showCupertinoDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
-        return CupertinoPopupSurface(
-          isSurfacePainted: true,
-          child: Center(
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: CupertinoColors.black,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CupertinoActivityIndicator(
-                    radius: 15,
-                    animating: true,
-                  ),
-                  if (isGenerating) ...[
-                    SizedBox(height: screenWidth * 0.1),
-                    Text(
-                      "Generating Image...",
-                      style: TextStyle(
-                        color: CupertinoColors.systemGrey6,
-                        fontSize: screenWidth * 0.05,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    CupertinoButton.filled(
-                      color: CupertinoColors.systemGrey,
-                      borderRadius: BorderRadius.circular(12),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      onPressed: () {
-                        if (mounted) {
-                          Navigator.of(context).pop();
-                        }
-                      },
-                      child: Text(
-                        "Cancel",
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.04,
-                          color: CupertinoColors.black,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+      builder: (BuildContext dialogContext) {
+        return CupertinoAlertDialog(
+          title: const Text('Generating Image...', style: TextStyle(fontSize: 20)),
+          content: const Padding(
+            padding: EdgeInsets.only(top: 16),
+            child: CupertinoActivityIndicator(radius: 15),
           ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () {
+                _isCancelled = true;               
+                Navigator.of(dialogContext).pop();
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
         );
       },
     );
   }
-
 
   Future<void> _generateAndShowImage(
     String inputPrompt,
@@ -1226,31 +1215,36 @@ void _showScreensPage(bool onPlayer) {
     int height, {
     String? prevImageID,
   }) async {
-    if (!mounted) return; // widget already disposed
+    if (!mounted) return;
 
-    final navigator = Navigator.of(context); // stable context
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+    _isCancelled = false;  // reset cancel flag
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenWidth = MediaQuery.of(context).size.width;
 
-    if (kDebugMode) {
-      print("Starting _generateAndShowImage with prompt: $inputPrompt");
-    }
+    showLoadingCircle(context);  // show loading with cancel
 
     Map<String, dynamic>? aiImage;
 
     if (prevImageID == null) {
-      if (kDebugMode) {
-        print("Calling _getAIPhoto just based on prompt");
-      }
       aiImage = await _getAIPhoto(inputPrompt, width, height);
     } else {
-      if (kDebugMode) {
-        print("Calling _getAIPhoto based on prompt and prevImageID");
-      }
       aiImage = await _getAIPhoto(inputPrompt, width, height, prevImageID: prevImageID);
     }
 
     if (!mounted) return;
+
+    // If cancelled, just return early without doing anything further
+    if (_isCancelled) {
+      if (Navigator.canPop(context)) {
+        Navigator.of(context).pop();  // close loading dialog if still open
+      }
+      if (kDebugMode) print('Image generation cancelled.');
+      return;
+    }
+
+    if (Navigator.canPop(context)) {
+      Navigator.of(context).pop(); // close loading dialog normally
+    }
 
     String? imageUrl = aiImage?['image_url'];
     String? imageId = aiImage?['image_id'];
@@ -1259,8 +1253,8 @@ void _showScreensPage(bool onPlayer) {
       print("Image generation result: URL=$imageUrl, ID=$imageId");
     }
 
-    if (navigator.canPop()) {
-      navigator.pop(); // close loading dialog
+    if (Navigator.canPop(context)) {
+      Navigator.of(context).pop();
     }
 
     if (imageUrl != null && imageId != null) {
@@ -1376,18 +1370,18 @@ void _showScreensPage(bool onPlayer) {
                             },
                             child: const Text("Close", style: TextStyle(color: CupertinoColors.systemGrey6)),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 5),
                           CupertinoButton.filled(
                             borderRadius: BorderRadius.circular(8),
-                            color: darkGreen,
+                            color: CupertinoColors.systemGreen,
                             onPressed: () async {
                               if (Navigator.canPop(popupContext)) {
                                 Navigator.of(popupContext).pop();
                               }
-                              showLoadingCircle(context, isGenerating: true);
+                              showLoadingCircle(context);
                               // await onSubmit(...)
                             },
-                            child: const Text("Save & Upload", style: TextStyle(color: CupertinoColors.systemGrey6)),
+                            child: const Text("Save & Upload", style: TextStyle(color: CupertinoColors.black)),
                           ),
                         ],
                       ),
@@ -1464,7 +1458,7 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
                     cursorColor: CupertinoColors.white,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Color(colorNum),
+                      color: CupertinoColors.black,
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
@@ -1551,7 +1545,7 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
               if (mounted) {
                 Navigator.of(context).pop();
               }
-              showLoadingCircle(context, isGenerating: true);
+              showLoadingCircle(context);
               await _generateAndShowImage(
                 prompt,
                 numLeft,
