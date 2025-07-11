@@ -501,7 +501,6 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
                           Positioned.fill(
                             child: Container(
                               decoration: BoxDecoration(
-                                // Billy fill free to mess with the opacity
                                 color: CupertinoColors.black.withOpacity(0.3),
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -550,31 +549,6 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
     ],
   );
 }
-//         Positioned(
-//           bottom: 60,
-//           left: 16,
-//           right: 16,
-//           child: CupertinoButton.filled(
-//             onPressed: _hasPlaylistChanged() ? _onSavePressed : null,
-//             style: ElevatedButton.styleFrom(
-//               backgroundColor:
-//                   _hasPlaylistChanged() ? Colors.green : Colors.grey[700],
-//               foregroundColor:
-//                   _hasPlaylistChanged() ? Colors.black : Colors.white54,
-//               padding: const EdgeInsets.symmetric(vertical: 16),
-//               shape: RoundedRectangleBorder(
-//                   borderRadius: BorderRadius.circular(10)),
-//             ),
-//             child: const Text(
-//               'Save Playlist',
-//               style: TextStyle(fontWeight: FontWeight.bold),
-//             ),
-//           ),
-//         ),
-//         SizedBox(height: 40),
-//       ],
-//     );
-//   }
 
   void _onSavePressed() async {
     final selectedFilenames =
@@ -619,12 +593,12 @@ class _PlaylistSheetState extends State<PlaylistSheet> {
             isDefaultAction: true,
             child: const Text('OK'),
             onPressed: () => Navigator.of(context).pop(),
-          ),
-        ],
-      ),
-    );
+            ),
+          ],
+        ),
+      );
+    } 
   }
-}
 }
 class PlayersPage extends StatefulWidget {
   final String userEmail;
@@ -651,8 +625,6 @@ class _PlayersPageState extends State<PlayersPage> {
   final bool _isGenerating = false;
   bool _isCancelled = false;
   String backgroundURL = dotenv.env['BACKGROUND_IMAGE_URL']!;
-  // final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
-  //     GlobalKey<ScaffoldMessengerState>();
 
   @override
   void initState() {
@@ -666,7 +638,6 @@ class _PlayersPageState extends State<PlayersPage> {
     mainPageSubTitle = widget.mainPageSubTitle ?? "";
   }
 
-  // final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int selectedIndex = 0;
 
 void _showScreensPage(bool onPlayer) {
@@ -716,6 +687,7 @@ void _showScreensPage(bool onPlayer) {
       }
     }
   }
+
 
   Future<void> _showUploadSheet(File imageFile) async {
     double screenHeight = MediaQuery.of(context).size.height;
@@ -802,7 +774,7 @@ void _showScreensPage(bool onPlayer) {
 
                           // hide the loading circle
                           if (Navigator.canPop(context)) {
-                            Navigator.of(context).pop(); // hide spinner
+                            Navigator.of(context).pop(); 
                           }
 
                           final bool success = result['success'] as bool;
@@ -979,16 +951,13 @@ void _showScreensPage(bool onPlayer) {
               break;
             } else if (status == 'FAILED') {
               if (mounted) {
-                // ScaffoldMessenger.of(context).showSnackBar(
-                //   SnackBar(
-                //     content: Text("Image generation failed",
-                //         style: TextStyle(fontSize: 20)),
-                //     backgroundColor: Colors.redAccent,
-                //     behavior: SnackBarBehavior.floating,
-                //     shape: RoundedRectangleBorder(
-                //         borderRadius: BorderRadius.circular(10)),
-                //   ),
-                // );
+                Fluttertoast.showToast(
+                  msg: "Image Generation Failed",
+                  toastLength: Toast.LENGTH_LONG,
+                  gravity: ToastGravity.CENTER,
+                  backgroundColor: CupertinoColors.systemRed,
+                  textColor: CupertinoColors.white,
+                );
               }
               return null;
             }
@@ -1000,18 +969,6 @@ void _showScreensPage(bool onPlayer) {
           }
         }
         if (!isCompleted || imageUrl == null) {
-          if (mounted) {
-            // ScaffoldMessenger.of(context).showSnackBar(
-            //   SnackBar(
-            //     content: Text("Image generation timed out or no image received",
-            //         style: TextStyle(fontSize: 20)),
-            //     backgroundColor: Colors.redAccent,
-            //     behavior: SnackBarBehavior.floating,
-            //     shape: RoundedRectangleBorder(
-            //         borderRadius: BorderRadius.circular(10)),
-            //   ),
-            // );
-          }
           return null;
         }
         if (kDebugMode) {
@@ -1037,15 +994,13 @@ void _showScreensPage(bool onPlayer) {
             errorMsg = 'Error: ${response.statusCode} - ${response.body}';
         }
         if (mounted) {
-          // ScaffoldMessenger.of(context).showSnackBar(
-          //   SnackBar(
-          //     content: Text(errorMsg, style: TextStyle(fontSize: 20)),
-          //     backgroundColor: Colors.redAccent,
-          //     behavior: SnackBarBehavior.floating,
-          //     shape: RoundedRectangleBorder(
-          //         borderRadius: BorderRadius.circular(10)),
-          //   ),
-          // );
+          Fluttertoast.showToast(
+            msg: errorMsg,
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.CENTER,
+            backgroundColor: CupertinoColors.systemRed,
+            textColor: CupertinoColors.white,
+          );
         }
         return null;
       }
@@ -1065,122 +1020,107 @@ void _showScreensPage(bool onPlayer) {
     _showAIPromptDialog();
   }
 
-  // void onEdit(String prevImageID) {
-  //   Navigator.of(context).pop();
-  //   setState(() {
-  //     _textFieldController.clear();
-  //   });
-  //   _showAIPromptDialog(prevImageID: prevImageID);
-  // }
 
-  // Future<String> onSubmit(
-  //     String imageUrl,
-  //     String username,
-  //     BuildContext dialogContext,
-  //     GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey) async {
-  //   try {
-  //     final response = await http
-  //         .get(Uri.parse(imageUrl))
-  //         .timeout(Duration(seconds: 30), onTimeout: () {
-  //       throw TimeoutException("Image download timed out");
-  //     });
+  Future<String> onSubmit(
+      String imageUrl,
+      String username,
+      BuildContext dialogContext) async {
+    try {
+      // show loading spinner
+      showCupertinoDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => Container(
+          color: CupertinoColors.black.withOpacity(0.4),
+          child: const Center(
+            child: CupertinoActivityIndicator(radius: 15),
+          ),
+        ),
+      );
 
-  //     if (response.statusCode != 200) {
-  //       // scaffoldMessengerKey.currentState?.showSnackBar(
-  //       //   SnackBar(
-  //       //     content: Text(
-  //       //         "Failed to download image: HTTP ${response.statusCode}",
-  //       //         style: TextStyle(fontSize: 20)),
-  //       //     backgroundColor: Colors.redAccent,
-  //       //     behavior: SnackBarBehavior.floating,
-  //       //     shape:
-  //       //         RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-  //       //   ),
-  //       // );
-  //       if (kDebugMode) {
-  //         print("ERROR ON onSubmit FUNCTION: HTTP ${response.statusCode}");
-  //       }
-  //       return "error";
-  //     }
-  //     final bytes = response.bodyBytes;
-  //     final tempDir = await getTemporaryDirectory();
-  //     final filename = path.basename(imageUrl);
-  //     final tempFile = File("${tempDir.path}/$filename");
-  //     await tempFile.writeAsBytes(bytes);
-  //     final result = await uploadImage(tempFile, username);
-  //     if (result is! Map<String, dynamic> ||
-  //         !result.containsKey('success') ||
-  //         !result.containsKey('message')) {
-  //       throw Exception("Invalid response from uploadImage");
-  //     }
-  //     final bool success = result['success'] as bool;
-  //     final String message = result['message'] as String;
-  //     await tempFile.delete();
+      final response = await http
+          .get(Uri.parse(imageUrl))
+          .timeout(Duration(seconds: 30), onTimeout: () {
+        throw TimeoutException("Image download timed out");
+      });
 
-  //     if (success) {
-  //       // scaffoldMessengerKey.currentState?.showSnackBar(
-  //       //   SnackBar(
-  //       //     content: Row(
-  //       //       mainAxisSize: MainAxisSize.min,
-  //       //       children: [
-  //       //         Text("Image Saved to your Account",
-  //       //             style: TextStyle(fontSize: 20)),
-  //       //         SizedBox(width: 8),
-  //       //         Icon(Icons.check_circle_outline, color: Colors.green),
-  //       //       ],
-  //       //     ),
-  //       //     behavior: SnackBarBehavior.floating,
-  //       //     shape: RoundedRectangleBorder(
-  //       //       borderRadius: BorderRadius.circular(10),
-  //       //       side: BorderSide(color: Colors.green, width: 2),
-  //       //     ),
-  //       //   ),
-  //       // );
-  //       return "success";
-  //     } else {
-  //       await showDialog(
-  //         context: dialogContext,
-  //         barrierColor: const Color.fromARGB(128, 0, 0, 0),
-  //         builder: (_) => AlertDialog(
-  //           backgroundColor: const Color(0xFF1E1E1E),
-  //           shape:
-  //               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-  //           title: Text(
-  //             message.contains('20') ? "Upload Limit Reached" : "Upload Failed",
-  //             style: const TextStyle(
-  //                 color: Colors.white, fontWeight: FontWeight.bold),
-  //           ),
-  //           content: Text(
-  //             message.contains('20')
-  //                 ? "You cannot upload more than 20 images. Please delete one first."
-  //                 : message,
-  //             style: const TextStyle(color: Colors.white70),
-  //           ),
-  //           actions: [
-  //             TextButton(
-  //               onPressed: () => Navigator.of(dialogContext).pop(),
-  //               child: const Text("OK", style: TextStyle(color: Colors.green)),
-  //             ),
-  //           ],
-  //         ),
-  //       );
-  //       return "too many images";
-  //     }
-  //   } catch (e) {
-  //     // scaffoldMessengerKey.currentState?.showSnackBar(
-  //     //   SnackBar(
-  //     //     content: Text("Error: $e", style: TextStyle(fontSize: 20)),
-  //     //     backgroundColor: Colors.redAccent,
-  //     //     behavior: SnackBarBehavior.floating,
-  //     //     shape:
-  //     //         RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-  //     //   ),
-  //     // );
-  //     return "error";
-  //   } finally {
-  //     Navigator.of(dialogContext).pop();
-  //   }
-  // }
+      if (response.statusCode != 200) {
+        Fluttertoast.showToast(
+          msg: "Could not upload image",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: CupertinoColors.systemRed,
+          textColor: CupertinoColors.white,
+        );
+        if (kDebugMode) {
+          print("ERROR ON onSubmit FUNCTION: HTTP ${response.statusCode}");
+        }
+        return "error";
+      }
+      final bytes = response.bodyBytes;
+      final tempDir = await getTemporaryDirectory();
+      final filename = path.basename(imageUrl);
+      final tempFile = File("${tempDir.path}/$filename");
+      await tempFile.writeAsBytes(bytes);
+      final result = await uploadImage(tempFile, username);
+
+      // hide the loading circle
+      if (Navigator.canPop(context)) {
+        Navigator.of(context).pop(); // hide spinner
+      }
+      
+      if (result is! Map<String, dynamic> ||
+          !result.containsKey('success') ||
+          !result.containsKey('message')) {
+        throw Exception("Invalid response from uploadImage");
+      }
+      final bool success = result['success'] as bool;
+      final String message = result['message'] as String;
+      await tempFile.delete();
+
+      if (success) {
+        Fluttertoast.showToast(
+          msg: "Image uploaded successfully",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: CupertinoColors.systemGreen,
+          textColor: CupertinoColors.white,
+        );
+        return "success";
+      } else {
+        await showCupertinoDialog(
+          context: context,
+          builder: (_) => CupertinoAlertDialog(
+            title: Text(
+              message.contains('20')
+                  ? "Upload Limit Reached"
+                  : "Upload Failed",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: Text(
+              message.contains('20')
+                  ? "You cannot upload more than 20 images. Please delete one first."
+                  : message,
+            ),
+            actions: [
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                child: const Text("OK"),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+        );
+        return "too many images";
+      }
+    } 
+    catch (e) {
+      return "error";
+    } 
+    finally {
+      Navigator.of(dialogContext).pop();
+    }
+  }
 
   void showLoadingCircle(BuildContext context) {
     showCupertinoDialog(
@@ -1235,11 +1175,7 @@ void _showScreensPage(bool onPlayer) {
 
     // If cancelled, just return early without doing anything further
     if (_isCancelled) {
-      if (Navigator.canPop(context)) {
-        Navigator.of(context).pop();  // close loading dialog if still open
-      }
-      if (kDebugMode) print('Image generation cancelled.');
-      return;
+      return; 
     }
 
     if (Navigator.canPop(context)) {
@@ -1308,34 +1244,57 @@ void _showScreensPage(bool onPlayer) {
                         ),
                       ),
                       const SizedBox(height: 12),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        constraints: BoxConstraints(
-                          maxHeight: screenHeight * 0.4, // Limit image height
-                          maxWidth: screenWidth * 0.9,
-                        ),
-                        color: CupertinoColors.black,
-                        child: Image.network(
-                          imageUrl,
-                          fit: BoxFit.contain,
-                          width: double.infinity,
-                          height: double.infinity,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return const Center(child: CupertinoActivityIndicator(radius: 15));
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Center(
-                              child: Text(
-                                "Failed to load image",
-                                style: TextStyle(color: CupertinoColors.destructiveRed),
-                              ),
-                            );
-                          },
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          constraints: BoxConstraints(
+                            maxHeight: screenHeight * 0.4, // Limit image height
+                            maxWidth: screenWidth * 0.9,
+                          ),
+                          color: CupertinoColors.black,
+                          child: Image.network(
+                            imageUrl,
+                            fit: BoxFit.contain,
+                            width: double.infinity,
+                            height: double.infinity,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                alignment: Alignment.center,
+                                child: Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: CupertinoColors.black.withOpacity(0.8),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const CupertinoActivityIndicator(radius: 15, color: CupertinoColors.white),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        "Loading Image...",
+                                        style: TextStyle(
+                                          color: CupertinoColors.white,
+                                          fontSize: screenWidth * 0.04,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Center(
+                                child: Text(
+                                  "Failed to load image",
+                                  style: TextStyle(color: CupertinoColors.destructiveRed),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ),
-                    ),
 
                       const SizedBox(height: 20),
                       Row(
@@ -1378,8 +1337,7 @@ void _showScreensPage(bool onPlayer) {
                               if (Navigator.canPop(popupContext)) {
                                 Navigator.of(popupContext).pop();
                               }
-                              showLoadingCircle(context);
-                              // await onSubmit(...)
+                              await onSubmit(imageUrl, widget.userEmail, popupContext);
                             },
                             child: const Text("Save & Upload", style: TextStyle(color: CupertinoColors.black)),
                           ),
@@ -1502,11 +1460,14 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
                                 ? CupertinoColors.systemGrey
                                 : CupertinoColors.darkBackgroundGray,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: CupertinoColors.white),
+                            border: Border.all(color: CupertinoColors.transparent),
                           ),
                           child: Text(
                             labels[index],
-                            style: const TextStyle(color: CupertinoColors.white),
+                            style: TextStyle(
+                              color: isSelected[index] 
+                                ? CupertinoColors.black 
+                                : CupertinoColors.white),
                           ),
                         ),
                       );
@@ -1626,45 +1587,54 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
                         return Padding(
                           padding: EdgeInsets.only(bottom: vh * 1),
                           child: GestureDetector(
-                            behavior: HitTestBehavior.opaque, // larger tap area
+                            behavior: HitTestBehavior.opaque,
                             onTap: () {
                               selectedPlayerName = player.name;
                               _showScreensPage(true);
                             },
-                            child: Container(
-                              height: vh * 10,
-                              decoration: BoxDecoration(
-                                gradient: active
-                                    ? _gradientActiveMediaPlayer(context)
-                                    : _gradientInActiveMediaPlayer(context),
-                                borderRadius: BorderRadius.circular(10),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: CupertinoColors.systemGrey.withAlpha(80),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              alignment: Alignment.center,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    player.name,
-                                    style: TextStyle(
-                                      fontSize: vw * 5,
-                                      fontWeight: FontWeight.bold,
-                                      color: CupertinoColors.white,
+                            child: SizedBox(
+                              width: double.infinity, // Use full available width
+                              child: Container(
+                                height: vh * 10,
+                                decoration: BoxDecoration(
+                                  gradient: active
+                                      ? _gradientActiveMediaPlayer(context)
+                                      : _gradientInActiveMediaPlayer(context),
+                                  borderRadius: BorderRadius.circular(10),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: CupertinoColors.systemGrey.withAlpha(80),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
                                     ),
-                                  ),
-                                  active
-                                      ? _activeScreenText(context, index, vw)
-                                      : _inActiveScreenText(context, index, vw),
-                                ],
+                                  ],
+                                ),
+                                alignment: Alignment.center,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        player.name,
+                                        style: TextStyle(
+                                          fontSize: vw * 5,
+                                          fontWeight: FontWeight.bold,
+                                          color: CupertinoColors.white,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    active
+                                        ? _activeScreenText(context, index, vw)
+                                        : _inActiveScreenText(context, index, vw),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
+
                         );
                       },
                       childCount: dmbMediaPlayers.length,
@@ -1857,113 +1827,6 @@ Widget _uploadExpansion(double vw) {
     );
   }
 }
-
-  // @override
-  // Widget build(BuildContext context) {
-  //   final double vw = MediaQuery.of(context).size.width / 100;
-  //   final double vh = MediaQuery.of(context).size.height / 100;
-  //   final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
-  //   final int colorNum = int.parse(lightGreyTheme!, radix: 16);
-  //   final Color backgroundColor = Color(colorNum);
-
-  //   return PopScope(
-  //     canPop: false,
-  //     onPopInvokedWithResult: (didPop, result) {
-  //       if (!didPop) {
-  //         SystemNavigator.pop();
-  //       }
-  //     },
-  //     child: Stack( // outer Stack for the background image
-  //       children: [
-  //         Positioned.fill(
-  //           child: Image.network(
-  //             backgroundURL.isNotEmpty
-  //                 ? backgroundURL
-  //                 : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?fit=crop&w=1536&h=864',
-  //             fit: BoxFit.cover,
-  //             errorBuilder: (context, error, stackTrace) {
-  //               if (kDebugMode) {
-  //                 print('Failed to load background image: $error');
-  //               }
-  //               return Container(color: CupertinoColors.systemGrey);
-  //             },
-  //           ),
-  //         ),
-  //         CupertinoPageScaffold(
-  //           backgroundColor: CupertinoColors.transparent, 
-  //           navigationBar: _appBarNoBackBtn(context, mainPageTitle, mainPageSubTitle), 
-  //           child: CustomScrollView( 
-  //             physics: const AlwaysScrollableScrollPhysics(),
-  //             slivers: <Widget>[
-  //               CupertinoSliverRefreshControl(
-  //                 onRefresh: _refreshData,
-  //               ),
-  //               SliverPadding(
-  //                 padding: EdgeInsets.only(
-  //                     top: vh * 12, // padding between top of screen and first item 
-  //                     left: vw * 6,
-  //                     right: vw * 6,
-  //                     bottom: vh * 10),
-  //                 sliver: SliverList(
-  //                   delegate: SliverChildBuilderDelegate(
-  //                     (BuildContext context, int index) {
-  //                       return Padding(
-  //                         padding: const EdgeInsets.only(bottom: 10),
-  //                         child: GestureDetector(
-  //                           onTap: () {
-  //                             // add logic here
-  //                           },
-  //                           child: Container(
-  //                             margin: EdgeInsets.symmetric(vertical: vh * 1),
-  //                             decoration: BoxDecoration(
-  //                               gradient: _checkPlayerStatus(index)
-  //                                   ? _gradientActiveMediaPlayer(context)
-  //                                   : _gradientInActiveMediaPlayer(context),
-  //                               borderRadius: BorderRadius.circular(10),
-  //                               boxShadow: [
-  //                                 BoxShadow(
-  //                                   color: CupertinoColors.systemGrey.withAlpha(80),
-  //                                   blurRadius: 8,
-  //                                   offset: const Offset(0, 4),
-  //                                 ),
-  //                               ],
-  //                             ),
-  //                             height: vh * 10,
-  //                             width: vw * 90,
-  //                             child: Center(
-  //                               child: Column(
-  //                                 mainAxisAlignment: MainAxisAlignment.center,
-  //                                 children: [
-  //                                   Text(
-  //                                     dmbMediaPlayers[index].name,
-  //                                     style: TextStyle(
-  //                                       fontSize: (vw * 5),
-  //                                       fontWeight: FontWeight.bold,
-  //                                       color: CupertinoColors.white,
-  //                                     ),
-  //                                   ),
-  //                                   _checkPlayerStatus(index)
-  //                                       ? _activeScreenText(context, index, vw)
-  //                                       : _inActiveScreenText(context, index, vw),
-  //                                 ],
-  //                               ),
-  //                             ),
-  //                           ),
-  //                         ),
-  //                       );
-  //                     },
-  //                     childCount: dmbMediaPlayers.length,
-  //                   ),
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-  // }
 
 ObstructingPreferredSizeWidget _appBarNoBackBtn(BuildContext context, String title, String subTitle, VoidCallback onMenuPressed) {
   final double vw = MediaQuery.of(context).size.width / 100;

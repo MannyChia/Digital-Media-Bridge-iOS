@@ -75,7 +75,8 @@ class _ScreensPageState extends State<ScreensPage> {
                           selectedPlayerName,
                           dmbScreens[index].name,
                         );
-                      } else {
+                      } 
+                      else {
                         _showCupertinoAlert(context, "Select a Player First");
                       }
                     } else {
@@ -106,7 +107,7 @@ class _ScreensPageState extends State<ScreensPage> {
           ),
         ],
       ),
-    );
+    );xs
   }
 }
 

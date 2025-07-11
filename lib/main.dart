@@ -1,15 +1,14 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/cupertino.dart'; // Using Cupertino
+import 'package:flutter/cupertino.dart'; 
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import './players_page.dart'; // Uncommented
-import './dmb_functions.dart'; // Uncommented - assuming it's Cupertino-compatible or pure logic
-import './screens_page.dart'; // Assuming this is needed and also converted
+import './players_page.dart';
+import './dmb_functions.dart'; 
+import './screens_page.dart'; 
 
-// Global variables - remain as is
 dynamic selectedIndex = 0;
 dynamic mainPageTitle = "Select Media Player";
 dynamic mainPageSubTitle = "Select Player";
@@ -58,24 +57,17 @@ class DmbApp extends StatelessWidget {
       builder: (context, child) {
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1.0)),
-          child: CupertinoApp( // CupertinoApp as the root
+          child: CupertinoApp( 
             debugShowCheckedModeBanner: false,
             title: 'Digital Media Bridge',
             initialRoute: '/',
             theme: const CupertinoThemeData(
               primaryColor: CupertinoColors.activeBlue,
-              // Use CupertinoColors for scaffold background
               scaffoldBackgroundColor: CupertinoColors.black,
-              barBackgroundColor: CupertinoColors.black, // For navigation bars
-              // Add other Cupertino theme properties as needed
+              barBackgroundColor: CupertinoColors.black, 
             ),
             home: const MyHomePage(title: 'Digital Media Bridge'),
-            // Define routes if you use named routes
-            // routes: {
-            //   '/home': (context) => const HomePage(),
-            //   '/login': (context) => const LoginPage(),
-            //   '/bypassLogin': (context) => const BypassloginPage(),
-            // },
+
           ),
         );
       },
@@ -94,10 +86,6 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // precacheImage( // Uncommented if you have a Cupertino-style background, otherwise not needed
-      //     const AssetImage('assets/cilutions_background.jpg'), context);
-    });
   }
 
   Future<bool> _readFromStorage() async { // Uncommented
@@ -115,21 +103,20 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold( // CupertinoPageScaffold
-      backgroundColor: CupertinoColors.black, // Explicitly black background
+    return CupertinoPageScaffold( 
+      backgroundColor: CupertinoColors.black, 
       child: FutureBuilder<bool>(
         future: _readFromStorage(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-              child: CupertinoActivityIndicator( // Cupertino loading indicator
-                radius: 15.0, // Adjust size as needed
+              child: CupertinoActivityIndicator( 
+                radius: 15.0, 
               ),
             );
           }
           if (snapshot.hasData && snapshot.data == true) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              // Using CupertinoPageRoute for navigation
               Navigator.push(
                 context,
                 CupertinoPageRoute(
@@ -137,7 +124,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ).then((_) {});
             });
           }
-          return const LoginPage(); // Assuming LoginPage is also Cupertino
+          return const LoginPage(); 
         },
       ),
     );
@@ -165,7 +152,6 @@ class _BypassloginPageState extends State<BypassloginPage> {
       loginUsername = storedUsername;
       loginPassword = storedPassword;
       await preloadPlaylistPreviews(loginUsername);
-      // Using CupertinoPageRoute for navigation
       Navigator.pushAndRemoveUntil(
         context,
         CupertinoPageRoute(builder: (context) => const HomePage()),
@@ -181,14 +167,14 @@ class _BypassloginPageState extends State<BypassloginPage> {
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      backgroundColor: CupertinoColors.black, // Cupertino black
+      backgroundColor: CupertinoColors.black, 
       child: Center(
         child: Text(
           bypassMsg,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontWeight: FontWeight.normal,
-            color: CupertinoColors.white, // Cupertino white
+            color: CupertinoColors.white,
             fontSize: 14.sp,
           ),
         ),
@@ -205,20 +191,16 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  // GlobalKey for Form is typically used with Material's Form/TextFormField.
-  // For Cupertino, you'd usually validate manually or use a different validation approach.
-  // Keeping it for potential future integration with a Cupertino-compatible validation package.
-  final _formKey = GlobalKey<FormState>(); // Still FormState
+  final _formKey = GlobalKey<FormState>(); 
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool _passwordPeak = false;
 
-  Future<void> _saveUsername(String login, String password) async { // Uncommented
+  Future<void> _saveUsername(String login, String password) async { 
     await systemStorage.write(key: "KEY_USERNAME", value: login);
     await systemStorage.write(key: "KEY_PASSWORD", value: password);
   }
 
-  // Helper function for Cupertino-style alerts
   void _showCupertinoAlert(BuildContext context, String title, String message, {Color? titleColor}) {
     showCupertinoDialog(
       context: context,
@@ -243,7 +225,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      backgroundColor: CupertinoColors.black, // Cupertino black
+      backgroundColor: CupertinoColors.black, 
       child: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
@@ -254,7 +236,7 @@ class _LoginPageState extends State<LoginPage> {
                 'Digital Media Bridge',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: CupertinoColors.white, // Cupertino white
+                  color: CupertinoColors.white, 
                   fontSize: 32.sp,
                   fontWeight: FontWeight.bold,
                 ),
@@ -262,7 +244,7 @@ class _LoginPageState extends State<LoginPage> {
               SizedBox(height: 48.h),
               Container(
                 decoration: BoxDecoration(
-                  color: CupertinoColors.darkBackgroundGray, // Cupertino dark grey
+                  color: CupertinoColors.darkBackgroundGray, 
                   borderRadius: BorderRadius.circular(12),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -271,7 +253,7 @@ class _LoginPageState extends State<LoginPage> {
                     const Icon(CupertinoIcons.person, color: CupertinoColors.white),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: CupertinoTextField( // Cupertino TextField
+                      child: CupertinoTextField( 
                         controller: emailController,
                         placeholder: 'Username',
                         maxLength: 40,
@@ -281,7 +263,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 20),
                         cursorColor: CupertinoColors.white,
-                        decoration: const BoxDecoration(), // No border by default
+                        decoration: const BoxDecoration(), 
                       ),
                     ),
                   ],
@@ -290,7 +272,7 @@ class _LoginPageState extends State<LoginPage> {
               SizedBox(height: 16.h),
               Container(
                 decoration: BoxDecoration(
-                  color: CupertinoColors.darkBackgroundGray, // Cupertino dark grey
+                  color: CupertinoColors.darkBackgroundGray, 
                   borderRadius: BorderRadius.circular(12),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -299,7 +281,7 @@ class _LoginPageState extends State<LoginPage> {
                     const Icon(CupertinoIcons.lock, color: CupertinoColors.white),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: CupertinoTextField( // Cupertino TextField
+                      child: CupertinoTextField( 
                         controller: passwordController,
                         placeholder: 'Password',
                         obscureText: !_passwordPeak,
@@ -310,7 +292,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 20),
                         cursorColor: CupertinoColors.white,
-                        decoration: const BoxDecoration(), // No border by default
+                        decoration: const BoxDecoration(), 
                       ),
                     ),
                     GestureDetector(
@@ -330,11 +312,10 @@ class _LoginPageState extends State<LoginPage> {
               SizedBox(height: 32.h),
               SizedBox(
                 width: double.infinity,
-                child: CupertinoButton.filled( // Cupertino filled button
+                child: CupertinoButton.filled( 
                   padding: EdgeInsets.symmetric(vertical: 16.h),
                   borderRadius: BorderRadius.circular(8),
-                  // Use a Cupertino-compatible color or a custom one
-                  color: const Color.fromRGBO(10, 85, 163, 1.0), // Your custom blue
+                  color: const Color.fromRGBO(10, 85, 163, 1.0), 
                   child: Text(
                     'Log In',
                     style: TextStyle(
@@ -344,13 +325,6 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   onPressed: () async {
-                    // For CupertinoTextField, validation is usually done by checking controller.text
-                    // directly, as there's no built-in validator like TextFormField.
-                    // The _formKey.currentState!.validate() will always be true unless you wrap
-                    // your CupertinoTextFields in a custom FormField-like widget or manually add validation logic.
-                    // For demonstration, I'll proceed as if validation passes or handle errors immediately.
-
-                    // Basic validation check
                     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
                       _showCupertinoAlert(
                         context,
@@ -400,7 +374,6 @@ class _LoginPageState extends State<LoginPage> {
                       loginPassword = passwordController.text;
                       await _saveUsername(loginUsername, loginPassword);
                       await preloadPlaylistPreviews(loginUsername);
-                      // Using CupertinoPageRoute for navigation
                       Navigator.push(
                         context,
                         CupertinoPageRoute(
@@ -418,7 +391,6 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-// HomePage class from your previous request, already converted.
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
   @override
