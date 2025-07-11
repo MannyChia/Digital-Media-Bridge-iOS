@@ -1,8 +1,9 @@
 import './players_page.dart';
 import './dmb_functions.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:marquee/marquee.dart'; // for marquee ef
+
 
 class DmbScreen {
   String name;
@@ -13,28 +14,30 @@ List<DmbScreen> dmbScreens = [];
 final List<int> colorCodesScreens = <int>[400, 200, 900];
 
 class ScreensPage extends StatefulWidget {
-  const ScreensPage(
-      {super.key,
-      required this.screensPageTitle,
-      required this.screensPageSubTitle});
+  const ScreensPage({
+    super.key,
+    required this.screensPageTitle,
+    required this.screensPageSubTitle,
+  });
 
   final String screensPageTitle;
   final String screensPageSubTitle;
 
   @override
-  _ScreensPageState createState() => _ScreensPageState();
+  State<ScreensPage> createState() => _ScreensPageState();
 }
 
 class _ScreensPageState extends State<ScreensPage> {
   late String screensPageTitle;
   late String screensPageSubTitle;
-  String backgroundURL = dotenv.env['BACKGROUND_IMAGE_URL']!;
+  late String backgroundURL;
 
   @override
   void initState() {
     super.initState();
     screensPageTitle = widget.screensPageTitle;
     screensPageSubTitle = widget.screensPageSubTitle;
+    backgroundURL = dotenv.env['BACKGROUND_IMAGE_URL']!;
   }
 
   @override
@@ -44,10 +47,9 @@ class _ScreensPageState extends State<ScreensPage> {
     final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
     final int colorNum = int.parse(lightGreyTheme!, radix: 16);
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: _appBarBackBtn(context, screensPageTitle, screensPageSubTitle),
-      body: Stack(
+    return CupertinoPageScaffold(
+      navigationBar: _appBarBackBtn(context, screensPageTitle),
+      child: Stack(
         children: [
           Container(
             decoration: BoxDecoration(
@@ -58,116 +60,144 @@ class _ScreensPageState extends State<ScreensPage> {
             ),
           ),
           Padding(
-            padding: EdgeInsets.only(top: vh * 16),
+            padding: EdgeInsets.only(top: vh * 10),
             child: ListView.separated(
-              padding: EdgeInsets.only(top: vh * 2, bottom: vh * 8, left: vw * 3, right: vw * 3),
+              padding: EdgeInsets.symmetric(
+                  vertical: vh * 2, horizontal: vw * 3),
               itemCount: dmbScreens.length,
-              itemBuilder: (BuildContext context, int index) {
-                return InkWell(
-                  onTap: (){
+              itemBuilder: (context, index) {
+                return GestureDetector(
+                  onTap: () {
                     if (screensPageTitle != "Available Screens") {
-                      if(selectedPlayerName != null) {
+                      if (selectedPlayerName != null) {
                         confirmPublish(
-                            context, selectedPlayerName, dmbScreens[index].name);
-                      }
-                      else{
-                        ScaffoldMessenger.of(context).clearSnackBars();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Select a Player First", style: TextStyle(fontSize: 20)),
-                            backgroundColor: Colors.redAccent,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
+                          context,
+                          selectedPlayerName,
+                          dmbScreens[index].name,
                         );
+                      } else {
+                        _showCupertinoAlert(context, "Select a Player First");
                       }
-                    }
-                    else {
-                      ScaffoldMessenger.of(context).clearSnackBars();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Select a Player First", style: TextStyle(fontSize: 20)),
-                          backgroundColor: Colors.redAccent,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                      );
+                    } else {
+                      _showCupertinoAlert(context, "Select a Player First");
                     }
                   },
-                  customBorder: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Ink(
-                      decoration: BoxDecoration(
-                        color: Color(colorNum).withValues(alpha: 0.8),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      height: 75,
-                      width: double.infinity,
-                      child: Center(
-                        child: Text(
-                          dmbScreens[index].name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontSize: 20,
-                          ),
+                  child: Container(
+                    height: 75,
+                    decoration: BoxDecoration(
+                      color: Color(colorNum).withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Center(
+                      child: Text(
+                        dmbScreens[index].name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: CupertinoColors.white,
+                          fontSize: 20,
                         ),
                       ),
                     ),
                   ),
                 );
               },
-              separatorBuilder: (context, index) => const Divider(
-                color: Colors.transparent,
-              ),
-            )
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+            ),
           ),
-        ]
+        ],
       ),
     );
   }
 }
 
-PreferredSizeWidget _appBarBackBtn(
-    BuildContext context, String title, String subTitle) {
+
+CupertinoNavigationBar _appBarBackBtn(BuildContext context, String title) {
   final double vw = MediaQuery.of(context).size.width / 100;
-  final double vh = MediaQuery.of(context).size.height / 100;
-  return PreferredSize(
-    preferredSize: Size.fromHeight(vh * 11),
-    child: AppBar(
-      iconTheme: IconThemeData(
-        color: Colors.white,
-        size: vw * 8,
-      ),
-      backgroundColor: Colors.black.withValues(alpha: 0.8),
-      automaticallyImplyLeading: true,
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              fontSize: vw * 6,
+
+  return CupertinoNavigationBar(
+    backgroundColor: CupertinoColors.black.withOpacity(0.8),
+    leading: Builder(
+      builder: (context) {
+        final canGoBack = Navigator.canPop(context);
+        return canGoBack
+            ? CupertinoNavigationBarBackButton(color: CupertinoColors.white)
+            : Container();
+      },
+    ),
+    middle: StatefulBuilder(
+      builder: (context, setState) {
+        final ScrollController scrollController = ScrollController();
+        bool scrollingForward = true;
+
+        // Start the scrolling animation after first frame
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          final maxScroll = scrollController.position.maxScrollExtent;
+          final minScroll = scrollController.position.minScrollExtent;
+
+          // Initial pause before any scrolling happens
+          await Future.delayed(const Duration(seconds: 2));
+
+          while (scrollController.hasClients) {
+            if (scrollingForward) {
+              await scrollController.animateTo(
+                maxScroll,
+                duration: const Duration(seconds: 3),
+                curve: Curves.linear,
+              );
+              await Future.delayed(const Duration(seconds: 1));
+              scrollingForward = false;
+            } else {
+              await scrollController.animateTo(
+                minScroll,
+                duration: const Duration(seconds: 3),
+                curve: Curves.linear,
+              );
+              await Future.delayed(const Duration(seconds: 1));
+              scrollingForward = true;
+            }
+          }
+        });
+
+
+        return SizedBox(
+          width: MediaQuery.of(context).size.width * 0.95,
+          height: vw * 7,
+          child: SingleChildScrollView(
+            controller: scrollController,
+            scrollDirection: Axis.horizontal,
+            physics: const NeverScrollableScrollPhysics(),
+            child: Text(
+              title,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.visible,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: CupertinoColors.white,
+                fontSize: vw * 6,
+              ),
             ),
           ),
-          Text(
-            subTitle,
-            style: TextStyle(
-              fontStyle: FontStyle.italic,
-              color: Colors.white,
-              fontSize: vw * 5.5,
-            ),
-          ),
-        ],
-      ),
-      titleSpacing: vw * 4,
-      toolbarHeight: vh * 12,
+        );
+      },
+    ),
+    trailing: const SizedBox(width: 2),
+  );
+}
+
+
+void _showCupertinoAlert(BuildContext context, String message) {
+  showCupertinoDialog(
+    context: context,
+    builder: (BuildContext context) => CupertinoAlertDialog(
+      title: Text(message),
+      actions: [
+        CupertinoDialogAction(
+          isDefaultAction: true,
+          child: const Text("OK"),
+          onPressed: () => Navigator.of(context).pop(),
+        )
+      ],
     ),
   );
 }
