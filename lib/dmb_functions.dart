@@ -181,9 +181,7 @@ getUserData(String username, String password, String requestType) async {
       var dPlayerName = player["playerName"];
       var dPlayerStatus = player["status"];
       var dPlayerCurrentScreen = player["currentScreen"];
-      if (dPlayerCurrentScreen.length > 13) {
-        dPlayerCurrentScreen = dPlayerCurrentScreen.substring(0, 12) + "...";
-      }
+
       if (dPlayerStatus == "Active") {
         activeDMBPlayers++;
       }
@@ -313,7 +311,10 @@ publishScreen(String userName, String playerName, String screenName) async {
         ),
         actions: [
           CupertinoDialogAction(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
+            },
             isDefaultAction: true,
             child: Text(
               "OK",
@@ -336,11 +337,9 @@ void _deleteStorage() async {
 }
 
 void confirmLogout(BuildContext context) {
-  // Using MediaQuery for responsive sizing
   final double vw = MediaQuery.of(context).size.width / 100;
   final double vh = MediaQuery.of(context).size.height / 100;
-
-  // Create the Cupertino alert dialog
+  
   showCupertinoDialog(
     context: context,
     barrierDismissible: true,
@@ -349,7 +348,7 @@ void confirmLogout(BuildContext context) {
         title: Text(
           'Confirm Logout',
           style: TextStyle(
-            fontSize: vw * 5, // Adjusted for Cupertino aesthetic
+            fontSize: vw * 5, 
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -378,7 +377,7 @@ void confirmLogout(BuildContext context) {
           ),
           // Logout button
           CupertinoDialogAction(
-            isDestructiveAction: true, // Red color for destructive action
+            isDestructiveAction: true, 
             child: const Text(
               'Logout',
               style: TextStyle(
