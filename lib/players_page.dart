@@ -1970,7 +1970,8 @@ ObstructingPreferredSizeWidget _appBarNoBackBtn(BuildContext context, String tit
 
   return CupertinoNavigationBar(
     backgroundColor: CupertinoColors.black.withAlpha(200),
-    leading: null,
+    automaticallyImplyLeading: false,  
+    leading: const SizedBox.shrink(),
 
     // left aligned title
     middle: Align(

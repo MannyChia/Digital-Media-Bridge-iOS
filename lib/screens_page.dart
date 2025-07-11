@@ -116,12 +116,11 @@ CupertinoNavigationBar _appBarBackBtn(BuildContext context, String title) {
 
   return CupertinoNavigationBar(
     backgroundColor: CupertinoColors.black.withOpacity(0.8),
-    leading: Builder(
-      builder: (context) {
-        final canGoBack = Navigator.canPop(context);
-        return canGoBack
-            ? CupertinoNavigationBarBackButton(color: CupertinoColors.white)
-            : Container();
+   automaticallyImplyLeading: false,
+    leading: CupertinoNavigationBarBackButton(
+      color: CupertinoColors.white,
+      onPressed: () {
+        Navigator.of(context).pop();
       },
     ),
     middle: StatefulBuilder(
