@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import './main.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-
+import 'dart:math';
 import './screens_page.dart';
 import './dmb_functions.dart';
 import 'package:flutter/cupertino.dart';
@@ -20,10 +20,10 @@ import 'package:path_provider/path_provider.dart';
 dynamic activeDMBPlayers = 0;
 
 class MediaPlayer {
-  String name, status, currentScreen;
+  String name, status, currentScreen, playerID;
 
   MediaPlayer(
-      {required this.name, required this.status, required this.currentScreen});
+      {required this.name, required this.status, required this.currentScreen, required this.playerID});
 }
 
 List<MediaPlayer> dmbMediaPlayers = [];
@@ -625,12 +625,15 @@ class _PlayersPageState extends State<PlayersPage> {
   final bool _isGenerating = false;
   bool _isCancelled = false;
   String backgroundURL = dotenv.env['BACKGROUND_IMAGE_URL']!;
+  String _imageCacheKey = Random().nextInt(1000).toString(); // random number - used to force unique URLs
+
+
 
   @override
   void initState() {
     super.initState();
     _updateTitle();
-    _refreshData();
+    _imageCacheKey = Random().nextInt(1000).toString(); // random number - used to force unique URLs
   }
 
   void _updateTitle() {
@@ -669,24 +672,26 @@ void _showScreensPage(bool onPlayer) {
     confirmLogout(context);
   }
 
-  Future<void> _refreshData() async {
-    try {
-      getUserData("$loginUsername", "$loginPassword", "players-refresh")
-          .then((result) {
-        if (result.runtimeType != String) {
-          setState(() {
-            dmbMediaPlayers = result;
-            mainPageTitle = "Select Media Player";
-            mainPageSubTitle = "Select Player";
-          });
-        }
-      });
-    } catch (err) {
-      if (kDebugMode) {
-        print("Error refreshing data");
+ Future<void> _refreshData() async {
+  try {
+    getUserData("$loginUsername", "$loginPassword", "players-refresh")
+        .then((result) {
+      if (result.runtimeType != String) {
+        setState(() {
+          dmbMediaPlayers = result;
+          mainPageTitle = "Select Media Player";
+          mainPageSubTitle = "Select Player";
+          // Generate new cache key only when data is refreshed
+          _imageCacheKey = Random().nextInt(1000).toString();
+        });
       }
+    });
+  } catch (err) {
+    if (kDebugMode) {
+      print("Error refreshing data");
     }
   }
+}
 
 
   Future<void> _showUploadSheet(File imageFile) async {
@@ -1569,7 +1574,9 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
             backgroundColor: CupertinoColors.transparent,
             navigationBar: _appBarNoBackBtn(context, mainPageTitle, mainPageSubTitle, _toggleDrawer),
             child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
+              physics: _drawerOpen 
+                ? const NeverScrollableScrollPhysics() 
+                : const AlwaysScrollableScrollPhysics(),
               slivers: [
                 CupertinoSliverRefreshControl(onRefresh: _refreshData),
                 SliverPadding(
@@ -1592,49 +1599,97 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
                               selectedPlayerName = player.name;
                               _showScreensPage(true);
                             },
-                            child: SizedBox(
-                              width: double.infinity, // Use full available width
-                              child: Container(
-                                height: vh * 10,
-                                decoration: BoxDecoration(
-                                  gradient: active
-                                      ? _gradientActiveMediaPlayer(context)
-                                      : _gradientInActiveMediaPlayer(context),
-                                  borderRadius: BorderRadius.circular(10),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: CupertinoColors.systemGrey.withAlpha(80),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: active 
+                                      ? CupertinoColors.activeGreen
+                                      : CupertinoColors.destructiveRed,
+                                  width: 4,
                                 ),
-                                alignment: Alignment.center,
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Flexible(
+                              ),
+                              child: Column(
+                                children: [
+                                  // Header (Player Name and Status)
+                                  Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                                    decoration: BoxDecoration(
+                                      color: Color(colorNum),
+                                      borderRadius: BorderRadius.vertical(
+                                        bottom: Radius.circular(6),
+                                      ),
+                                    ),
+                                    child: Center(
                                       child: Text(
-                                        player.name,
+                                        "${player.name} (${active ? 'Active' : 'Inactive'})",
                                         style: TextStyle(
-                                          fontSize: vw * 5,
-                                          fontWeight: FontWeight.bold,
+                                          fontSize: vw * 4,
+                                          fontWeight: FontWeight.w600,
                                           color: CupertinoColors.white,
                                         ),
                                         textAlign: TextAlign.center,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
-                                    active
-                                        ? _activeScreenText(context, index, vw)
-                                        : _inActiveScreenText(context, index, vw),
-                                  ],
-                                ),
+                                  ),
+                                  // Screenshot of Player
+                                  AspectRatio(
+                                    aspectRatio: 16 / 9,
+                                    child: Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        Container(color: Color(colorNum)),
+                                        Image.network(
+                                          "https://www.digitalmediabridge.tv/screen-builder/assets/content/SITES/${player.playerID}/screenshot.png?$_imageCacheKey",
+                                          fit: BoxFit.cover,
+                                          loadingBuilder: (context, child, loadingProgress) {
+                                            if (loadingProgress == null) return child;
+                                            return Center(
+                                              child: Text(
+                                                "Loading Screenshot...",
+                                                style: TextStyle(color: CupertinoColors.systemGrey),
+                                              ),
+                                            );
+                                          },
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Center(
+                                              child: Text(
+                                                "Failed to load screenshot",
+                                                style: TextStyle(color: CupertinoColors.systemGrey),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // Footer (Current/Last Screen)
+                                  Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                                    decoration: BoxDecoration(
+                                      color: Color(colorNum),
+                                      borderRadius: BorderRadius.vertical(
+                                        bottom: Radius.circular(6),
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        "${active ? "Current" : "Last"} Screen: ${player.currentScreen}",
+                                        style: TextStyle(
+                                          fontSize: vw * 4,
+                                          fontWeight: FontWeight.w600,
+                                          color: CupertinoColors.systemGrey,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-
                         );
                       },
                       childCount: dmbMediaPlayers.length,
@@ -1878,27 +1933,7 @@ ObstructingPreferredSizeWidget _appBarNoBackBtn(BuildContext context, String tit
 }
 
 
-LinearGradient _gradientActiveMediaPlayer(BuildContext context) {
-  return const LinearGradient(
-    begin: AlignmentDirectional.topCenter,
-    end: AlignmentDirectional.bottomCenter,
-    colors: [
-      CupertinoColors.black,
-      CupertinoColors.systemGreen,
-    ],
-  );
-}
 
-LinearGradient _gradientInActiveMediaPlayer(BuildContext context) {
-  return const LinearGradient(
-    begin: AlignmentDirectional.topCenter,
-    end: AlignmentDirectional.bottomCenter,
-    colors: [
-      CupertinoColors.black,
-      CupertinoColors.systemRed,
-    ],
-  );
-}
 
 Text _activeScreenText(BuildContext context, pIndex, vw) {
   return Text(

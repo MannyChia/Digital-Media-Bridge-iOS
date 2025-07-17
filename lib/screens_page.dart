@@ -107,7 +107,7 @@ class _ScreensPageState extends State<ScreensPage> {
           ),
         ],
       ),
-    );xs
+    );
   }
 }
 

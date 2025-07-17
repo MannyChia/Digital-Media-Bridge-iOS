@@ -181,6 +181,7 @@ getUserData(String username, String password, String requestType) async {
       var dPlayerName = player["playerName"];
       var dPlayerStatus = player["status"];
       var dPlayerCurrentScreen = player["currentScreen"];
+      var dPlayerID = player["registrationCode"];
 
       if (dPlayerStatus == "Active") {
         activeDMBPlayers++;
@@ -188,7 +189,8 @@ getUserData(String username, String password, String requestType) async {
       dmbMediaPlayers.add(MediaPlayer(
           name: "$dPlayerName",
           status: "$dPlayerStatus",
-          currentScreen: "$dPlayerCurrentScreen"));
+          currentScreen: "$dPlayerCurrentScreen",
+          playerID: "$dPlayerID"));
     }
     for (var screen in screenInfo) {
       var dScreenName = screen["screenName"];

@@ -330,7 +330,7 @@ class _LoginPageState extends State<LoginPage> {
                         context,
                         "Input Error",
                         "Please enter both username and password.",
-                        titleColor: CupertinoColors.systemRed,
+                        titleColor: CupertinoColors.white,
                       );
                       return;
                     }
@@ -345,28 +345,28 @@ class _LoginPageState extends State<LoginPage> {
                         context,
                         "Login Failed",
                         "Invalid Username or Password.",
-                        titleColor: CupertinoColors.systemRed,
+                        titleColor: CupertinoColors.white,
                       );
                     } else if (result == "no_screens") {
                       _showCupertinoAlert(
                         context,
                         "Login Failed",
                         "No Screens To Play.",
-                        titleColor: CupertinoColors.systemRed,
+                        titleColor: CupertinoColors.white,
                       );
                     } else if (result == "no_players") {
                       _showCupertinoAlert(
                         context,
                         "Login Failed",
                         "No Players To Update.",
-                        titleColor: CupertinoColors.systemRed,
+                        titleColor: CupertinoColors.white,
                       );
                     } else if (result == false) {
                       _showCupertinoAlert(
                         context,
                         "Connection Error",
                         "Cannot Connect To DMB Server.",
-                        titleColor: CupertinoColors.systemRed,
+                        titleColor: CupertinoColors.white,
                       );
                     }
                     else {
