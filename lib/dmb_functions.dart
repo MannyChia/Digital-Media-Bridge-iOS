@@ -151,6 +151,49 @@ Future<bool> updatePlaylist({
   }
 }
 
+Future<bool> createNewUser(String email) async {
+  final uri = Uri.parse('https://digitalmediabridge.tv/CreateNewUser/index.php');
+  final response = await http.post(
+    uri,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: {
+      'Email': email,
+    },
+  );
+
+  if (response.statusCode == 200) {
+    return response.body.trim().toUpperCase() == 'COMPLETE';
+  } else {
+    throw Exception(
+      'Create user failed (${response.statusCode}): ${response.body}',
+    );
+  }
+}
+
+Future<bool> resetPassword(String email) async {
+  final uri = Uri.parse(
+      'https://digitalmediabridge.tv/ResetPassword-Request/index.php');
+  final response = await http.post(
+    uri,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: {
+      'Email': email,
+    },
+  );
+
+  if (response.statusCode == 200) {
+    return response.body.trim().toUpperCase() == 'COMPLETE';
+  } else {
+    throw Exception(
+      'Reset failed (${response.statusCode}): ${response.body}',
+    );
+  }
+}
+
 getUserData(String username, String password, String requestType) async {
   final response = await http.post(
     Uri.parse(
