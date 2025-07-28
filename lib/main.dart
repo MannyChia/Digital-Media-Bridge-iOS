@@ -8,6 +8,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import './players_page.dart';
 import './dmb_functions.dart'; 
 import './screens_page.dart'; 
+import './forgot_password_page.dart';
+import'./signup_page.dart';
 
 dynamic selectedIndex = 0;
 dynamic mainPageTitle = "Select Media Player";
@@ -226,22 +228,25 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.black, 
-      child: Center(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
+      child: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
+              Spacer(),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+              children: [
               Text(
                 'Digital Media Bridge',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: CupertinoColors.white, 
-                  fontSize: 32.sp,
+                  fontSize: 30.sp,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 48.h),
+              SizedBox(height: 32.h),
               Container(
                 decoration: BoxDecoration(
                   color: CupertinoColors.darkBackgroundGray, 
@@ -309,7 +314,24 @@ class _LoginPageState extends State<LoginPage> {
                   ],
                 ),
               ),
-              SizedBox(height: 32.h),
+              SizedBox(height: 8.h),
+              Align(
+                    alignment: Alignment.centerRight,
+                    child: CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () => Navigator.of(context).push(
+                        CupertinoPageRoute(builder: (_) => const ForgotPasswordPage()),
+                      ),
+                      child: Text(
+                        'Forgot password?',
+                        style: TextStyle(
+                          color: CupertinoColors.activeBlue,
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                    ),
+                  ),
+              SizedBox(height: 16.h),
               SizedBox(
                 width: double.infinity,
                 child: CupertinoButton.filled( 
@@ -381,6 +403,38 @@ class _LoginPageState extends State<LoginPage> {
                       );
                     }
                   },
+                ),
+              ),
+            ],
+            ),
+            Spacer(),
+              Padding(
+                padding: EdgeInsets.only(bottom: 24.h),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Don't have an account? ",
+                      style: TextStyle(
+                        color: CupertinoColors.white.withOpacity(0.7),
+                        fontSize: 14.sp,
+                      ),
+                    ),
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () => Navigator.of(context).push(
+                        CupertinoPageRoute(builder: (_) => const SignUpPage()),
+                      ),
+                      child: Text(
+                        'Sign up',
+                        style: TextStyle(
+                          color: CupertinoColors.activeBlue,
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
