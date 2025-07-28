@@ -662,8 +662,8 @@ void _showScreensPage(bool onPlayer) {
   );
 }
 
-
   bool _checkPlayerStatus(int index) {
+    print("STATUS: ${dmbMediaPlayers[index].status} for player ${dmbMediaPlayers[index].name}");
     return dmbMediaPlayers[index].status == "Active";
   }
 
@@ -1591,6 +1591,7 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
                       (context, index) {
                         final player = dmbMediaPlayers[index];
                         final active = _checkPlayerStatus(index);
+                        print("Status: $active for player ${player.name}");
                         return Padding(
                           padding: EdgeInsets.only(bottom: vh * 1),
                           child: GestureDetector(
@@ -1602,12 +1603,6 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
                             child: Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: active 
-                                      ? CupertinoColors.activeGreen
-                                      : CupertinoColors.destructiveRed,
-                                  width: 4,
-                                ),
                               ),
                               child: Column(
                                 children: [
@@ -1616,74 +1611,104 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
                                     width: double.infinity,
                                     padding: EdgeInsets.symmetric(vertical: 8.0),
                                     decoration: BoxDecoration(
-                                      color: Color(colorNum),
+                                      color: CupertinoColors.transparent,
                                       borderRadius: BorderRadius.vertical(
                                         bottom: Radius.circular(6),
                                       ),
                                     ),
-                                    child: Center(
-                                      child: Text(
-                                        "${player.name} (${active ? 'Active' : 'Inactive'})",
-                                        style: TextStyle(
-                                          fontSize: vw * 4,
-                                          fontWeight: FontWeight.w600,
-                                          color: CupertinoColors.white,
-                                        ),
-                                        textAlign: TextAlign.center,
+                                    child: Text(
+                                      "${player.name} (${active ? 'Active' : 'Inactive'})",
+                                      style: TextStyle(
+                                        fontSize: vw * 4,
+                                        fontWeight: FontWeight.w600,
+                                        color: CupertinoColors.white,
                                       ),
+                                      textAlign: TextAlign.left,
                                     ),
                                   ),
                                   // Screenshot of Player
                                   AspectRatio(
                                     aspectRatio: 16 / 9,
-                                    child: Stack(
-                                      fit: StackFit.expand,
-                                      children: [
-                                        Container(color: Color(colorNum)),
-                                        Image.network(
-                                          "https://www.digitalmediabridge.tv/screen-builder/assets/content/SITES/${player.playerID}/screenshot.png?$_imageCacheKey",
-                                          fit: BoxFit.cover,
-                                          loadingBuilder: (context, child, loadingProgress) {
-                                            if (loadingProgress == null) return child;
-                                            return Center(
-                                              child: Text(
-                                                "Loading Screenshot...",
-                                                style: TextStyle(color: CupertinoColors.systemGrey),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Stack(
+                                        fit: StackFit.expand,
+                                        children: [
+                                          Container(color: Color(colorNum)),
+                                          // screenshot of player
+                                          Image.network(
+                                            "https://www.digitalmediabridge.tv/screen-builder/assets/content/SITES/${player.playerID}/screenshot.png?$_imageCacheKey",
+                                            fit: BoxFit.cover,
+                                            loadingBuilder: (context, child, loadingProgress) {
+                                              if (loadingProgress == null) return child;
+                                              return Center(
+                                                child: Text(
+                                                  "Loading Screenshot...",
+                                                  style: TextStyle(color: CupertinoColors.systemGrey),
+                                                ),
+                                              );
+                                            },
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return Center(
+                                                child: Text(
+                                                  "Failed to load screenshot",
+                                                  style: TextStyle(color: CupertinoColors.systemGrey),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                          // active/inactive overlay
+                                          Positioned(
+                                            top: 8,
+                                            right: 8,
+                                            child: Container(
+                                              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: active ? CupertinoColors.systemGreen : CupertinoColors.systemRed,
+                                                borderRadius: BorderRadius.circular(5),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: CupertinoColors.black,
+                                                    blurRadius: 4,
+                                                    offset: Offset(0, 2),
+                                                  ),
+                                                ],
                                               ),
-                                            );
-                                          },
-                                          errorBuilder: (context, error, stackTrace) {
-                                            return Center(
                                               child: Text(
-                                                "Failed to load screenshot",
-                                                style: TextStyle(color: CupertinoColors.systemGrey),
+                                                active ? 'Active' : 'Inactive',
+                                                style: TextStyle(
+                                                  color: CupertinoColors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 3 * vw,
+                                                  fontStyle: FontStyle.italic,
+                                                  fontFamily: "Arial Rounded MT Bold",
+                                                ),
                                               ),
-                                            );
-                                          },
-                                        ),
-                                      ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
+
                                   // Footer (Current/Last Screen)
                                   Container(
                                     width: double.infinity,
                                     padding: EdgeInsets.symmetric(vertical: 8.0),
                                     decoration: BoxDecoration(
-                                      color: Color(colorNum),
+                                      color: CupertinoColors.transparent,
                                       borderRadius: BorderRadius.vertical(
                                         bottom: Radius.circular(6),
                                       ),
                                     ),
-                                    child: Center(
-                                      child: Text(
-                                        "${active ? "Current" : "Last"} Screen: ${player.currentScreen}",
-                                        style: TextStyle(
-                                          fontSize: vw * 4,
-                                          fontWeight: FontWeight.w600,
-                                          color: CupertinoColors.systemGrey,
-                                        ),
-                                        textAlign: TextAlign.center,
+                                    child: Text(
+                                      "${active ? "Current" : "Last"} Screen: ${player.currentScreen}",
+                                      style: TextStyle(
+                                        fontSize: vw * 4,
+                                        fontWeight: FontWeight.w600,
+                                        color: CupertinoColors.white,
                                       ),
+                                      textAlign: TextAlign.left,
                                     ),
                                   ),
                                 ],
