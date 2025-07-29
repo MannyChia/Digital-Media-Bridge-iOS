@@ -260,7 +260,7 @@ class _LoginPageState extends State<LoginPage> {
                     Expanded(
                       child: CupertinoTextField( 
                         controller: emailController,
-                        placeholder: 'Username',
+                        placeholder: 'Email',
                         maxLength: 40,
                         style: const TextStyle(color: CupertinoColors.white),
                         placeholderStyle: TextStyle(
@@ -351,8 +351,8 @@ class _LoginPageState extends State<LoginPage> {
                       _showCupertinoAlert(
                         context,
                         "Input Error",
-                        "Please enter both username and password.",
-                        titleColor: CupertinoColors.white,
+                        "Please enter both email and password.",
+                        titleColor: CupertinoColors.systemRed,
                       );
                       return;
                     }
@@ -367,28 +367,28 @@ class _LoginPageState extends State<LoginPage> {
                         context,
                         "Login Failed",
                         "Invalid Username or Password.",
-                        titleColor: CupertinoColors.white,
+                        titleColor: CupertinoColors.systemRed,
                       );
                     } else if (result == "no_screens") {
                       _showCupertinoAlert(
                         context,
                         "Login Failed",
                         "No Screens To Play.",
-                        titleColor: CupertinoColors.white,
+                        titleColor: CupertinoColors.systemRed,
                       );
                     } else if (result == "no_players") {
                       _showCupertinoAlert(
                         context,
                         "Login Failed",
                         "No Players To Update.",
-                        titleColor: CupertinoColors.white,
+                        titleColor: CupertinoColors.systemRed,
                       );
                     } else if (result == false) {
                       _showCupertinoAlert(
                         context,
                         "Connection Error",
                         "Cannot Connect To DMB Server.",
-                        titleColor: CupertinoColors.white,
+                        titleColor: CupertinoColors.systemRed,
                       );
                     }
                     else {

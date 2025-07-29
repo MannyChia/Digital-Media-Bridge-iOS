@@ -1591,7 +1591,6 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
                       (context, index) {
                         final player = dmbMediaPlayers[index];
                         final active = _checkPlayerStatus(index);
-                        print("Status: $active for player ${player.name}");
                         return Padding(
                           padding: EdgeInsets.only(bottom: vh * 1),
                           child: GestureDetector(
@@ -1617,10 +1616,10 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
                                       ),
                                     ),
                                     child: Text(
-                                      "${player.name} (${active ? 'Active' : 'Inactive'})",
+                                      "${player.name}",
                                       style: TextStyle(
-                                        fontSize: vw * 4,
-                                        fontWeight: FontWeight.w600,
+                                        fontSize: vw * 6,
+                                        fontWeight: FontWeight.bold,
                                         color: CupertinoColors.white,
                                       ),
                                       textAlign: TextAlign.left,
@@ -1669,23 +1668,52 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
                                                 boxShadow: [
                                                   BoxShadow(
                                                     color: CupertinoColors.black,
-                                                    blurRadius: 4,
+                                                    blurRadius: 6,
                                                     offset: Offset(0, 2),
                                                   ),
                                                 ],
                                               ),
-                                              child: Text(
-                                                active ? 'Active' : 'Inactive',
-                                                style: TextStyle(
-                                                  color: CupertinoColors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 3 * vw,
-                                                  fontStyle: FontStyle.italic,
-                                                  fontFamily: "Arial Rounded MT Bold",
-                                                ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text(
+                                                    active ? 'Active' : 'Inactive',
+                                                    style: TextStyle(
+                                                      color: CupertinoColors.white,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 3 * vw,
+                                                      fontStyle: FontStyle.italic,
+                                                      fontFamily: "Arial Rounded MT Bold",
+                                                    ),
+                                                  ),
+                                                  SizedBox(width: 6), // space between text and circle
+                                                  Container(
+                                                    width: 10,
+                                                    height: 10,
+                                                    decoration: BoxDecoration(
+                                                      color: CupertinoColors.white,
+                                                      shape: BoxShape.circle,
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: CupertinoColors.black.withOpacity(0.3),
+                                                          blurRadius: 3,
+                                                          offset: Offset(0, 1),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                           ),
+
+                                          // overlay for inactive players
+                                          if (!active) 
+                                            Container(
+                                              width: double.infinity,
+                                              height: 100,
+                                              color: CupertinoColors.black.withOpacity(0.5),
+                                            ),
                                         ],
                                       ),
                                     ),
@@ -1908,54 +1936,46 @@ Widget _uploadExpansion(double vw) {
   }
 }
 
-ObstructingPreferredSizeWidget _appBarNoBackBtn(BuildContext context, String title, String subTitle, VoidCallback onMenuPressed) {
+ObstructingPreferredSizeWidget _appBarNoBackBtn(
+  BuildContext context,
+  String title,
+  String subTitle,
+  VoidCallback onMenuPressed,
+) {
   final double vw = MediaQuery.of(context).size.width / 100;
 
   return CupertinoNavigationBar(
     backgroundColor: CupertinoColors.black.withAlpha(200),
-    automaticallyImplyLeading: false,  
-    leading: const SizedBox.shrink(),
+    automaticallyImplyLeading: false,
+    padding: EdgeInsetsDirectional.zero, // ensure clean padding
 
-    // left aligned title
-    middle: Align(
+    middle: Container(
       alignment: Alignment.centerLeft,
-      child: Padding( 
-        padding: EdgeInsets.only(
-          left: vw * 4, // space between left edge and title
+      padding: EdgeInsets.only(left: vw * 6), // match list left padding
+      child: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: CupertinoColors.white,
+          fontSize: vw * 6,
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center, 
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: CupertinoColors.white,
-                fontSize: vw * 6, 
-              ),
-              maxLines: 1, 
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ), 
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     ),
 
-    // hamburger menu
-    trailing: CupertinoButton( 
+    trailing: CupertinoButton(
       padding: EdgeInsets.zero,
       child: Icon(
-        CupertinoIcons.line_horizontal_3, 
+        CupertinoIcons.line_horizontal_3,
         color: CupertinoColors.white,
         size: vw * 8,
       ),
-      onPressed: onMenuPressed, // show drawer
+      onPressed: onMenuPressed,
     ),
-    padding: null, 
   );
 }
+
 
 
 

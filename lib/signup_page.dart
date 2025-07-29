@@ -50,23 +50,19 @@ class _SignUpPageState extends State<SignUpPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Title
               Text(
-                "What's your email?",
+                "What's your Email?",
                 style: TextStyle(
                   color: CupertinoColors.white,
                   fontSize: 20.sp,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 8.h),
-              Text(
-                "Enter the email where you can be contacted.",
-                style: TextStyle(
-                  color: CupertinoColors.white,
-                  fontSize: 16.sp,
-                ),
-              ),
-              SizedBox(height: 16.h),
+
+              SizedBox(height: 20.h),
+
+              // Email input container
               Container(
                 decoration: BoxDecoration(
                   color: CupertinoColors.darkBackgroundGray,
@@ -76,15 +72,14 @@ class _SignUpPageState extends State<SignUpPage> {
                   controller: _emailController,
                   placeholder: 'Email',
                   placeholderStyle: TextStyle(
-                    color: CupertinoColors.white,
+                    color: CupertinoColors.white.withOpacity(0.7),
                     fontSize: 16.sp,
                   ),
                   style: TextStyle(
                     color: CupertinoColors.white,
                     fontSize: 16.sp,
                   ),
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 20.w, vertical: 18.h),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 18.h),
                   cursorColor: CupertinoColors.white,
                   clearButtonMode: OverlayVisibilityMode.editing,
                   decoration: BoxDecoration(),
@@ -93,8 +88,10 @@ class _SignUpPageState extends State<SignUpPage> {
                   },
                 ),
               ),
-              if (_errorText != null) ...[
-                SizedBox(height: 8.h),
+              SizedBox(height: 8.h),
+
+              // Error message or space
+              if (_errorText != null)
                 Text(
                   _errorText!,
                   style: TextStyle(
@@ -102,27 +99,29 @@ class _SignUpPageState extends State<SignUpPage> {
                     fontSize: 12.sp,
                   ),
                 ),
-              ] else
-                SizedBox(height: 8.h),
+              if (_errorText == null) SizedBox(height: 8.h),
+
               Text(
-                "You may receive email notifications from us for security and login purposes.",
+                "We will send you a link with your new account information.",
                 style: TextStyle(
                   color: CupertinoColors.white,
-                  fontSize: 12.sp,
+                  fontSize: 14.sp,
                 ),
               ),
               SizedBox(height: 24.h),
+              // Sign Up button full width
               SizedBox(
                 width: double.infinity,
                 child: CupertinoButton.filled(
                   padding: EdgeInsets.symmetric(vertical: 16.h),
-                  borderRadius: BorderRadius.circular(30.r),
+                  borderRadius: BorderRadius.circular(8),
+                  color: const Color.fromRGBO(10, 85, 163, 1.0),
                   child: Text(
-                    'Sign Up',
+                    'Create Account',
                     style: TextStyle(
-                      color: CupertinoColors.white,
                       fontSize: 16.sp,
                       fontWeight: FontWeight.bold,
+                      color: CupertinoColors.white,
                     ),
                   ),
                   onPressed: () {
@@ -135,7 +134,10 @@ class _SignUpPageState extends State<SignUpPage> {
                   },
                 ),
               ),
+
               Spacer(),
+
+              // Bottom link button
               Center(
                 child: CupertinoButton(
                   padding: EdgeInsets.zero,
