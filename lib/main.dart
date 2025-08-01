@@ -260,7 +260,7 @@ class _LoginPageState extends State<LoginPage> {
                     Expanded(
                       child: CupertinoTextField( 
                         controller: emailController,
-                        placeholder: 'Username',
+                        placeholder: 'Email',
                         maxLength: 40,
                         style: const TextStyle(color: CupertinoColors.white),
                         placeholderStyle: TextStyle(
@@ -351,7 +351,7 @@ class _LoginPageState extends State<LoginPage> {
                       _showCupertinoAlert(
                         context,
                         "Input Error",
-                        "Please enter both username and password.",
+                        "Please enter both email and password.",
                         titleColor: CupertinoColors.systemRed,
                       );
                       return;

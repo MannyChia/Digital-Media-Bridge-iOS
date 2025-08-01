@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import './main.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-
+import 'dart:math';
 import './screens_page.dart';
 import './dmb_functions.dart';
 import 'package:flutter/cupertino.dart';
@@ -20,10 +20,10 @@ import 'package:path_provider/path_provider.dart';
 dynamic activeDMBPlayers = 0;
 
 class MediaPlayer {
-  String name, status, currentScreen;
+  String name, status, currentScreen, playerID;
 
   MediaPlayer(
-      {required this.name, required this.status, required this.currentScreen});
+      {required this.name, required this.status, required this.currentScreen, required this.playerID});
 }
 
 List<MediaPlayer> dmbMediaPlayers = [];
@@ -625,12 +625,15 @@ class _PlayersPageState extends State<PlayersPage> {
   final bool _isGenerating = false;
   bool _isCancelled = false;
   String backgroundURL = dotenv.env['BACKGROUND_IMAGE_URL']!;
+  String _imageCacheKey = Random().nextInt(1000).toString(); // random number - used to force unique URLs
+
+
 
   @override
   void initState() {
     super.initState();
     _updateTitle();
-    _refreshData();
+    _imageCacheKey = Random().nextInt(1000).toString(); // random number - used to force unique URLs
   }
 
   void _updateTitle() {
@@ -659,8 +662,8 @@ void _showScreensPage(bool onPlayer) {
   );
 }
 
-
   bool _checkPlayerStatus(int index) {
+    print("STATUS: ${dmbMediaPlayers[index].status} for player ${dmbMediaPlayers[index].name}");
     return dmbMediaPlayers[index].status == "Active";
   }
 
@@ -669,24 +672,26 @@ void _showScreensPage(bool onPlayer) {
     confirmLogout(context);
   }
 
-  Future<void> _refreshData() async {
-    try {
-      getUserData("$loginUsername", "$loginPassword", "players-refresh")
-          .then((result) {
-        if (result.runtimeType != String) {
-          setState(() {
-            dmbMediaPlayers = result;
-            mainPageTitle = "Select Media Player";
-            mainPageSubTitle = "Select Player";
-          });
-        }
-      });
-    } catch (err) {
-      if (kDebugMode) {
-        print("Error refreshing data");
+ Future<void> _refreshData() async {
+  try {
+    getUserData("$loginUsername", "$loginPassword", "players-refresh")
+        .then((result) {
+      if (result.runtimeType != String) {
+        setState(() {
+          dmbMediaPlayers = result;
+          mainPageTitle = "Select Media Player";
+          mainPageSubTitle = "Select Player";
+          // Generate new cache key only when data is refreshed
+          _imageCacheKey = Random().nextInt(1000).toString();
+        });
       }
+    });
+  } catch (err) {
+    if (kDebugMode) {
+      print("Error refreshing data");
     }
   }
+}
 
 
   Future<void> _showUploadSheet(File imageFile) async {
@@ -1569,7 +1574,9 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
             backgroundColor: CupertinoColors.transparent,
             navigationBar: _appBarNoBackBtn(context, mainPageTitle, mainPageSubTitle, _toggleDrawer),
             child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
+              physics: _drawerOpen 
+                ? const NeverScrollableScrollPhysics() 
+                : const AlwaysScrollableScrollPhysics(),
               slivers: [
                 CupertinoSliverRefreshControl(onRefresh: _refreshData),
                 SliverPadding(
@@ -1592,49 +1599,150 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
                               selectedPlayerName = player.name;
                               _showScreensPage(true);
                             },
-                            child: SizedBox(
-                              width: double.infinity, // Use full available width
-                              child: Container(
-                                height: vh * 10,
-                                decoration: BoxDecoration(
-                                  gradient: active
-                                      ? _gradientActiveMediaPlayer(context)
-                                      : _gradientInActiveMediaPlayer(context),
-                                  borderRadius: BorderRadius.circular(10),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: CupertinoColors.systemGrey.withAlpha(80),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                alignment: Alignment.center,
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        player.name,
-                                        style: TextStyle(
-                                          fontSize: vw * 5,
-                                          fontWeight: FontWeight.bold,
-                                          color: CupertinoColors.white,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Column(
+                                children: [
+                                  // Header (Player Name and Status)
+                                  Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                                    decoration: BoxDecoration(
+                                      color: CupertinoColors.transparent,
+                                      borderRadius: BorderRadius.vertical(
+                                        bottom: Radius.circular(6),
                                       ),
                                     ),
-                                    active
-                                        ? _activeScreenText(context, index, vw)
-                                        : _inActiveScreenText(context, index, vw),
-                                  ],
-                                ),
+                                    child: Text(
+                                      "${player.name}",
+                                      style: TextStyle(
+                                        fontSize: vw * 6,
+                                        fontWeight: FontWeight.bold,
+                                        color: CupertinoColors.white,
+                                      ),
+                                      textAlign: TextAlign.left,
+                                    ),
+                                  ),
+                                  // Screenshot of Player
+                                  AspectRatio(
+                                    aspectRatio: 16 / 9,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Stack(
+                                        fit: StackFit.expand,
+                                        children: [
+                                          Container(color: Color(colorNum)),
+                                          // screenshot of player
+                                          Image.network(
+                                            "https://www.digitalmediabridge.tv/screen-builder/assets/content/SITES/${player.playerID}/screenshot.png?$_imageCacheKey",
+                                            fit: BoxFit.cover,
+                                            loadingBuilder: (context, child, loadingProgress) {
+                                              if (loadingProgress == null) return child;
+                                              return Center(
+                                                child: Text(
+                                                  "Loading Screenshot...",
+                                                  style: TextStyle(color: CupertinoColors.systemGrey),
+                                                ),
+                                              );
+                                            },
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return Center(
+                                                child: Text(
+                                                  "Failed to load screenshot",
+                                                  style: TextStyle(color: CupertinoColors.systemGrey),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                          // active/inactive overlay
+                                          Positioned(
+                                            top: 8,
+                                            right: 8,
+                                            child: Container(
+                                              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: active ? CupertinoColors.systemGreen : CupertinoColors.systemRed,
+                                                borderRadius: BorderRadius.circular(5),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: CupertinoColors.black,
+                                                    blurRadius: 6,
+                                                    offset: Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text(
+                                                    active ? 'Active' : 'Inactive',
+                                                    style: TextStyle(
+                                                      color: CupertinoColors.white,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 3 * vw,
+                                                      fontStyle: FontStyle.italic,
+                                                      fontFamily: "Arial Rounded MT Bold",
+                                                    ),
+                                                  ),
+                                                  SizedBox(width: 6), // space between text and circle
+                                                  Container(
+                                                    width: 10,
+                                                    height: 10,
+                                                    decoration: BoxDecoration(
+                                                      color: CupertinoColors.white,
+                                                      shape: BoxShape.circle,
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: CupertinoColors.black.withOpacity(0.3),
+                                                          blurRadius: 3,
+                                                          offset: Offset(0, 1),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+
+                                          // overlay for inactive players
+                                          if (!active) 
+                                            Container(
+                                              width: double.infinity,
+                                              height: 100,
+                                              color: CupertinoColors.black.withOpacity(0.5),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+
+                                  // Footer (Current/Last Screen)
+                                  Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                                    decoration: BoxDecoration(
+                                      color: CupertinoColors.transparent,
+                                      borderRadius: BorderRadius.vertical(
+                                        bottom: Radius.circular(6),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      "${active ? "Current" : "Last"} Screen: ${player.currentScreen}",
+                                      style: TextStyle(
+                                        fontSize: vw * 4,
+                                        fontWeight: FontWeight.w600,
+                                        color: CupertinoColors.white,
+                                      ),
+                                      textAlign: TextAlign.left,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-
                         );
                       },
                       childCount: dmbMediaPlayers.length,
@@ -1828,77 +1936,49 @@ Widget _uploadExpansion(double vw) {
   }
 }
 
-ObstructingPreferredSizeWidget _appBarNoBackBtn(BuildContext context, String title, String subTitle, VoidCallback onMenuPressed) {
+ObstructingPreferredSizeWidget _appBarNoBackBtn(
+  BuildContext context,
+  String title,
+  String subTitle,
+  VoidCallback onMenuPressed,
+) {
   final double vw = MediaQuery.of(context).size.width / 100;
 
   return CupertinoNavigationBar(
     backgroundColor: CupertinoColors.black.withAlpha(200),
-    automaticallyImplyLeading: false,  
-    leading: const SizedBox.shrink(),
+    automaticallyImplyLeading: false,
+    padding: EdgeInsetsDirectional.zero, // ensure clean padding
 
-    // left aligned title
-    middle: Align(
+    middle: Container(
       alignment: Alignment.centerLeft,
-      child: Padding( 
-        padding: EdgeInsets.only(
-          left: vw * 4, // space between left edge and title
+      padding: EdgeInsets.only(left: vw * 6), // match list left padding
+      child: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: CupertinoColors.white,
+          fontSize: vw * 6,
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center, 
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: CupertinoColors.white,
-                fontSize: vw * 6, 
-              ),
-              maxLines: 1, 
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ), 
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     ),
 
-    // hamburger menu
-    trailing: CupertinoButton( 
+    trailing: CupertinoButton(
       padding: EdgeInsets.zero,
       child: Icon(
-        CupertinoIcons.line_horizontal_3, 
+        CupertinoIcons.line_horizontal_3,
         color: CupertinoColors.white,
         size: vw * 8,
       ),
-      onPressed: onMenuPressed, // show drawer
+      onPressed: onMenuPressed,
     ),
-    padding: null, 
   );
 }
 
 
-LinearGradient _gradientActiveMediaPlayer(BuildContext context) {
-  return const LinearGradient(
-    begin: AlignmentDirectional.topCenter,
-    end: AlignmentDirectional.bottomCenter,
-    colors: [
-      CupertinoColors.black,
-      CupertinoColors.systemGreen,
-    ],
-  );
-}
 
-LinearGradient _gradientInActiveMediaPlayer(BuildContext context) {
-  return const LinearGradient(
-    begin: AlignmentDirectional.topCenter,
-    end: AlignmentDirectional.bottomCenter,
-    colors: [
-      CupertinoColors.black,
-      CupertinoColors.systemRed,
-    ],
-  );
-}
+
 
 Text _activeScreenText(BuildContext context, pIndex, vw) {
   return Text(

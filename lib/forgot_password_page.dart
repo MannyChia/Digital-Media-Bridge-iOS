@@ -56,22 +56,16 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "What's your email or username?",
+                "What's your Email?",
                 style: TextStyle(
                   color: CupertinoColors.white,
-                  fontSize: 20.sp,
+                  fontSize: 18.sp,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 8.h),
-              Text(
-                "We'll help you find your account.",
-                style: TextStyle(
-                  color: CupertinoColors.white,
-                  fontSize: 16.sp,
-                ),
-              ),
-              SizedBox(height: 16.h),
+
+              SizedBox(height: 20.h),
+
               Container(
                 decoration: BoxDecoration(
                   color: CupertinoColors.darkBackgroundGray,
@@ -79,15 +73,16 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 ),
                 child: CupertinoTextField(
                   controller: _emailController,
-                  placeholder: 'Email or username',
+                  placeholder: 'Email',
                   placeholderStyle: TextStyle(
                     color: CupertinoColors.white,
                     fontSize: 16.sp,
                   ),
-                  style:
-                      TextStyle(color: CupertinoColors.white, fontSize: 16.sp),
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 20.w, vertical: 18.h),
+                  style: TextStyle(
+                    color: CupertinoColors.white,
+                    fontSize: 16.sp,
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 18.h),
                   cursorColor: CupertinoColors.white,
                   clearButtonMode: OverlayVisibilityMode.editing,
                   decoration: BoxDecoration(),
@@ -98,8 +93,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   },
                 ),
               ),
-              if (_errorText != null) ...[
-                SizedBox(height: 8.h),
+              SizedBox(height: 8.h),
+              if (_errorText != null)
                 Text(
                   _errorText!,
                   style: TextStyle(
@@ -107,10 +102,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     fontSize: 12.sp,
                   ),
                 ),
-              ] else
-                SizedBox(height: 8.h),
+              if (_errorText == null) SizedBox(height: 8.h),
               Text(
-                "You may receive email notifications from us for security and login purposes.",
+                "We will send you a link to reset your password.",
                 style: TextStyle(
                   color: CupertinoColors.white,
                   fontSize: 12.sp,
@@ -121,20 +115,21 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 width: double.infinity,
                 child: CupertinoButton.filled(
                   padding: EdgeInsets.symmetric(vertical: 16.h),
-                  borderRadius: BorderRadius.circular(30.r),
+                  borderRadius: BorderRadius.circular(8.r),
+                  color: const Color.fromRGBO(10, 85, 163, 1.0),
                   child: Text(
                     'Recover',
                     style: TextStyle(
-                      color: CupertinoColors.white,
                       fontSize: 16.sp,
                       fontWeight: FontWeight.bold,
+                      color: CupertinoColors.white,
                     ),
                   ),
                   onPressed: () {
                     final email = _emailController.text.trim();
                     if (email.isEmpty) {
                       setState(() {
-                        _errorText = 'Please enter your email or username';
+                        _errorText = 'Please enter your Email';
                       });
                       return;
                     }
@@ -148,4 +143,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       ),
     );
   }
+
+
 }
