@@ -164,7 +164,9 @@ Future<bool> createNewUser(String email) async {
   );
 
   if (response.statusCode == 200) {
-    return response.body.trim().toUpperCase() == 'COMPLETE';
+    return true;
+  } else if (response.statusCode == 403) {
+    return false;
   } else {
     throw Exception(
       'Create user failed (${response.statusCode}): ${response.body}',
