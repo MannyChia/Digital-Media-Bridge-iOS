@@ -19,20 +19,66 @@ class _SignUpPageState extends State<SignUpPage> {
     super.dispose();
   }
 
-  Future<void> _submit() async {
-    final email = _emailController.text.trim();
-    //TODO: need to make snack bars in the future
-    try {
-      final ok = await createNewUser(email);
-      if (ok) {
-        Navigator.of(context).pop();
-      } else {
-        setState(() => _errorText = 'Sign up failed for: $email');
-      }
-    } catch (e) {
-      setState(() => _errorText = 'Exception: $e');
-    }
+Future<void> _submit() async {
+  final email = _emailController.text.trim();
+  if (email.isEmpty) {
+    setState(() => _errorText = 'Please enter your Email');
+    return;
   }
+
+  try {
+    final ok = await createNewUser(email);
+    if (ok) {
+      await showCupertinoDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => CupertinoAlertDialog(
+          title: Text('Email Sent'),
+          content: Text('\nPlease check your email to complete account creation.\n$email'),
+          actions: [
+            CupertinoDialogAction(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        ),
+      );
+    } else {
+      await showCupertinoDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => CupertinoAlertDialog(
+          title: Text('Already Registered'),
+          content: Text('\nAn account with that email already exists.\n$email'),
+          actions: [
+            CupertinoDialogAction(
+              child: Text('OK'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        ),
+      );
+    }
+  } catch (e) {
+    await showCupertinoDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => CupertinoAlertDialog(
+        title: Text('Error'),
+        content: Text('\nSomething went wrong.\nPlease try again later.'),
+        actions: [
+          CupertinoDialogAction(
+            child: Text('OK'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {

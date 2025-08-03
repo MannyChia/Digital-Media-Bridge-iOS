@@ -19,25 +19,64 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     super.dispose();
   }
 
-  Future<void> _submit() async {
-    final email = _emailController.text.trim();
-    if (email.isEmpty) {
-      print('Please enter your email');
-      return;
-    }
-    try {
-      //TODO: need to make snack bars in the future
-      final ok = await resetPassword(email);
-      if (ok) {
-        print('Reset link (success): $email');
-        Navigator.of(context).pop();
-      } else {
-        print('No account: $email');
-      }
-    } catch (e) {
-      print('Exception forgot pwd: $e');
-    }
+Future<void> _submit() async {
+  final email = _emailController.text.trim();
+  if (email.isEmpty) {
+    setState(() => _errorText = 'Please enter your Email');
+    return;
   }
+
+  try {
+    final ok = await resetPassword(email);
+    if (ok) {
+      await showCupertinoDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => CupertinoAlertDialog(
+          title: Text('Email Sent'),
+          content: Text('\nA reset link has been sent to\n$email'),
+          actions: [
+            CupertinoDialogAction(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop(); 
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        ),
+      );
+    } else {
+      await showCupertinoDialog(
+        context: context,
+        builder: (_) => CupertinoAlertDialog(
+          title: Text('No Account Found'),
+          content: Text('\nNo account exists for\n$email'),
+          actions: [
+            CupertinoDialogAction(
+              child: Text('OK'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        ),
+      );
+    }
+  } catch (e) {
+    await showCupertinoDialog(
+      context: context,
+      builder: (_) => CupertinoAlertDialog(
+        title: Text('Error'),
+        content: Text('\nSomething went wrong.\nPlease try again later.'),
+        actions: [
+          CupertinoDialogAction(
+            child: Text('OK'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {
