@@ -26,6 +26,18 @@ class MediaPlayer {
       {required this.name, required this.status, required this.currentScreen, required this.playerID});
 }
 
+class UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    return TextEditingValue(
+      text: newValue.text.toUpperCase(),
+      selection: newValue.selection,
+    );
+  }
+}
 List<MediaPlayer> dmbMediaPlayers = [];
 dynamic selectedPlayerName;
 
@@ -616,7 +628,7 @@ class PlayersPage extends StatefulWidget {
   _PlayersPageState createState() => _PlayersPageState();
 }
 
-class _PlayersPageState extends State<PlayersPage> {
+class _PlayersPageState extends State<PlayersPage> with SingleTickerProviderStateMixin{
   late String mainPageTitle;
   late String mainPageSubTitle;
   File? _image;
@@ -627,13 +639,32 @@ class _PlayersPageState extends State<PlayersPage> {
   String backgroundURL = dotenv.env['BACKGROUND_IMAGE_URL']!;
   String _imageCacheKey = Random().nextInt(1000).toString(); // random number - used to force unique URLs
 
-
+  late final AnimationController _uploadController;
+  late final Animation<double> _iconTurns;
+  late final Animation<double> _expandFactor;
 
   @override
   void initState() {
     super.initState();
     _updateTitle();
     _imageCacheKey = Random().nextInt(1000).toString(); // random number - used to force unique URLs
+    _uploadController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    _iconTurns = Tween<double>(begin: 0.0, end: 0.5).animate(
+      CurvedAnimation(parent: _uploadController, curve: Curves.easeInOut),
+    );
+    _expandFactor = CurvedAnimation(
+      parent: _uploadController,
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _uploadController.dispose();
+    super.dispose();
   }
 
   void _updateTitle() {
@@ -878,6 +909,108 @@ void _showScreensPage(bool onPlayer) {
     }
   }
 
+  Future<void> showCreatePlayerDialog(BuildContext pageContext) async {
+    final idController   = TextEditingController();
+    final nameController = TextEditingController();
+
+    await showCupertinoDialog(
+      context: pageContext,
+      builder: (dialogContext) => CupertinoAlertDialog(
+        title: Text('Register Player'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(height: 12),
+            CupertinoTextField(
+              controller: idController,
+              textCapitalization: TextCapitalization.characters,
+              inputFormatters: [UpperCaseTextFormatter()],
+              placeholder: 'Unique ID',
+              placeholderStyle: TextStyle(color: CupertinoColors.systemGrey, letterSpacing: 0),
+              style: TextStyle(color: CupertinoColors.white, letterSpacing: 4.0),
+              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              decoration: BoxDecoration(
+                color: CupertinoColors.darkBackgroundGray,
+                borderRadius: BorderRadius.circular(18),
+              ),
+            ),
+            SizedBox(height: 12),
+            CupertinoTextField(
+              controller: nameController,
+              placeholder: 'Player Name',
+              placeholderStyle: TextStyle(color: CupertinoColors.systemGrey),
+              style: TextStyle(color: CupertinoColors.white),
+              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              decoration: BoxDecoration(
+                color: CupertinoColors.darkBackgroundGray,
+                borderRadius: BorderRadius.circular(18),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text('Cancel'),
+          ),
+          CupertinoDialogAction(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              final code = idController.text.trim();
+              final name = nameController.text.trim();
+
+              try {
+                final res = await registerPlayer(
+                  account: loginUsername,
+                  registrationCode: code,
+                  playerName: name,
+                );
+
+                await showCupertinoDialog(
+                  context: pageContext,
+                  builder: (_) {
+                    final isSuccess = res['status'] == 'success';
+                    return CupertinoAlertDialog(
+                      title: Text(
+                        isSuccess ? 'Success' : 'Oops',
+                        style: TextStyle(
+                          color: isSuccess 
+                            ? CupertinoColors.systemGreen      
+                            : CupertinoColors.systemRed,
+                        ),
+                      ),
+                      content: Text(res['message']),
+                      actions: [
+                        CupertinoDialogAction(
+                          onPressed: () => Navigator.pop(_),
+                          child: Text('OK'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              } catch (e) {
+                await showCupertinoDialog(
+                  context: pageContext,
+                  builder: (_) => CupertinoAlertDialog(
+                    title: Text('Error', style: TextStyle(color: CupertinoColors.systemRed)),
+                    content: Text(e.toString()),
+                    actions: [
+                      CupertinoDialogAction(
+                        onPressed: () => Navigator.pop(_),
+                        child: Text('OK'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            },
+            child: Text('Submit'),
+          ),
+        ],
+      ),
+    );
+  }
   Future<Map<String, dynamic>?> _getAIPhoto( String prompt, int width, int height, {String? prevImageID}) async {
     final stableDiffusion = dotenv.env['STABLE_DIFFUSION_KEY']!;
     final lucidRealism = dotenv.env['LUCID_REALISM_KEY']!;
@@ -1788,6 +1921,7 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
                       child: ListView(
                         padding: EdgeInsets.symmetric(vertical: vw * 2),
                         children: [
+                          SizedBox(height: vw * 3),
                           _drawerItem(
                             icon: CupertinoIcons.tv,
                             label: 'Screens',
@@ -1795,6 +1929,16 @@ Future<void> _showAIPromptDialog({String? prevImageID}) async {
                             onTap: () {
                               _toggleDrawer();
                               _showScreensPage(false);
+                            },
+                          ),
+                          SizedBox(height: vw * 3),
+                          _drawerItem(
+                            icon: CupertinoIcons.plus_rectangle,
+                            label: 'Register Player',
+                            vw: vw,
+                            onTap: () {
+                              _toggleDrawer();
+                              showCreatePlayerDialog(context);
                             },
                           ),
                           SizedBox(height: vw * 3),
@@ -1861,56 +2005,80 @@ Widget _uploadExpansion(double vw) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      // "Upload Image" button styled like other menu buttons
       GestureDetector(
-        behavior: HitTestBehavior.opaque, // larger tap area
+        behavior: HitTestBehavior.opaque,
         onTap: () {
-          setState(() {
-            _uploadExpanded = !_uploadExpanded;
-          });
+          setState(() => _uploadExpanded = !_uploadExpanded);
+          if (_uploadExpanded) {
+            _uploadController.forward();
+          } else {
+            _uploadController.reverse();
+          }
         },
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: vw * 4, vertical: vw * 1.5),
+          padding: EdgeInsets.symmetric(
+            horizontal: vw * 4,
+            vertical: vw * 1.5,
+          ),
           child: Row(
             children: [
-              Icon(CupertinoIcons.upload_circle, color: CupertinoColors.systemOrange, size: vw * 7),
+              Icon(
+                CupertinoIcons.upload_circle,
+                color: CupertinoColors.systemOrange,
+                size: vw * 7,
+              ),
               SizedBox(width: vw * 4),
               Text(
                 'Upload Image',
                 style: TextStyle(
                   color: CupertinoColors.white,
                   fontSize: vw * 4.5,
-                  fontWeight: FontWeight.normal,
                 ),
               ),
               Spacer(),
-              Icon(
-                _uploadExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
-                color: CupertinoColors.white,
-                size: vw * 4,
+              RotationTransition(
+                turns: _iconTurns,
+                child: Icon(
+                  CupertinoIcons.chevron_down,
+                  color: CupertinoColors.white,
+                  size: vw * 4,
+                ),
               ),
             ],
           ),
         ),
       ),
-
-      // Dropdown options with your distinct style
-      if (_uploadExpanded)
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: vw * 2), // Add some space between options
-            _uploadOption(vw, CupertinoIcons.camera, 'Camera', _takePhoto),
-            SizedBox(height: vw * 2), // Add some space between options
-            _uploadOption(vw, CupertinoIcons.photo_on_rectangle, 'Gallery', _chooseFromGallery),
-            SizedBox(height: vw * 2), // Add some space between options
-            _uploadOption(vw, CupertinoIcons.sparkles, 'AI Image', _showAIPromptDialog),
-          ],
+      ClipRect(
+        child: SizeTransition(
+          axis: Axis.vertical,
+          axisAlignment: -1.0,     
+          sizeFactor: _expandFactor, 
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: vw * 2),
+              _uploadOption(vw, CupertinoIcons.camera, 'Camera', _takePhoto),
+              SizedBox(height: vw * 2),
+              _uploadOption(
+                vw,
+                CupertinoIcons.photo_on_rectangle,
+                'Gallery',
+                _chooseFromGallery,
+              ),
+              SizedBox(height: vw * 2),
+              _uploadOption(
+                vw,
+                CupertinoIcons.sparkles,
+                'AI Image',
+                _showAIPromptDialog,
+              ),
+            ],
+          ),
         ),
+      ),
     ],
   );
 }
-
 
   Widget _uploadOption(double vw, IconData icon, String label, VoidCallback onTap) {
     return GestureDetector(
@@ -1974,26 +2142,4 @@ ObstructingPreferredSizeWidget _appBarNoBackBtn(
       onPressed: onMenuPressed,
     ),
   );
-}
-
-
-
-
-
-Text _activeScreenText(BuildContext context, pIndex, vw) {
-  return Text(
-      "${dmbMediaPlayers[pIndex].status} - Screen: ${dmbMediaPlayers[pIndex].currentScreen}",
-      style: TextStyle(
-          fontSize: vw * 4,
-          fontStyle: FontStyle.italic,
-          color: CupertinoColors.white));
-}
-
-Text _inActiveScreenText(BuildContext context, pIndex, vw) {
-  return Text(
-      "${dmbMediaPlayers[pIndex].status} - Screen: ${dmbMediaPlayers[pIndex].currentScreen}",
-      style: TextStyle(
-          fontSize: vw * 4,
-          fontStyle: FontStyle.italic,
-          color: CupertinoColors.white));
 }

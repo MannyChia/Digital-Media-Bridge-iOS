@@ -112,7 +112,7 @@ Future<void> _submit() async {
               Container(
                 decoration: BoxDecoration(
                   color: CupertinoColors.darkBackgroundGray,
-                  borderRadius: BorderRadius.circular(30.r),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: CupertinoTextField(
                   controller: _emailController,
@@ -128,7 +128,6 @@ Future<void> _submit() async {
                   padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 18.h),
                   cursorColor: CupertinoColors.white,
                   clearButtonMode: OverlayVisibilityMode.editing,
-                  decoration: BoxDecoration(),
                   onChanged: (_) {
                     if (_errorText != null) setState(() => _errorText = null);
                   },
@@ -163,7 +162,7 @@ Future<void> _submit() async {
                   borderRadius: BorderRadius.circular(8),
                   color: const Color.fromRGBO(10, 85, 163, 1.0),
                   child: Text(
-                    'Create Account',
+                    'Create New Account',
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.bold,

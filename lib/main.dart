@@ -426,7 +426,7 @@ class _LoginPageState extends State<LoginPage> {
                         CupertinoPageRoute(builder: (_) => const SignUpPage()),
                       ),
                       child: Text(
-                        'Sign up',
+                        'Create New Account',
                         style: TextStyle(
                           color: CupertinoColors.activeBlue,
                           fontSize: 14.sp,
