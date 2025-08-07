@@ -196,6 +196,32 @@ Future<bool> resetPassword(String email) async {
   }
 }
 
+Future<Map<String, dynamic>> registerPlayer({
+  required String account,
+  required String registrationCode,
+  required String playerName,
+}) async {
+  final uri = Uri.parse(
+    'https://digitalmediabridge.tv/ScreenBuilder-Server/api/player/register',
+  );
+  final response = await http.post(
+    uri,
+    headers: { 'Content-Type': 'application/json' },
+    body: jsonEncode({
+      'Account': account,
+      'RegistrationCode': registrationCode,
+      'PlayerName': playerName,
+    }),
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception(
+      'Register failed [${response.statusCode}]: ${response.body}',
+    );
+  }
+  return jsonDecode(response.body) as Map<String, dynamic>;
+}
+
 getUserData(String username, String password, String requestType) async {
   final response = await http.post(
     Uri.parse(

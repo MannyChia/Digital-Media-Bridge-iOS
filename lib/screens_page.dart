@@ -43,14 +43,15 @@ class _ScreensPageState extends State<ScreensPage> {
   @override
   Widget build(BuildContext context) {
     final double vw = MediaQuery.of(context).size.width / 100;
-    final double vh = MediaQuery.of(context).size.height / 100;
     final lightGreyTheme = dotenv.env['LIGHT_GREY_THEME'];
     final int colorNum = int.parse(lightGreyTheme!, radix: 16);
 
     return CupertinoPageScaffold(
       navigationBar: _appBarBackBtn(context, screensPageTitle),
-      child: Stack(
-        children: [
+      child: SafeArea(
+        bottom: false,
+        child: Stack(
+          children: [
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
@@ -60,10 +61,8 @@ class _ScreensPageState extends State<ScreensPage> {
             ),
           ),
           Padding(
-            padding: EdgeInsets.only(top: vh * 10),
+            padding: EdgeInsets.fromLTRB(vw * 3, 16, vw * 3, vw * 2),
             child: ListView.separated(
-              padding: EdgeInsets.symmetric(
-                  vertical: vh * 2, horizontal: vw * 3),
               itemCount: dmbScreens.length,
               itemBuilder: (context, index) {
                 return GestureDetector(
@@ -106,7 +105,8 @@ class _ScreensPageState extends State<ScreensPage> {
             ),
           ),
         ],
-      ),
+        )
+      )
     );
   }
 }

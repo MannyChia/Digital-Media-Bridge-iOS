@@ -108,7 +108,7 @@ Future<void> _submit() async {
               Container(
                 decoration: BoxDecoration(
                   color: CupertinoColors.darkBackgroundGray,
-                  borderRadius: BorderRadius.circular(30.r),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: CupertinoTextField(
                   controller: _emailController,
@@ -124,7 +124,6 @@ Future<void> _submit() async {
                   padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 18.h),
                   cursorColor: CupertinoColors.white,
                   clearButtonMode: OverlayVisibilityMode.editing,
-                  decoration: BoxDecoration(),
                   onChanged: (_) {
                     if (_errorText != null) {
                       setState(() => _errorText = null);
